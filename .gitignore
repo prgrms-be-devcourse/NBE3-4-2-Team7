@@ -1,0 +1,11 @@
+# IntelliJ 설정 무시
+.idea/
+*.iml
+
+# macOS 시스템 파일 무시
+.DS_Store
+
+# Node.js 관련 파일 무시 (frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
