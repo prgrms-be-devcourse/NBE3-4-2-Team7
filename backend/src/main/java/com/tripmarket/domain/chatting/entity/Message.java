@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @Entity
-@RequiredArgsConstructor
 @NoArgsConstructor
 public class Message extends BaseEntity {
 
