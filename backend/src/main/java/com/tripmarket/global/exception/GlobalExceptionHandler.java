@@ -1,4 +1,4 @@
-package com.tripmaket.global.exception;
+package com.tripmarket.global.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

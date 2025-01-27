@@ -1,4 +1,4 @@
-package com.tripmaket.global.jpa.entity;
+package com.tripmarket.global.jpa.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
