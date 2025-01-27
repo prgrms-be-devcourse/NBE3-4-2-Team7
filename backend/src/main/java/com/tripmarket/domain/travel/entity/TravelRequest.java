@@ -6,7 +6,6 @@ import com.tripmarket.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.context.annotation.Primary;
 
 @Getter
 @NoArgsConstructor

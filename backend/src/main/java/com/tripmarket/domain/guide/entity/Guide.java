@@ -29,7 +29,7 @@ public class Guide extends BaseEntity {
     @Column(nullable = false)
     private Boolean isDeleted = false; // 삭제 여부 (기본값: false)
 
-    @Column(length = 255)
+    @Column(length = 500)
     private String introduction; // 가이드 소개
 
 
