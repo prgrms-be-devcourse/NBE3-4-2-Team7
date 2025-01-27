@@ -1,5 +1,6 @@
 package com.tripmarket.domain.chatting.entity;
 
+import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.global.jpa.entity.BaseEntity;
@@ -11,10 +12,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 public class Chatting extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long chattingId; // 채팅 ID (Primary Key)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chatting_room_id")

@@ -3,7 +3,6 @@ package com.tripmarket.domain.member.entity;
 import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 import com.tripmarket.domain.guide.entity.Guide;
-import com.tripmarket.domain.review.entity.Review;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +35,7 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member")
     private List<Guide> guides; // 해당 회원이 작성한 가이드 리스트
 
-    @OneToMany(mappedBy = "member")
-    private List<Review> reviews; // 해당 회원이 작성한 리뷰 리스트
+   /* @OneToMany(mappedBy = "member")
+    private List<Review> reviews; 회원이 작성한 리뷰 리스트 */
+
 }

@@ -10,10 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChattingRoom extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long chattingRoomId; // 채팅방 ID (Primary Key)
-
     @Enumerated(EnumType.STRING)
     private ChatStatus chatStatus; // 채팅방 상태 (ON/OFF)
 
