@@ -36,7 +36,7 @@ public class GuideController {
 	@Operation(summary = "가이드 상세 조회")
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public GuideDto findGuideById(@PathVariable(name = "id") Long id) {
+	public GuideDto getGuideById(@PathVariable(name = "id") Long id) {
 		return guideService.findById(id);
 	}
 
@@ -50,8 +50,8 @@ public class GuideController {
 	@Operation(summary = "가이드 리스트 조회")
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
-	public List<GuideDto> findGuides() {
-		return guideService.findAll();
+	public List<GuideDto> getAllGuides() {
+		return guideService.getAllGuides();
 	}
 
 	@Operation(summary = "가이드 수정")
@@ -60,4 +60,19 @@ public class GuideController {
 	public void updateGuide(@Valid @RequestBody GuideDto guideDto) {
 		guideService.update(guideDto);
 	}
+
+	@Operation(summary = "가이드 탈퇴")
+	@PatchMapping("/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public void deleteGuide(@PathVariable(name = "id") Long id) {
+		guideService.delete(id);
+	}
+
+	@Operation(summary = "가이드 리뷰 전체 조회")
+	@GetMapping("/{id}/reviews")
+	@ResponseStatus(HttpStatus.OK)
+	public void getAllReviews(@PathVariable(name = "id") Long id) {
+		guideService.getAllReviews(id);
+	}
+
 }

@@ -13,18 +13,17 @@ import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+import com.tripmarket.domain.review.entity.Review;
 
 @Service
 @RequiredArgsConstructor
 public class GuideService {
-
 	private final GuideRepository guideRepository;
 
 	public Guide getGuide(Long guideId) {
 		return guideRepository.findById(guideId)
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_NOT_FOUND));
 	}
-
 	public GuideDto findById(Long id) {
 		// TODO : 익셉션 정의하기
 		Guide guide = guideRepository.findById(id)
@@ -34,7 +33,7 @@ public class GuideService {
 
 	@Transactional
 	public void create(GuideDto guideDto) {
-		guideRepository.save(Guide.toEntity(guideDto));
+		guideRepository.save(GuideDto.toEntity(guideDto));
 	}
 
 	public Guide getGuideByMember(Long userId) {
@@ -44,12 +43,25 @@ public class GuideService {
 
 	@Transactional
 	public void update(GuideDto guideDto) {
-		guideRepository.save(Guide.toEntity(guideDto));
+		guideRepository.save(GuideDto.toEntity(guideDto));
 	}
 
-	public List<GuideDto> findAll() {
+	public List<GuideDto> getAllGuides() {
 		return guideRepository.findAll().stream()
 			.map(GuideDto::of)
 			.toList();
-		}
+	}
+
+	public void delete(Long id) {
+		// 가이드 가져와서 상태 업데이트
+		GuideDto guideDto = findById(id);
+		guideDto.setDeleted(true);
+		guideRepository.save(GuideDto.toEntity(guideDto));
+	}
+
+	public List<Review> getAllReviews(Long id) {
+		Guide guide = GuideDto.toEntity(findById(id));
+		// TODO : review repository 에서 리뷰 전체 가져오기 ( 패치 사이즈 몇?)
+		return List.of();
+	}
 }
