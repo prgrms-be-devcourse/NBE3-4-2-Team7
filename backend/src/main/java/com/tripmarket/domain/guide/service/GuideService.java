@@ -10,31 +10,38 @@ import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.repository.GuideRepository;
 import com.tripmarket.domain.review.entity.Review;
+import com.tripmarket.global.exception.EntityNotFoundException;
 
 @Service
 public class GuideService {
 	private final GuideRepository guideRepository;
+	private final GuideValidationService guideValidationService;
 
 	@Autowired
-	public GuideService(GuideRepository guideRepository) {
+	public GuideService(GuideRepository guideRepository, GuideValidationService guideValidationService) {
 		this.guideRepository = guideRepository;
+		this.guideValidationService = guideValidationService;
 	}
 
 	public GuideDto findById(Long id) {
-		// TODO : 익셉션 정의하기
-		Guide guide = guideRepository.findById(id)
-			.orElseThrow(() -> new RuntimeException("GUIDE NOT FOUND"));
+		Guide guide = guideRepository
+			.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("GUIDE NOT FOUND"));
 		return GuideDto.of(guide);
 	}
 
 	@Transactional
 	public void create(GuideDto guideDto) {
-		guideRepository.save(GuideDto.toEntity(guideDto));
+		Guide guide = GuideDto.toEntity(guideDto);
+		guideValidationService.checkValid(guide);
+		guideRepository.save(guide);
 	}
 
 	@Transactional
 	public void update(GuideDto guideDto) {
-		guideRepository.save(GuideDto.toEntity(guideDto));
+		Guide guide = GuideDto.toEntity(guideDto);
+		guideValidationService.checkValid(guide);
+		guideRepository.save(guide);
 	}
 
 	public List<GuideDto> getAllGuides() {
