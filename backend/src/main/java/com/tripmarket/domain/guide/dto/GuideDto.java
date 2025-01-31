@@ -18,7 +18,7 @@ public class GuideDto {
 	@NotBlank
 	private String name;
 
-	// 가이드가 유저 프로필도 존재할 때
+	// 가이드가 유저 프로필도 존재할 때(0 : 없음)
 	private Long userId;
 
 	@NotBlank
@@ -34,6 +34,11 @@ public class GuideDto {
 
 	private boolean isDeleted;
 
+	public void setDeleted(boolean deleted) {
+		isDeleted = deleted;
+	}
+
+	// Entity -> Dto 변환
 	public static GuideDto of(Guide guide) {
 		return GuideDto.builder()
 			.id(guide.getId())
@@ -42,6 +47,18 @@ public class GuideDto {
 			.activityRegion(guide.getActivityRegion())
 			.experienceYears(guide.getExperienceYears())
 			.introduction(guide.getIntroduction())
+			.build();
+	}
+
+	// DTO → Entity 변환
+	public static Guide toEntity(GuideDto guideDto) {
+		return Guide.builder()
+			.name(guideDto.getName())
+			.languages(guideDto.getLanguages())
+			.introduction(guideDto.getIntroduction())
+			.activityRegion(guideDto.getActivityRegion())
+			.experienceYears(guideDto.getExperienceYears())
+			.isDeleted(guideDto.isDeleted())
 			.build();
 	}
 }
