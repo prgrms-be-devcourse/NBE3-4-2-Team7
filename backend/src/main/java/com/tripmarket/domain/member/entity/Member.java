@@ -28,12 +28,12 @@ public class Member extends BaseEntity {
 	@Column(nullable = false, unique = true, length = 100)
 	private String email; // 회원 이메일 (고유값)
 
-	private String password; // 회원 비밀번호, 소셜 로그인은 password가 필요 없으므로 nullable false 삭제
+	private String password; // 회원 비밀번호, 소셜 로그인은 password가 필요 없으므로 nullable
 
 	@Column(nullable = false, unique = true)
-	private String providerId; // 카카오 회원 고유 ID
+	private String providerId; // OAuth2 회원 고유 ID
 
-	private String profileImage;
+	private String imageUrl; // 프로필 이미지 URL
 
 	@Enumerated(EnumType.STRING)
 	private Role role; // 회원 역할 (예: 관리자, 사용자)
@@ -52,14 +52,21 @@ public class Member extends BaseEntity {
     private List<Review> reviews; 회원이 작성한 리뷰 리스트 */
 
 	@Builder
-	public Member(String name, String email, String providerId, String profileImage) {
+	public Member(String name, String email, String providerId, String imageUrl) {
 		this.name = name;
 		this.email = email;
 		this.providerId = providerId;
-		this.profileImage = profileImage;
+		this.imageUrl = imageUrl;
 		this.role = Role.USER;
-		this.hasGuideProfile = false;
-		this.isDeleted = false;
 	}
 
+	/**
+	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
+	 * 소셜 로그인(카카오, 구글 등) 프로필 정보가 변경되었을 때 호출
+	 */
+	public Member updateOAuth2Profile(String name, String imageUrl) {
+		this.name = name;
+		this.imageUrl = imageUrl;
+		return this;
+	}
 }
