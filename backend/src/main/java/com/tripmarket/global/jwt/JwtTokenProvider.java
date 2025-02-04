@@ -59,7 +59,7 @@ public class JwtTokenProvider {
 	 */
 	public String createAccessToken(Authentication authentication) {
 		Date now = new Date();
-		Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
+		Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds * 1000);
 
 		return Jwts.builder()
 			.subject(authentication.getName())
@@ -77,7 +77,7 @@ public class JwtTokenProvider {
 	 */
 	public String createRefreshToken() {
 		Date now = new Date();
-		Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
+		Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds * 1000);
 
 		return Jwts.builder()
 			.issuedAt(now)
