@@ -37,7 +37,7 @@ public class GuideController {
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public GuideDto getGuideById(@PathVariable(name = "id") Long id) {
-		return guideService.findById(id);
+		return guideService.getGuideDto(id);
 	}
 
 	@Operation(summary = "가이드 생성")

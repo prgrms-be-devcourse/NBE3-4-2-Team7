@@ -18,11 +18,10 @@ public class GuideDto {
 	@NotBlank
 	private String name;
 
-	// 가이드가 유저 프로필도 존재할 때(0 : 없음)
 	private Long userId;
 
 	/*
-	 * ISO 639 표준에 따른 언어코드 형식의 문자열
+	 * ISO 639 언어코드 형식의 문자열(소문자)
 	 * EX) "kr, en"
 	 * */
 	@NotBlank
@@ -43,7 +42,7 @@ public class GuideDto {
 	}
 
 	// Entity -> Dto 변환
-	public static GuideDto of(Guide guide) {
+	public static GuideDto fromEntity(Guide guide) {
 		return GuideDto.builder()
 			.id(guide.getId())
 			.name(guide.getName())
