@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -40,6 +41,10 @@ public class SecurityConfig {
 			// CSRF 설정 비활성화 - REST API에서는 불필요
 			.csrf(AbstractHttpConfigurer::disable)
 
+			// H2 콘솔 설정 추가
+			.headers(headers ->
+				headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+
 			// 세션 설정 - JWT를 사용하므로 세션을 생성하지 않음
 			.sessionManagement((sessionManagement) ->
 				sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -48,6 +53,7 @@ public class SecurityConfig {
 			// 요청에 대한 권한 설정
 			.authorizeHttpRequests((authorizeHttpRequests) ->
 				authorizeHttpRequests
+					.requestMatchers("/h2-console/**").permitAll()
 					.requestMatchers("/auth/**", "/oauth2/**").permitAll()
 					.anyRequest().authenticated()
 			)
