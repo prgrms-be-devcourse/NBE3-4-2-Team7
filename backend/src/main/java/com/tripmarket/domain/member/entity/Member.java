@@ -8,6 +8,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,11 +43,10 @@ public class Member extends BaseEntity {
 	@Column(nullable = false, unique = true)
 	private String providerId; // OAuth2 회원 고유 ID
 
-	@OneToOne(mappedBy = "member")
-	private Guide guides;
-       
-	private String imageUrl; // 프로필 이미지 URL
-       
+	@OneToOne
+	@JoinColumn(name = "guide_id")
+	private Guide guide;
+
 	@Builder
 	public Member(String name, String email, String providerId, String imageUrl, Provider provider) {
 		this.name = name;
@@ -65,4 +66,5 @@ public class Member extends BaseEntity {
 		this.imageUrl = imageUrl;
 		return this;
 	}
+
 }
