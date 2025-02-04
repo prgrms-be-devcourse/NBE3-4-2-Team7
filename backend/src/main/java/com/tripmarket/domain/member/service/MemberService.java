@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tripmarket.domain.member.dto.MemberResponseDTO;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
