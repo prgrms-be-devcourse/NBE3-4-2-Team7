@@ -21,6 +21,10 @@ public class GuideDto {
 	// 가이드가 유저 프로필도 존재할 때(0 : 없음)
 	private Long userId;
 
+	/*
+	 * ISO 639 표준에 따른 언어코드 형식의 문자열
+	 * EX) "kr, en"
+	 * */
 	@NotBlank
 	private String languages;
 
@@ -54,10 +58,10 @@ public class GuideDto {
 	public static Guide toEntity(GuideDto guideDto) {
 		return Guide.builder()
 			.name(guideDto.getName())
-			.languages(guideDto.getLanguages())
 			.introduction(guideDto.getIntroduction())
 			.activityRegion(guideDto.getActivityRegion())
 			.experienceYears(guideDto.getExperienceYears())
+			.languages(guideDto.getLanguages())
 			.isDeleted(guideDto.isDeleted())
 			.build();
 	}

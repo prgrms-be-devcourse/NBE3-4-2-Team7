@@ -10,6 +10,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,24 +19,29 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Getter
 @Builder
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Guide extends BaseEntity {
 
 	@Column(nullable = false, length = 30)
+	@Size(min = 1, max = 30)
 	private String name;
 
-	@Column(length = 100)
+	@Column(nullable = false, length = 100)
+	@Size(min = 1, max = 100)
 	private String activityRegion;
 
-	@Column(length = 300)
+	@Column(nullable = false, length = 300)
+	@Size(min = 1, max = 300)
 	private String introduction;
 
-	@Column(length = 100)
+	@Column(nullable = false)
+	@ValidLanguages
 	private String languages;
 
+	@Min(0)
 	@Max(100)
 	private Integer experienceYears;
 
@@ -52,4 +59,8 @@ public class Guide extends BaseEntity {
 	// 여행 요청 리스트
 	@OneToMany(mappedBy = "guide")
 	List<TravelRequest> travelRequests;
+
+	// 리뷰 통계 테이블
+	// @OneToOne
+	// GuideReviewStats guideReviewStats;
 }
