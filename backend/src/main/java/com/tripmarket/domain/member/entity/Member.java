@@ -1,7 +1,5 @@
 package com.tripmarket.domain.member.entity;
 
-import java.util.List;
-
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
@@ -9,7 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,8 +34,8 @@ public class Member extends BaseEntity {
 	@Column(nullable = false)
 	private Boolean hasGuideProfile = false; // 가이드 프로필 여부
 
-	@OneToMany(mappedBy = "member")
-	private List<Guide> guides;
+	@OneToOne(mappedBy = "member")
+	private Guide guides;
 
 	@Builder
 	public Member(String email, String password, String name, Role role) {
