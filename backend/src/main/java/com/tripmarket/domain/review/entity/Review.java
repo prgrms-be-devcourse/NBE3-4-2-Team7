@@ -34,7 +34,7 @@ public class Review extends BaseEntity {
 	@Schema(description = "리뷰 내용", example = "가이드가 친절하고 유익했어요!")
 	private String comment;
 
-	@Column(nullable = false, precision = 2, scale = 1)
+	@Column(nullable = false)
 	@Schema(description = "리뷰 점수 (0.0~5.0)", example = "3.3")
 	private Double reviewScore; // 소수점 1자리까지 저장
 
@@ -48,5 +48,12 @@ public class Review extends BaseEntity {
 		this.member = member;
 		this.comment = comment;
 		this.reviewScore = reviewScore;
+	}
+
+	// 엔티티에서 업데이트 메소드를 통해 일괄로 처리하는게 캡슐화에 어울리지않나
+	public void update(String comment, double reviewScore) {
+		this.comment = comment;
+		this.reviewScore = reviewScore;
+		this.updateTimestamp();
 	}
 }
