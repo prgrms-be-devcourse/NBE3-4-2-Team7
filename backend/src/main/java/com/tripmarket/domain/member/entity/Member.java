@@ -56,9 +56,10 @@ public class Member extends BaseEntity {
     private List<Review> reviews; 회원이 작성한 리뷰 리스트 */
 
 	@Builder
-	public Member(String name, String email, String providerId, String imageUrl) {
+	public Member(String name, String email, String providerId, String imageUrl, Provider provider) {
 		this.name = name;
 		this.email = email;
+		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = imageUrl;
 		this.role = Role.USER;
