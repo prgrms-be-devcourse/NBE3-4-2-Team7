@@ -1,7 +1,5 @@
 package com.tripmarket.domain.member.entity;
 
-import java.util.List;
-
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
@@ -9,7 +7,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,8 +35,16 @@ public class Member extends BaseEntity {
 	@Column(nullable = false)
 	private Boolean hasGuideProfile = false; // 가이드 프로필 여부
 
-	@OneToMany(mappedBy = "member")
-	private List<Guide> guides;
+	/*
+	 * 가이드 프로필 생성하려면 무조건 멤버 정보가 있어야 하므로 주인으로 설정
+	 *
+	 * */
+	@OneToOne
+	@JoinColumn(name = "guide_id")
+	private Guide guide;
+
+   /* @OneToMany(mappedBy = "member")
+    private List<Review> reviews; 회원이 작성한 리뷰 리스트 */
 
 	@Builder
 	public Member(String email, String password, String name, Role role) {
@@ -46,4 +53,5 @@ public class Member extends BaseEntity {
 		this.name = name;
 		this.role = role;
 	}
+
 }
