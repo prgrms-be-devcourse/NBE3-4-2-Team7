@@ -35,7 +35,7 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
 			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
-			.cors(cors -> cors.configurationSource(corsConfigurationSoruce()))
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
 			// CSRF 설정 비활성화 - REST API에서는 불필요
 			.csrf(AbstractHttpConfigurer::disable)
@@ -65,7 +65,7 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public CorsConfigurationSource corsConfigurationSoruce() {
+	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
 
 		// 허용할 프론트엔드 origin 설정
