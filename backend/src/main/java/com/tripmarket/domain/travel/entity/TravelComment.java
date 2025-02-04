@@ -4,21 +4,22 @@ import com.tripmarket.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
+
 
 @Getter
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Entity
 public class TravelComment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", nullable = false)
-    @NonNull // null 값을 허용하지 않음
-    private TravelRequest travelRequest;
+    @NonNull
+    private Travel travel; // 여행 요청과의 관계
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    @NonNull // null 값을 허용하지 않음
-    private String comment;
+    @NonNull
+    private String comment; // 댓글 내용
+
 }
+
