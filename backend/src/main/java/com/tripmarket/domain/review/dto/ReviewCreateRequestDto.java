@@ -6,7 +6,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record ReviewCreateRequestDTO(
+public record ReviewCreateRequestDto(
 
 	@NotNull(message = "가이드 ID는 필수입니다.")
 	@Schema(description = "리뷰를 남길 가이드의 ID", example = "1")
