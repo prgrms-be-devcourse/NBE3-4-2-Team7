@@ -1,6 +1,7 @@
 package com.tripmarket.global.oauth2.service;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -69,21 +70,27 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 	 */
 	private Member saveOrUpdate(OAuth2UserInfo userInfo, String registrationId) {
 		Provider provider = getProvider(registrationId);
+		Optional<Member> optionalMember = memberRepository.findByEmail(userInfo.getEmail());
 
-		Member member = memberRepository.findByEmail(userInfo.getEmail())
-			.map(entity -> entity.updateOAuth2Profile(
+		if (optionalMember.isPresent()) {
+			// 기존 회원이면 정보 업데이트
+			Member member = optionalMember.get();
+			member.updateOAuth2Profile(
 				userInfo.getName(),
 				userInfo.getImageUrl()
-			))
-			.orElse(Member.builder()
+			);
+			return memberRepository.save(member);
+		} else {
+			// 새 회원이면 회원가입
+			Member member = Member.builder()
 				.email(userInfo.getEmail())
 				.name(userInfo.getName())
 				.providerId(userInfo.getId())
 				.provider(provider)
 				.imageUrl(userInfo.getImageUrl())
-				.build());
-
-		return memberRepository.save(member);
+				.build();
+			return memberRepository.save(member);
+		}
 	}
 
 	/**
