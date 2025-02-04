@@ -1,21 +1,27 @@
 package com.tripmarket.domain.chatting.entity;
 
-import com.tripmarket.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+
+import com.tripmarket.global.jpa.entity.BaseEntity;
 
 @Getter
-@Entity
 @NoArgsConstructor
+@Entity
 public class Message extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chatting_room_id", nullable = false)
-    private ChattingRoom chattingRoom; // 메시지가 속한 채팅방
+	private String roomId;
+	private String senderId;
+	private String toUserId;
+	private String content;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String content; // 메시지 내용
-
+	@Builder
+	public Message(String roomId, String senderId, String toUserId, String content) {
+		this.roomId = roomId;
+		this.senderId = senderId;
+		this.toUserId = toUserId;
+		this.content = content;
+	}
 }
