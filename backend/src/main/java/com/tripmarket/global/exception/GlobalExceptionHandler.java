@@ -20,6 +20,33 @@ public class GlobalExceptionHandler {
 		ErrorResponse errorResponse = ErrorResponse.builder()
 			.status(e.getStatus())
 			.message(e.getMessage())
+			.code("JWT_ERROR")
+			.build();
+
+		return ResponseEntity
+			.status(e.getStatus())
+			.body(errorResponse);
+	}
+
+	@ExceptionHandler(UnauthorizedException.class)
+	public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(e.getStatus())
+			.message(e.getMessage())
+			.code("UNAUTHORIZED")
+			.build();
+
+		return ResponseEntity
+			.status(e.getStatus())
+			.body(errorResponse);
+	}
+
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(e.getStatus())
+			.message(e.getMessage())
+			.code("RESOURCE_NOT_FOUND")
 			.build();
 
 		return ResponseEntity
