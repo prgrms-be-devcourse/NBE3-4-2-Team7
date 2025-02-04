@@ -15,6 +15,45 @@ public class GlobalExceptionHandler {
 			.body("서버에서 오류가 발생했습니다: " + e.getMessage());
 	}
 
+	@ExceptionHandler(JwtAuthenticationException.class)
+	public ResponseEntity<ErrorResponse> handleException(JwtAuthenticationException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(e.getStatus())
+			.message(e.getMessage())
+			.code("JWT_ERROR")
+			.build();
+
+		return ResponseEntity
+			.status(e.getStatus())
+			.body(errorResponse);
+	}
+
+	@ExceptionHandler(UnauthorizedException.class)
+	public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(e.getStatus())
+			.message(e.getMessage())
+			.code("UNAUTHORIZED")
+			.build();
+
+		return ResponseEntity
+			.status(e.getStatus())
+			.body(errorResponse);
+	}
+
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(e.getStatus())
+			.message(e.getMessage())
+			.code("RESOURCE_NOT_FOUND")
+			.build();
+
+		return ResponseEntity
+			.status(e.getStatus())
+			.body(errorResponse);
+	}
+       
 	@ExceptionHandler({CustomException.class})
 	public ResponseEntity<CustomErrorResponse> handleCustomException(CustomException ex) {
 		CustomErrorResponse errorResponse = new CustomErrorResponse(
