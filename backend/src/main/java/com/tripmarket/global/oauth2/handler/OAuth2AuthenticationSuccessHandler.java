@@ -9,6 +9,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
@@ -25,7 +26,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RedisTemplate<String, String> redisTemplate;
-	private static final String REDIRECT_URI = "http://localhost:3000/";
+	private static final String REDIRECT_URI = "http://localhost:3000/oauth/callback";
 
 	@Override
 	public void onAuthenticationSuccess(
@@ -56,7 +57,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 		log.info("OAuth2 Login Success: {}", email);
 
-		// 프론트엔드로 리다이렉트
-		getRedirectStrategy().sendRedirect(request, response, REDIRECT_URI);
+		// 성공 상태와 함께 리다이렉트
+		String targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URI)
+			.queryParam("status", "success")
+			.build().toUriString();
+
+		getRedirectStrategy().sendRedirect(request, response, targetUrl);
 	}
 }
