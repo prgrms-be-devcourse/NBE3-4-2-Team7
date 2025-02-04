@@ -30,6 +30,10 @@ public class Member extends BaseEntity {
 
 	private String password; // 회원 비밀번호, 소셜 로그인은 password가 필요 없으므로 nullable
 
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE 등)
+
 	@Column(nullable = false, unique = true)
 	private String providerId; // OAuth2 회원 고유 ID
 
