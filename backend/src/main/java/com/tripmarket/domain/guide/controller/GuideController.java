@@ -72,6 +72,7 @@ public class GuideController {
 	@GetMapping("/{id}/reviews")
 	@ResponseStatus(HttpStatus.OK)
 	public void getAllReviews(@PathVariable(name = "id") Long id) {
+		// TODO: 리뷰 dto 생성
 		guideService.getAllReviews(id);
 	}
 

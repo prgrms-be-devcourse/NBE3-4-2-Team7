@@ -34,7 +34,7 @@ public class Review extends BaseEntity {
 	@Schema(description = "리뷰 내용", example = "가이드가 친절하고 유익했어요!")
 	private String comment;
 
-	@Column(nullable = false, precision = 2, scale = 1)
+	//@Column(nullable = false, precision = 2, scale = 1)
 	@Schema(description = "리뷰 점수 (0.0~5.0)", example = "3.3")
 	private Double reviewScore; // 소수점 1자리까지 저장
 
