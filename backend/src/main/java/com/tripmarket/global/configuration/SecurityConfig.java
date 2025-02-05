@@ -41,7 +41,7 @@ public class SecurityConfig {
 
 			// CSRF 설정 - 쿠키 사용시 CSRF 보호 활성화
 			.csrf(csrf -> csrf
-				.ignoringRequestMatchers("/h2-console/**") // H2 콘솔은 CSRF 검사 제외
+				.ignoringRequestMatchers("/h2-console/**", "/chat/**") // H2 콘솔,채팅은 CSRF 검사 제외
 				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 			// H2 콘솔 설정 추가
@@ -70,6 +70,9 @@ public class SecurityConfig {
 
 					// Swagger UI 관련 경로
 					.requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
+
+					//채팅 관련 경로
+					.requestMatchers("/chat-test.html", "/chat/**").permitAll()
 
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 
