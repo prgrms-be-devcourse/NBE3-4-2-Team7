@@ -56,6 +56,8 @@ spring:
     defer-datasource-initialization: true
 
   data:
+    mongodb:
+      uri: mongodb://root:1234@localhost:27017/chatdb?authSource=admin
     redis:
       host: localhost
       port: 6379

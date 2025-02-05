@@ -1,4 +1,5 @@
 services:
+  # rabbitmq
   rabbitmq:
     image: rabbitmq:management
     container_name: rabbitmq_container
@@ -23,11 +24,25 @@ services:
     networks:
       - my_network
 
+  # redis
   redis:
     image: redis:alpine
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - my_network
+
+  # mongodb
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root  # 초기 사용자
+      MONGO_INITDB_ROOT_PASSWORD: 1234  # 초기 비밀번호
+      MONGO_INITDB_DATABASE: chatdb
     networks:
       - my_network
 

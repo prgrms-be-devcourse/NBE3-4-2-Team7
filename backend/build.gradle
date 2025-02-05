@@ -64,6 +64,9 @@ dependencies {
     implementation 'org.springframework:spring-messaging'
     implementation 'org.springframework.boot:spring-boot-starter-reactor-netty:3.0.0'
     implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-x86_64'
+
+    //mongodb
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 }
 
 tasks.named('test') {
