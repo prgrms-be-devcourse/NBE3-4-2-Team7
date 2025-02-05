@@ -31,6 +31,7 @@ public class MemberController {
 		if (oAuth2User == null) {
 			throw new UnauthorizedException("로그인이 필요합니다.");
 		}
+		log.debug("OAuth2User: {}", oAuth2User);
 		MemberResponseDTO memberResponseDTO = memberService.getMemberByEmail(oAuth2User.getEmail());
 
 		return ResponseEntity.ok(memberResponseDTO);
