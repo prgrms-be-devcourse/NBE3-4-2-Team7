@@ -7,7 +7,8 @@ import com.tripmarket.domain.chatting.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,22 +18,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageService {
 
 	private final MessageRepository messageRepository;
-	private final SimpMessagingTemplate messagingTemplate;
+	private final RabbitTemplate rabbitTemplate;
+
+	@Value("${spring.rabbitmq.chat.exchange.name}")
+	private String chatExchangeName;
 
 	@Transactional
-	public void sendMessageToRoom(MessageDto messageDto) {
-		// 대상 유저에게 실시간 메시지 전송
-		String destination = "/queue/private." + messageDto.getToUserId();
+	public void sendMessageToRoom(MessageDto messageDto, String roomId) {
+		// RabbitMQ에 메시지 전송
 		try {
-			messagingTemplate.convertAndSend(destination, messageDto);
-			log.info("메세지가 전송되었습니다 : {}, Destination: {}", messageDto.getToUserId(), destination);
+			rabbitTemplate.convertAndSend(chatExchangeName, "chat.room." + roomId, messageDto);
+			log.info("메세지가 RabbitMQ로 전송되었습니다: {}", messageDto);
 		} catch (Exception e) {
-			log.error("메세지 전송 실패 : {}", e.getMessage(), e);
+			log.error("메세지 전송 실패: {}", e.getMessage(), e);
 		}
 
+		// DB에 메시지 저장
 		Message message = messageDto.toMessageEntity();
 		messageRepository.save(message);
-		log.info("메세지가 저장되었습니다 : {}", message.getId());
-
+		log.info("메세지가 DB에 저장되었습니다: {}", message.getId());
 	}
 }
