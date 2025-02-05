@@ -13,13 +13,13 @@ import org.springframework.stereotype.Controller;
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-public class ChatController {
+public class MessageController {
 
 	private final MessageService messageService;
 
 	@MessageMapping("chat.message.{roomId}")
 	public void message(@DestinationVariable String roomId, MessageDto messageDto) {
 		log.info("메세지 전달 완료 {}: {}", roomId, messageDto);
-		messageService.sendMessageToRoom(messageDto);
+		messageService.sendMessageToRoom(messageDto,roomId);
 	}
 }
