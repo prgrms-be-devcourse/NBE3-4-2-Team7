@@ -1,21 +1,24 @@
 package com.tripmarket.domain.chatting.entity;
 
 import com.tripmarket.global.jpa.entity.BaseEntity;
+
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @Entity
-@NoArgsConstructor
+@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChattingRoom extends BaseEntity {
 
-    @Enumerated(EnumType.STRING)
-    private ChatStatus chatStatus; // 채팅방 상태 (ON/OFF)
+	@Column(nullable = false)
+	private Long user1Id;  // 유저1
 
-    public enum ChatStatus {
-        ON, OFF
-    }
-
-
+	@Column(nullable = false)
+	private Long user2Id;  // 유저2
 }
