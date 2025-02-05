@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "Members", description = "회원 관리 API")
 public class MemberController {
@@ -36,5 +36,4 @@ public class MemberController {
 
 		return ResponseEntity.ok(memberResponseDTO);
 	}
-
 }
