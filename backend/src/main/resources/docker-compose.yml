@@ -1,27 +1,31 @@
-version: '3.8'
 services:
   rabbitmq:
     image: rabbitmq:management
     container_name: rabbitmq_container
     ports:
-      - "5672:5672"     # AMQP 프로토콜 포트
-      - "15672:15672"   # 관리 대시보드 포트
-      - "61613:61613"   # STOMP Relay를 위한 포트 (Spring에서 사용)
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: "/"
     command: >
       bash -c "
         rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_web_stomp rabbitmq_consistent_hash_exchange &&
-        docker-entrypoint.sh rabbitmq-server
+        rabbitmq-server &
+        sleep 10 &&
+        rabbitmqadmin declare queue name=chat.queue durable=true &&
+        rabbitmqadmin declare exchange name=chat.exchange type=topic durable=true &&
+        rabbitmqadmin declare binding source='chat.exchange' destination_type='queue' destination='chat.queue' routing_key='room.*' &&
+        tail -f /dev/null
       "
-    environment:
-      RABBITMQ_DEFAULT_USER: kang      # 사용자 이름 설정
-      RABBITMQ_DEFAULT_PASS: 1234      # 비밀번호 설정
-      RABBITMQ_DEFAULT_VHOST: "/"      # Virtual Host 설정
     networks:
       - my_network
+
   redis:
     image: redis:alpine
     container_name: redis
-    hostname: redis
     ports:
       - "6379:6379"
     networks:

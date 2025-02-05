@@ -46,6 +46,19 @@ public class RabbitMQConfig {
 	@Value("${spring.rabbitmq.virtual-host}")
 	private String virtualHost;
 
+	// RabbitMQ와 연결 설정. CachingConnectionFactory 를 세팅
+	@Bean
+	public ConnectionFactory createConnectionFactory() {
+		CachingConnectionFactory factory = new CachingConnectionFactory();
+		factory.setHost(host);
+		factory.setUsername(username);
+		factory.setPassword(password);
+		factory.setPort(port);
+		factory.setVirtualHost(virtualHost);
+
+		return factory;
+	}
+
 	// "chat.queue"라는 이름의 Queue 생성
 	@Bean
 	public Queue chatQueue() {
@@ -57,13 +70,14 @@ public class RabbitMQConfig {
 	@Bean
 	public TopicExchange chatExchange() {
 		log.info("Exchange 생성: {}", chatExchangeName);
-		return new TopicExchange(chatExchangeName);
+		return new TopicExchange(chatExchangeName, true, false);
 	}
 
 	// Exchange와 Queue를 연결. "chat.queue"에 "chat.exchange" 규칙을 Binding
 	@Bean
 	public Binding chatBinding(Queue chatQueue, TopicExchange chatExchange) {
-		log.info("Queue: {}, Exchange: {}, Routing Key: {} ", chatQueue.getName(),chatExchange.getName(),chatRoutingKey);
+		log.info("Queue: {}, Exchange: {}, Routing Key: {} ", chatQueue.getName(), chatExchange.getName(),
+			chatRoutingKey);
 		Binding binding = BindingBuilder
 			.bind(chatQueue)
 			.to(chatExchange)
@@ -88,22 +102,10 @@ public class RabbitMQConfig {
 		return new RabbitMessagingTemplate(rabbitTemplate);
 	}
 
-	// RabbitMQ와 연결 설정. CachingConnectionFactory 를 세팅
-	@Bean
-	public ConnectionFactory createConnectionFactory() {
-		CachingConnectionFactory factory = new CachingConnectionFactory();
-		factory.setHost(host);
-		factory.setUsername(username);
-		factory.setPassword(password);
-		factory.setPort(port);
-		factory.setVirtualHost(virtualHost);
-
-		return factory;
-	}
-
 	// 메시지를 JSON으로 직렬/역직렬화
 	@Bean
 	public Jackson2JsonMessageConverter messageConverter() {
 		return new Jackson2JsonMessageConverter();
 	}
+
 }
