@@ -37,7 +37,10 @@ public enum ErrorCode {
 	SELF_RESPONSE_NOT_ALLOWED(BAD_REQUEST, "본인이 작성한 여행 요청 글에는 매칭 요청할 수 없습니다."),
 	DUPLICATE_TRAVEL_OFFER(BAD_REQUEST, "해당 가이더는 해당 사용자에게 이미 요청을 보냈습니다. 중복해서 요청할 수 없습니다"),
 	TRAVEL_OFFER_NOT_FOUND(NOT_FOUND, "여행 제안 내역이 존재하지 않습니다."),
-	MEMBER_ACCESS_DENIED(FORBIDDEN, "현재 사용자는 매칭 요청을 당한 사용자가 아닙니다.");
+	MEMBER_ACCESS_DENIED(FORBIDDEN, "현재 사용자는 매칭 요청을 당한 사용자가 아닙니다."),
+
+	//Chatting
+	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
