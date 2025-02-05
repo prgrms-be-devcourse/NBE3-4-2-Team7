@@ -3,6 +3,7 @@ package com.tripmarket.global.jwt;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
@@ -12,11 +13,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import com.tripmarket.global.exception.JwtAuthenticationException;
+import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -61,9 +61,11 @@ public class JwtTokenProvider {
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds * 1000);
 
+		CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
+
 		return Jwts.builder()
-			.subject(authentication.getName())
-			.claim("auth", getAuthorities(authentication))
+			.subject(user.getEmail()) // 식별자로 email만 사용
+			.claim("auth", getAuthorities(authentication)) // 권한 정보
 			.issuedAt(now)
 			.expiration(validity)
 			.signWith(key)
@@ -99,7 +101,13 @@ public class JwtTokenProvider {
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		UserDetails principal = new User(claims.getSubject(), "", authorities);
+		//
+		CustomOAuth2User principal = new CustomOAuth2User(
+			authorities, // 권한 정보
+			Map.of("email", claims.getSubject()), // OAuth2 속성
+			"email", // nameAttributeKey
+			claims.getSubject() // email
+		);
 		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 	}
 
