@@ -7,11 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -21,6 +21,7 @@ import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationFailureHandler;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -38,12 +39,23 @@ public class SecurityConfig {
 			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-			// CSRF 설정 비활성화 - REST API에서는 불필요
-			.csrf(AbstractHttpConfigurer::disable)
+			// CSRF 설정 - 쿠키 사용시 CSRF 보호 활성화
+			.csrf(csrf -> csrf
+				.ignoringRequestMatchers("/h2-console/**") // H2 콘솔은 CSRF 검사 제외
+				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 			// H2 콘솔 설정 추가
 			.headers(headers ->
 				headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+
+			// 인증 실패 처리 추가
+			.exceptionHandling(exception -> exception
+				.authenticationEntryPoint((request, response, authException) -> {
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					response.setContentType("application/json; charset=utf-8");
+					response.getWriter().write("{\"message\": \"인증되지 않은 사용자입니다.\"");
+				})
+			)
 
 			// 세션 설정 - JWT를 사용하므로 세션을 생성하지 않음
 			.sessionManagement((sessionManagement) ->
@@ -53,8 +65,14 @@ public class SecurityConfig {
 			// 요청에 대한 권한 설정
 			.authorizeHttpRequests((authorizeHttpRequests) ->
 				authorizeHttpRequests
+					// H2 콘솔 관련 경로
 					.requestMatchers("/h2-console/**").permitAll()
-					.requestMatchers("/auth/**", "/oauth2/**").permitAll()
+
+					// Swagger UI 관련 경로
+					.requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
+
+					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+
 					.anyRequest().authenticated()
 			)
 
