@@ -77,7 +77,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 				userInfo.getName(),
 				userInfo.getImageUrl()
 			);
-			return memberRepository.save(member);
+			return member;
 		} else {
 			// 새 회원이면 회원가입
 			Member member = Member.builder()
