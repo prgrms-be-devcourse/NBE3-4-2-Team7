@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -73,6 +76,9 @@ public class SecurityConfig {
 
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 
+					.requestMatchers(HttpMethod.GET, "/guides").permitAll()
+
+					// 나머지 경로는 인증된 사용자만 접근 가능
 					.anyRequest().authenticated()
 			)
 
