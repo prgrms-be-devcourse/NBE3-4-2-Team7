@@ -1,3 +1,7 @@
+logging:
+  level:
+    org.springframework.messaging: DEBUG
+    org.springframework.web: DEBUG
 server:
   port: 8080
 
@@ -55,7 +59,26 @@ spring:
     redis:
       host: localhost
       port: 6379
-
+  rabbitmq:
+    dynamic: true
+    host: "localhost"
+    port: 5672
+    virtual-host: "/"
+    username: "kang"
+    password: "1234"
+    chat:
+      queue:
+        name: "chat.queue"
+      exchange:
+        name: "chat.exchange"
+      routing:
+        key: "*.room."
+    relay:
+      port: 61613
+      system-login: kang
+      system-passcode: 1234
+      client-login: kang
+      client-passcode: 1234
 springdoc:
   api-docs:
     path: /api-docs
