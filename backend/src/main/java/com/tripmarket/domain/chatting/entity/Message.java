@@ -1,27 +1,35 @@
 package com.tripmarket.domain.chatting.entity;
 
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import com.tripmarket.global.jpa.entity.BaseEntity;
 
-@Getter
-@NoArgsConstructor
 @Entity
-public class Message extends BaseEntity {
+@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Document(collection = "message")
+public class Message  {
+
+	@Id
+	private String id;
 
 	private String roomId;
 	private String senderId;
 	private String toUserId;
 	private String content;
 
-	@Builder
-	public Message(String roomId, String senderId, String toUserId, String content) {
-		this.roomId = roomId;
-		this.senderId = senderId;
-		this.toUserId = toUserId;
-		this.content = content;
-	}
+	@CreatedDate
+	@Column(name = "createdAt", updatable = false)
+	private LocalDateTime createdAt;
 }

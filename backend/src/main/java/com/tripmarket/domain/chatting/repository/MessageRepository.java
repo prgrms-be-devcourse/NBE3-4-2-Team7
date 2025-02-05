@@ -1,8 +1,7 @@
 package com.tripmarket.domain.chatting.repository;
 
 import com.tripmarket.domain.chatting.entity.Message;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface MessageRepository extends JpaRepository<Message, Long> {
+public interface MessageRepository extends MongoRepository<Message, String> {
 }
