@@ -1,15 +1,10 @@
-server:
-  port: 8080
 spring:
-  profiles:
-    active: dev
   h2:
     console:
       enabled: true
       path: /h2-console
-    settings:
-      trace: false
-      web-allow-others: true
+      settings:
+        web-allow-others: true
   datasource:
     url: jdbc:h2:file:./data/db_test;MODE=MYSQL
     username: sa
@@ -18,14 +13,23 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop  # 실행 시 테이블 생성, 종료 시 삭제 (테스트 환경)
     properties:
       hibernate:
+        default_batch_fetch_size: 100
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        show_sql: true
-
-# Swagger ??
+        use_sql_comments: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always  # data.sql 실행 허용
+  logging:
+    level:
+      root: info  # 전체 애플리케이션 로그 레벨을 info로 설정
+      com.tripmarket: debug  # 패키지별 로깅 (서비스 코드에서 로그가 찍히도록)
+      
+# Swagger 설정
 springdoc:
   api-docs:
     path: /api-docs
