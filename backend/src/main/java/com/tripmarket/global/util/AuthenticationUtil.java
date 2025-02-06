@@ -12,6 +12,10 @@ import com.tripmarket.global.oauth2.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 인증 관련 유틸리티 클래스
+ * 현재 인증된 사용자의 권한 확인 등의 기능 제공
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,8 +40,8 @@ public class AuthenticationUtil {
 		return Optional.ofNullable(authentication.getPrincipal())
 			.filter(principal -> principal instanceof CustomOAuth2User) // OAuth2 기반 User인지 체크
 			.map(principal -> (CustomOAuth2User)principal)
-			.map(CustomOAuth2User::getEmail)
-			.flatMap(memberRepository::findByEmail)
+			.map(CustomOAuth2User::getId)
+			.flatMap(memberRepository::findById)
 			.map(Member::getHasGuideProfile)
 			.orElseGet(() -> {
 				log.debug("Failed to verify guide profile");

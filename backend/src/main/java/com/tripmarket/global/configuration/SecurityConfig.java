@@ -44,7 +44,7 @@ public class SecurityConfig {
 
 			// CSRF 설정 - 쿠키 사용시 CSRF 보호 활성화
 			.csrf(csrf -> csrf
-				.ignoringRequestMatchers("/h2-console/**") // H2 콘솔은 CSRF 검사 제외
+				.ignoringRequestMatchers("/h2-console/**", "/auth/**", "/oauth2/**") // H2 콘솔은 CSRF 검사 제외
 				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
 
 			// H2 콘솔 설정 추가
@@ -72,7 +72,14 @@ public class SecurityConfig {
 					.requestMatchers("/h2-console/**").permitAll()
 
 					// Swagger UI 관련 경로
-					.requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
+					.requestMatchers(
+						"/v3/api-docs/**",
+						"/swagger-ui/**",
+						"/swagger-ui.html",
+						"/swagger-resources/**",
+						"/webjars/**",
+						"/api-docs/**"
+					).permitAll()
 
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 

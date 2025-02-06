@@ -28,7 +28,7 @@ public class GuideRequestService {
 
 	@Transactional
 	public void createGuideRequest(Long userId, Long guideId, GuideRequestCreate requestDto) {
-		Member member = memberService.getMember(userId);
+		Member member = memberService.getMemberById(userId);
 		Guide guide = guideService.getGuide(guideId);
 		validateSelfRequest(userId, guide);
 		validateDuplicateRequest(userId, guideId, requestDto.getTravelId());
