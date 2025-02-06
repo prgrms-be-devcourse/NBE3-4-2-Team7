@@ -9,7 +9,7 @@ public record ReviewDeleteRequestDto(
 	Long reviewId,
 
 	@NotNull(message = "사용자 ID는 필수입니다.")
-	@Schema(description = "삭제 요청을 하는 사용자 ID", example = "10")
+	@Schema(description = "삭제 요청을 하는 사용자 ID", example = "4")
 	Long memberId
 ) {
 }
