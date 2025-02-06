@@ -1,5 +1,8 @@
 package com.tripmarket.domain.chatting.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import jakarta.persistence.*;
@@ -16,9 +19,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChattingRoom extends BaseEntity {
 
-	@Column(nullable = false)
-	private Long user1Id;  // 유저1
+	@OneToMany(mappedBy = "chattingRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ChattingRoomParticipant> participants = new HashSet<>();
 
-	@Column(nullable = false)
-	private Long user2Id;  // 유저2
+	// 참여자 이메일
+	public Set<String> getParticipantEmails() {
+		Set<String> emails = new HashSet<>();
+		for (ChattingRoomParticipant participant : participants) {
+			emails.add(participant.getMember().getEmail());
+		}
+		return emails;
+	}
 }
