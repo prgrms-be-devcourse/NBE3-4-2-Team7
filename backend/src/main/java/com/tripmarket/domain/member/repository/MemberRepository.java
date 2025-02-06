@@ -9,5 +9,5 @@ import com.tripmarket.domain.member.entity.Member;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
-	Optional<Member> findByEmail(String email);
+	Optional<Member> findByEmailId(String emailId);
 }
