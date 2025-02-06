@@ -7,9 +7,11 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.tripmarket.domain.chatting.repository.message.MessageRepository;
+
 @Configuration
 @EnableJpaRepositories(basePackages = {"com.tripmarket.domain"}, excludeFilters = {
-	@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {com.tripmarket.domain.chatting.repository.MessageRepository.class})
+	@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {MessageRepository.class})
 })
 @EntityScan(basePackages = {"com.tripmarket.domain"})
 @EnableJpaAuditing
