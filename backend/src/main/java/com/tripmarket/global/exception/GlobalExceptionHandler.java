@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -53,7 +54,7 @@ public class GlobalExceptionHandler {
 			.status(e.getStatus())
 			.body(errorResponse);
 	}
-       
+
 	@ExceptionHandler({CustomException.class})
 	public ResponseEntity<CustomErrorResponse> handleCustomException(CustomException ex) {
 		CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -61,5 +62,18 @@ public class GlobalExceptionHandler {
 			ex.getErrorCode().name(),
 			ex.getErrorMessage());
 		return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+	}
+
+	@ExceptionHandler(MessageSendException.class)
+	public ResponseEntity<ErrorResponse> handleMessageSendException(MessageSendException e) {
+		ErrorResponse errorResponse = ErrorResponse.builder()
+			.status(HttpStatus.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()))
+			.message(e.getMessage())
+			.code("MESSAGE_SEND_FAILURE")
+			.build();
+
+		return ResponseEntity
+			.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			.body(errorResponse);
 	}
 }
