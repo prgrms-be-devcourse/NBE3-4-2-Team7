@@ -16,17 +16,17 @@ public class SwaggerConfig {
 	public OpenAPI customOpenAPI() {
 		// Cookie 기반 인증 스키마 정의
 		SecurityScheme cookieAuth = new SecurityScheme()
-			.type(SecurityScheme.Type.APIKEY)
-			.in(SecurityScheme.In.COOKIE)
-			.name("accessToken");
+				.type(SecurityScheme.Type.APIKEY)
+				.in(SecurityScheme.In.COOKIE)
+				.name("accessToken");
 
 		return new OpenAPI()
-			.info(new Info()
-				.title("Team7 문서")
-				.version("1.0.0")
-				.description("team7 프로젝트 API 명세서"))
-			.components(new Components()
-				.addSecuritySchemes("cookieAuth", cookieAuth))
-			.addSecurityItem(new SecurityRequirement().addList("cookieAuth"));
+				.info(new Info()
+						.title("Team7 문서")
+						.version("1.0.0")
+						.description("team7 프로젝트 API 명세서"))
+				.components(new Components()
+						.addSecuritySchemes("cookieAuth", cookieAuth))
+				.addSecurityItem(new SecurityRequirement().addList("cookieAuth"));
 	}
 }
