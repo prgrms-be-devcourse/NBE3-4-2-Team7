@@ -1,49 +1,90 @@
 package com.tripmarket.domain.guide.entity;
 
+import java.util.Objects;
+
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
-@NoArgsConstructor
+@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Guide extends BaseEntity {
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@Setter
+	@OneToOne(mappedBy = "guide")
 	private Member member; // 가이드와 연결된 회원 정보
 
+	@Column(nullable = false, length = 30)
+	@Size(min = 1, max = 30)
+	private String name;
+
 	@Column(nullable = false, length = 100)
-	private String name; // 가이드 이름
+	@Size(min = 1, max = 100)
+	// TODO: 국가 단위면 ISO 국가코드 사용하면 되고, 도시는 어떻게 검증?
+	private String activityRegion;
 
-	@Column(length = 100)
-	private String languages; // 가이드가 사용하는 언어
-
-	@Column(length = 100)
-	private String activityRegion; // 가이드 활동 지역
+	@Column(nullable = false, length = 300)
+	@Size(min = 1, max = 300)
+	private String introduction;
 
 	@Column(nullable = false)
-	private Boolean isDeleted = false; // 삭제 여부 (기본값: false)
+	@ValidLanguages
+	private String languages;
 
-	@Column(length = 500)
-	private String introduction; // 가이드 소개
+	@Min(0)
+	@Max(100)
+	private Integer experienceYears;
 
-	public Guide(Member user, String name, String languages, String activityRegion, String introduction,
-		boolean isDeleted) {
-		this.member = user; // 🛠️ user 필드를 올바르게 할당!
-		this.name = name;
-		this.languages = languages;
-		this.activityRegion = activityRegion;
-		this.introduction = introduction;
-		this.isDeleted = isDeleted;
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean isDeleted = false;
+
+	// // 가이드의 리뷰 리스트
+	// @OneToMany(mappedBy = "guide")
+	// List<Review> reviews;
+
+	// 리뷰 통계 테이블
+	// @OneToOne
+	// GuideReviewStats guideReviewStats;
+
+	// public void updateGuide(GuideDto guideDto) {
+	// 	this.activityRegion = guideDto.getActivityRegion();
+	// 	this.introduction = guideDto.getIntroduction();
+	// 	this.languages = guideDto.getLanguages();
+	// 	this.experienceYears = guideDto.getExperienceYears();
+	// }
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		Guide guide = (Guide)o;
+		return isDeleted == guide.isDeleted
+			&& Objects.equals(super.getId(), guide.getId())
+			&& Objects.equals(name, guide.name)
+			&& Objects.equals(activityRegion, guide.activityRegion)
+			&& Objects.equals(introduction, guide.introduction)
+			&& Objects.equals(languages, guide.languages)
+			&& Objects.equals(experienceYears, guide.experienceYears);
 	}
+
 }
