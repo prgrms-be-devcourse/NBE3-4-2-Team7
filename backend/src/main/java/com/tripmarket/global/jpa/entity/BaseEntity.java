@@ -11,10 +11,10 @@ import lombok.Getter;
 @MappedSuperclass
 public abstract class BaseEntity extends BaseTimeEntity {
 
-    // Getter
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
-    private Long id;
+	// Getter
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 }

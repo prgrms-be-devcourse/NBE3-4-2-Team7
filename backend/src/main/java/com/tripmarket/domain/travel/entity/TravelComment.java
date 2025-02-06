@@ -1,24 +1,28 @@
 package com.tripmarket.domain.travel.entity;
 
 import com.tripmarket.global.jpa.entity.BaseEntity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Entity
 public class TravelComment extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id", nullable = false)
-    @NonNull // null 값을 허용하지 않음
-    private TravelRequest travelRequest;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "request_id", nullable = false)
+	@NonNull
+	private Travel travel; // 여행 요청과의 관계
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    @NonNull // null 값을 허용하지 않음
-    private String comment;
+	@Column(nullable = false, columnDefinition = "TEXT")
+	@NonNull
+	private String comment; // 댓글 내용
+
 }

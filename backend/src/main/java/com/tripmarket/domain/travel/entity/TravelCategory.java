@@ -1,21 +1,22 @@
 package com.tripmarket.domain.travel.entity;
 
 import com.tripmarket.global.jpa.entity.BaseEntity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA를 위한 기본 생성자
 @Entity
 public class TravelCategory extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id", nullable = false)
-    @NonNull
-    private TravelRequest travelRequest; // 관련된 여행 요청
+	@Column(nullable = false, length = 50)
+	private String name; // 카테고리 이름 (예: "자연", "힐링")
 
-    @Column(nullable = false, length = 50)
-    private String name; // 카테고리 이름 (예: "자연", "역사")
+	public TravelCategory(String name) {
+		this.name = name;
+	}
 }
