@@ -22,6 +22,10 @@ import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * OAuth2 인증 후 사용자 정보를 처리하는 서비스
+ * 카카오 등 OAuth2 제공자로부터 받은 정보로 회원가입/로그인 처리
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,7 +34,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 	private final MemberRepository memberRepository;
 
 	/**
-	 * OAuth2 인증 후 받아온 유저 정보를 처리
+	 * OAuth2 인증 후 받아온 사용자 정보를 처리
+	 * 1. 기본 OAuth2UserService로 사용자 정보 조회
+	 * 2. 우리 서비스의 회원으로 가입 또는 정보 업데이트
+	 * 3. CustomOAuth2User 객체 생성하여 반환
 	 */
 	@Override
 	@Transactional
@@ -57,18 +64,22 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 			Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())),
 			oAuth2User.getAttributes(),
 			usernameAttributeName,
+			member.getId(),
 			member.getEmail()
 		);
 	}
 
 	/**
-	 * OAuth2 유저 정보로 회원가입 또는 정보 업데이트
-	 * @param userInfo OAuth2 제공자로부터 받은 유저 정보
-	 * @param registrationId OAuth2 서비스 구분 ID (kakao, google 등)
+	 * OAuth2 사용자 정보로 회원가입 또는 정보 업데이트
+	 *
+	 * @param userInfo OAuth2 제공자로부터 받은 사용자 정보
+	 * @param registrationId OAuth2 서비스 구분자 (kakao, google 등)
+	 * @return 저장 또는 업데이트된 회원 엔티티
 	 */
 	private Member saveOrUpdate(OAuth2UserInfo userInfo, String registrationId) {
 		Provider provider = getProvider(registrationId);
-		Optional<Member> optionalMember = memberRepository.findByEmail(userInfo.getEmail());
+		Optional<Member> optionalMember = memberRepository
+			.findByProviderAndProviderId(provider, userInfo.getId());
 
 		if (optionalMember.isPresent()) {
 			// 기존 회원이면 정보 업데이트
@@ -101,7 +112,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 			return Provider.valueOf(registrationId.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			log.error("Unsupported OAuth2 provider: {}", registrationId);
-			throw new OAuth2AuthenticationException("Unsupported OAuth2 provider");
+			throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
 		}
 	}
 }

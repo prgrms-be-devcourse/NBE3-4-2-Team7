@@ -29,7 +29,7 @@ public class TravelService {
 
 	@Transactional
 	public TravelDto createTravel(Long userId, TravelCreateRequest requestDto) {
-		Member member = memberService.getMember(userId);
+		Member member = memberService.getMemberById(userId);
 		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.getCategoryId());
 		Travel travel = requestDto.toEntity(member, category);
 		travelRepository.save(travel);
