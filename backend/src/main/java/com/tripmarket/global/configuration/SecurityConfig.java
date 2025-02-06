@@ -22,6 +22,7 @@ import com.tripmarket.global.jwt.JwtAuthenticationFilter;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationFailureHandler;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationSuccessHandler;
+import com.tripmarket.global.oauth2.service.CustomOAuth2UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class SecurityConfig {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 	private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+	private final CustomOAuth2UserService customOAuth2UserService;
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -93,6 +95,8 @@ public class SecurityConfig {
 			.oauth2Login(oauth2 -> oauth2
 				.successHandler(oAuth2AuthenticationSuccessHandler) // 로그인 성공 시 처리할 핸들러
 				.failureHandler(oAuth2AuthenticationFailureHandler) // 로그인 실패 시 처리할 핸들러
+				.userInfoEndpoint(userinfo -> userinfo
+					.userService(customOAuth2UserService))
 			)
 
 			// JWT 필터 추가
