@@ -9,11 +9,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,13 +41,11 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
-				// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
-				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-				// CSRF 설정 - 쿠키 사용시 CSRF 보호 활성화
-				.csrf(csrf -> csrf
-						.ignoringRequestMatchers("/h2-console/**", "/auth/**", "/oauth2/**") // H2 콘솔은 CSRF 검사 제외
-						.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+			// CSRF 설정 비활성화 - REST API에서는 불필요
+			.csrf(AbstractHttpConfigurer::disable)
 
 				// H2 콘솔 설정 추가
 				.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))

@@ -44,6 +44,9 @@ public class Member extends BaseEntity {
 
 	private String imageUrl;
 
+
+	private String matchingList;
+
 	@OneToOne
 	@JoinColumn(name = "guide_id")
 	private Guide guide;

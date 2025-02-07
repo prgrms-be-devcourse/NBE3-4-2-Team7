@@ -29,5 +29,4 @@ public class MemberService {
 		return memberRepository.findByEmail(email)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 	}
-
 }
