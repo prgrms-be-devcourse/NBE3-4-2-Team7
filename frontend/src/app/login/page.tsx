@@ -2,20 +2,26 @@
 
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { authService } from "../auth/services/authService";
 
 const LoginPage: React.FC = () => {
+    const router = useRouter();
+    
     const handleKakaoLogin = () => {
         authService.loginWithKakao();
+    };
+
+    const handleGuestAccess = () => {
+        router.push('/travels');
     };
 
     return (
         <div style={styles.container}>
             <div style={styles.card}>
-                <h1 style={styles.title}>여행 가이드 매칭 서비스</h1>
-                <p style={styles.subtitle}>
-                    카카오 계정으로 간편하게 시작하세요
-                </p>
+                <h1 style={styles.title}>
+                    <span style={styles.titleText}>Login</span>
+                </h1>
                 <div style={styles.buttonContainer}>
                     <button
                         onClick={handleKakaoLogin}
@@ -29,6 +35,12 @@ const LoginPage: React.FC = () => {
                             priority
                         />
                     </button>
+                    <button
+                        onClick={handleGuestAccess}
+                        style={styles.guestButton}
+                    >
+                        비회원으로 계속하기
+                    </button>
                 </div>
             </div>
         </div>
@@ -39,10 +51,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     container: {
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-start",
         minHeight: "100vh",
         backgroundColor: "#E3F2FD",
-        padding: "2rem",
+        paddingTop: "15vh",
+        paddingRight: "2rem",
+        paddingBottom: "2rem",
+        paddingLeft: "2rem",
+        overflow: "auto",
     },
     card: {
         backgroundColor: "#FFFFFF",
@@ -50,22 +66,24 @@ const styles: { [key: string]: React.CSSProperties } = {
         boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
         padding: "2rem",
         width: "100%",
-        maxWidth: "400px",
+        minWidth: "400px",
+        maxWidth: "500px",
         textAlign: "center",
     },
     title: {
+        marginBottom: "2rem",
+        whiteSpace: "nowrap",
+    },
+    titleText: {
         fontSize: "2rem",
         color: "#1E88E5",
-        marginBottom: "1rem",
-    },
-    subtitle: {
-        fontSize: "1rem",
-        color: "#424242",
-        marginBottom: "2rem",
+        fontWeight: "bold",
     },
     buttonContainer: {
         display: "flex",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "1rem",
         marginTop: "1rem",
     },
     loginButton: {
@@ -74,9 +92,22 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: 0,
         cursor: "pointer",
         transition: "transform 0.2s ease",
-        ':hover': {
-            transform: "scale(1.02)",
-        },
+    },
+    guestButton: {
+        width: "300px",
+        height: "45px",
+        padding: "0",
+        backgroundColor: "#FFFFFF",
+        border: "2px solid #1E88E5",
+        borderRadius: "4px",
+        color: "#1E88E5",
+        fontSize: "16px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
     },
 };
 

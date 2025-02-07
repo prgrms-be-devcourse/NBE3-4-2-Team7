@@ -2,16 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoadingScreen from "../../components/LoadingScreen";
+import LoadingScreen from "../../../components/LoadingScreen";
 
-const OAuthCallbackPage = () => {
+const LogoutCallbackPage = () => {
     const router = useRouter();
 
     useEffect(() => {
-        // 로그인 성공 후 travels 페이지로 리다이렉트
         const timer = setTimeout(() => {
-            router.push("/travels");
-        }, 1500); // 1.5초 후 리다이렉트
+            router.push("/main");  // 이미 '/main'으로 설정되어 있음을 확인
+        }, 1500);
 
         return () => clearTimeout(timer);
     }, [router]);
@@ -19,4 +18,4 @@ const OAuthCallbackPage = () => {
     return <LoadingScreen />;
 };
 
-export default OAuthCallbackPage; 
+export default LogoutCallbackPage; 
