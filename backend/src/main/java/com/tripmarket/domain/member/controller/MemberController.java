@@ -15,7 +15,6 @@ import com.tripmarket.domain.member.dto.MemberResponseDTO;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
-import com.tripmarket.global.exception.UnauthorizedException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/members")
 @RequiredArgsConstructor
 @Tag(name = "Members", description = "회원 관리 API")
 public class MemberController {
@@ -45,7 +44,7 @@ public class MemberController {
 	@Operation(summary = "사용자 : 내가 요청한 가이드 요청 내역")
 	public ResponseEntity<List<GuideRequestDto>> getGuideRequestsByRequester(
 		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-		List<GuideRequestDto> guideRequests = memberService.getGuideRequestsByRequester(oAuth2User.getName());
+		List<GuideRequestDto> guideRequests = memberService.getGuideRequestsByRequester(oAuth2User.getEmail());
 		return ResponseEntity.ok(guideRequests);
 	}
 

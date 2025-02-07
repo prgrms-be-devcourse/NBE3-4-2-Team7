@@ -10,7 +10,6 @@ import com.tripmarket.domain.match.dto.GuideRequestDto;
 import com.tripmarket.domain.match.dto.TravelOfferDto;
 import com.tripmarket.domain.match.repository.GuideRequestRepository;
 import com.tripmarket.domain.match.repository.TravelOfferRepository;
-import com.tripmarket.domain.member.dto.MemberResponseDTO;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.domain.travel.dto.TravelDto;
@@ -44,14 +43,9 @@ public class MemberService {
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 	}
 
-	public Member getMemberByEmail(String email) {
-		return memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
-	}
-
 	public List<GuideRequestDto> getGuideRequestsByRequester(String email) {
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		return guideRequestRepository.findDetailedByMemberId(member.getId()).stream()
 			.map(GuideRequestDto::of) // Entity -> DTO 변환
@@ -61,7 +55,7 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public List<TravelDto> getMyTravels(String email) {
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		List<Travel> travels = travelRepository.findByUser(member);
 		return travels.stream()
@@ -71,7 +65,7 @@ public class MemberService {
 
 	public List<TravelOfferDto> getTravelOffersForUser(String email) {
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 		List<Travel> travels = travelRepository.findByUser(member);
 
 		if (travels.isEmpty()) {
@@ -86,7 +80,7 @@ public class MemberService {
 
 	public List<GuideRequestDto> getGuideRequestsByGuide(String email) {
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		if (member.getGuide() == null) {
 			return Collections.emptyList();
@@ -99,7 +93,7 @@ public class MemberService {
 
 	public List<TravelOfferDto> getTravelOffersByGuide(String email) {
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		if (member.getGuide() == null) {
 			return Collections.emptyList();

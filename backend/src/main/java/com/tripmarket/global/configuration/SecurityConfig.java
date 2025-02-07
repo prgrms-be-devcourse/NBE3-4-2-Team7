@@ -9,11 +9,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -73,6 +73,8 @@ public class SecurityConfig {
 					// Swagger UI 관련 경로 (swagger-ui.html 추가)
 					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+					.requestMatchers("/", "login/auth/**", "login/oauth2/**").permitAll()
+
 					.requestMatchers(HttpMethod.GET, "/travels/*").permitAll()
 					.requestMatchers(HttpMethod.GET, "/travels/**").permitAll()
 					.requestMatchers(HttpMethod.GET, "/guides/*").permitAll()
