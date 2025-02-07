@@ -41,11 +41,11 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
-			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
-			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+				// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
+				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-			// CSRF 설정 비활성화 - REST API에서는 불필요
-			.csrf(AbstractHttpConfigurer::disable)
+				// CSRF 설정 비활성화 - REST API에서는 불필요
+				.csrf(AbstractHttpConfigurer::disable)
 
 				// H2 콘솔 설정 추가
 				.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
@@ -80,6 +80,10 @@ public class SecurityConfig {
 						.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 
 						.requestMatchers(HttpMethod.GET, "/guides").permitAll()
+
+						// 여행 목록 조회 엔드포인트 추가
+						.requestMatchers(HttpMethod.GET, "/travels").permitAll()
+						.requestMatchers(HttpMethod.GET, "/travels/**").permitAll() // 여행 상세 조회도 허용
 
 						// 나머지 경로는 인증된 사용자만 접근 가능
 						.anyRequest().authenticated())
