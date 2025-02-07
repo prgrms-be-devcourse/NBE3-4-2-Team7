@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomsResponseDto;
 import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.chatting.entity.ChattingRoomParticipant;
@@ -49,26 +50,48 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 
 	@Override
 	public Page<ChattingRoomsResponseDto> findChattingRooms(String userEmail, String search, Pageable pageable) {
+
 		Page<ChattingRoom> chattingRoomsPage = findChattingRoomsPage(userEmail, search, pageable);
 
 		List<String> roomIds = findRoomIds(chattingRoomsPage);
-		List<Message> latestMessages = messageRepository.findLatestMessages(roomIds);
-		Map<String, Message> messageMap = getMessageMap(latestMessages);
 
-		List<ChattingRoomsResponseDto> chattingRoomsResponse = getChattingRoomsResponse(userEmail, chattingRoomsPage, messageMap);
+		List<Message> latestMessages = messageRepository.findLatestMessages(roomIds);
+
+		Map<String, Message> messageMap = getMessageMap(latestMessages);
+		List<ChattingRoomsResponseDto> chattingRoomsResponse = getChattingRoomsResponse(userEmail, chattingRoomsPage,
+			messageMap);
 
 		return new PageImpl<>(chattingRoomsResponse, pageable, chattingRoomsPage.getTotalElements());
 	}
 
-	private static List<ChattingRoomsResponseDto> getChattingRoomsResponse(String userEmail, Page<ChattingRoom> chattingRoomsPage,
+	@Override
+	public Page<ChattingResponseDto> getChattingMessages(String roomId, Pageable pageable) {
+		Page<Message> messages = messageRepository.findMessagesByRoom(roomId, pageable);
+
+		return getMessages(messages);
+	}
+
+	private Page<ChattingResponseDto> getMessages(Page<Message> messages) {
+		return messages.map(message -> {
+			Member sender = memberRepository.findByEmail(message.getSender())
+				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+			return ChattingResponseDto.of(
+				message, sender);
+		});
+	}
+
+	private static List<ChattingRoomsResponseDto> getChattingRoomsResponse(String userEmail,
+		Page<ChattingRoom> chattingRoomsPage,
 		Map<String, Message> messageMap) {
 		return chattingRoomsPage.getContent().stream()
 			.map(chattingRoom -> {
-				Long roomId = chattingRoom.getId();
-				Message lastMessage = messageMap.get(roomId.toString());
+				String roomId = chattingRoom.getId();
+				Message lastMessage = messageMap.get(roomId);
 				Member receiver = getReceiver(userEmail, chattingRoom);
+
 				return ChattingRoomsResponseDto.of(roomId, receiver, lastMessage);
 			})
+			//최근에 도착한 메세지 순서대로 정렬
 			.sorted(Comparator.comparing(ChattingRoomsResponseDto::lastMessageTime,
 				Comparator.nullsFirst(Comparator.reverseOrder())))
 			.toList();
@@ -76,19 +99,23 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 
 	private static Member getReceiver(String userEmail, ChattingRoom chattingRoom) {
 		return chattingRoom.getParticipants().stream()
+			// 채팅방 참여자중 상대 참여자를 가져오는 필터
 			.filter(participant -> !participant.getMember().getEmail().equals(userEmail))
 			.findFirst()
-			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
+			.orElseThrow(() -> {
+				return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+			})
 			.getMember();
 	}
 
+	//roomId를 키값으로하고 message를 value로하는 map
 	private static Map<String, Message> getMessageMap(List<Message> latestMessages) {
 		return latestMessages.stream().collect(Collectors.toMap(Message::getRoomId, message -> message));
 	}
 
 	private static List<String> findRoomIds(Page<ChattingRoom> chattingRoomsPage) {
 		return chattingRoomsPage.getContent().stream()
-			.map(chattingRoom -> chattingRoom.getId().toString())
+			.map(ChattingRoom::getId)
 			.toList();
 	}
 

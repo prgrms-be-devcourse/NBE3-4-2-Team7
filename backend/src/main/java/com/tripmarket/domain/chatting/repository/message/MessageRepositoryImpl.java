@@ -2,6 +2,9 @@ package com.tripmarket.domain.chatting.repository.message;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -28,7 +31,20 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 					.limit(1);
 				return mongoTemplate.findOne(query, Message.class);
 			})
-			.filter(Objects::nonNull)  // null 메시지 필터링
+			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+
+	@Override
+	public Page<Message> findMessagesByRoom(String roomId, Pageable pageable) {
+		Query query = new Query()
+			.addCriteria(Criteria.where("roomId").is(roomId))
+			.with(Sort.by(Sort.Direction.DESC, "createdAt"))
+			.with(pageable);
+
+		List<Message> messages = mongoTemplate.find(query, Message.class);
+		long count = mongoTemplate.count(Query.query(Criteria.where("roomId").is(roomId)), Message.class);
+
+		return new PageImpl<>(messages, pageable, count);
 	}
 }
