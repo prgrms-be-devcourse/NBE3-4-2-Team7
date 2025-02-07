@@ -3,6 +3,8 @@ package com.tripmarket.domain.chatting.entity;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import jakarta.persistence.*;
@@ -19,14 +21,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(collection = "message")
+@CompoundIndexes({
+	@CompoundIndex(name = "room_createdAt_idx", def = "{'roomId': 1, 'createdAt': -1}")
+})
 public class Message  {
 
 	@Id
 	private String id;
 
 	private String roomId;
-	private String senderId;
-	private String toUserId;
+	private String sender;
+	private String receiver;
 	private String content;
 
 	@CreatedDate
