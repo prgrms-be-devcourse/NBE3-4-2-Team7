@@ -26,9 +26,9 @@ spring:
       mode: always  # data.sql 실행 허용
   logging:
     level:
-      root: info  # 전체 애플리케이션 로그 레벨을 info로 설정
+      root: debug  # 전체 애플리케이션 로그 레벨을 info로 설정
       com.tripmarket: debug  # 패키지별 로깅 (서비스 코드에서 로그가 찍히도록)
-      
+
 # Swagger 설정
 springdoc:
   api-docs:
