@@ -8,13 +8,13 @@ import lombok.Builder;
 
 @Builder
 public record ChattingRoomsResponseDto(
-	Long roomId,
+	String roomId,
 	String name,
 	String profileImage,
 	String lastMessage,
 	String lastMessageTime
 ) {
-	public static ChattingRoomsResponseDto of(Long roomId, Member target, Message message) {
+	public static ChattingRoomsResponseDto of(String roomId, Member target, Message message) {
 		return ChattingRoomsResponseDto.builder()
 			.roomId(roomId)
 			.name(target.getName())

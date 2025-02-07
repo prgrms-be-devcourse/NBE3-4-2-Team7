@@ -3,7 +3,9 @@ package com.tripmarket.domain.chatting.entity;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.tripmarket.global.jpa.entity.BaseEntity;
+import org.hibernate.annotations.UuidGenerator;
+
+import com.tripmarket.global.jpa.entity.BaseTimeEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,7 +19,12 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChattingRoom extends BaseEntity {
+public class ChattingRoom extends BaseTimeEntity {
+
+	@Id
+	@UuidGenerator
+	@Column(length = 36, nullable = false, updatable = false)
+	private String id;
 
 	@OneToMany(mappedBy = "chattingRoom", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ChattingRoomParticipant> participants = new HashSet<>();
