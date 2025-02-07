@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +21,9 @@ import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.domain.travel.dto.request.TravelCreateRequest;
 import com.tripmarket.domain.travel.dto.request.TravelUpdateRequest;
 import com.tripmarket.domain.travel.service.TravelService;
+import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,30 +37,29 @@ public class TravelController {
 	private final TravelService travelService;
 
 	@Operation(summary = "여행 요청 생성")
-	@PostMapping("/{userId}")
+	@PostMapping()
 	public ResponseEntity<TravelDto> createTravel(
-		@Parameter(description = "사용자 ID (임시, 추후 인증 객체로 변경 예정)")
-		@PathVariable Long userId,
+		@AuthenticationPrincipal CustomOAuth2User oAuth2User,
 		@RequestBody @Valid TravelCreateRequest requestDto) {
-		TravelDto response = travelService.createTravel(userId, requestDto);
+
+		TravelDto response = travelService.createTravel(oAuth2User.getEmail(), requestDto);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@Operation(summary = "여행 요청 수정")
 	@PutMapping("/{userId}/{travelId}")
 	public ResponseEntity<TravelDto> updateTravel(
-		@PathVariable Long travelId,
-		@Parameter(description = "사용자 ID (임시, 추후 인증 객체로 변경 예정)") @PathVariable Long userId,
+		@PathVariable(name = "travelId") Long travelId,  // 이름 명시
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
 		@RequestBody @Valid TravelUpdateRequest requestDto) {
-		TravelDto updatedTravel = travelService.updateTravel(travelId, userId, requestDto);
+		TravelDto updatedTravel = travelService.updateTravel(travelId, customOAuth2User.getEmail(), requestDto);
 		return ResponseEntity.ok(updatedTravel);
 	}
 
 	@Operation(summary = "여행 요청 전체 조회")
 	@GetMapping
 	public ResponseEntity<Page<TravelDto>> getTravels(
-		@Parameter(description = "여행 카테고리 ID (선택 사항)", required = false)
-		@RequestParam(required = false) Long categoryId,
+		@RequestParam(name = "categoryId", required = false) Long categoryId,
 		@PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		Page<TravelDto> travelList = travelService.getTravels(categoryId, pageable);
 		return ResponseEntity.ok(travelList);
@@ -68,7 +68,7 @@ public class TravelController {
 	@Operation(summary = "여행 요청 상세 조회")
 	@GetMapping("/{travelId}")
 	public ResponseEntity<TravelDto> getTravelDetail(
-		@PathVariable Long travelId) {
+		@PathVariable(name = "travelId") Long travelId) {  // 이름 명시
 		TravelDto travelDto = travelService.getTravelDetail(travelId);
 		return ResponseEntity.ok(travelDto);
 	}
@@ -76,9 +76,9 @@ public class TravelController {
 	@Operation(summary = "여행 요청 삭제 (Soft Delete)")
 	@PatchMapping("/{travelId}")
 	public ResponseEntity<String> deleteTravel(
-		@PathVariable Long travelId,
-		@Parameter(description = "사용자 ID (임시, 추후 인증 객체로 변경 예정)") @RequestParam Long userId) {
-		travelService.deleteTravel(travelId, userId);
+		@PathVariable(name = "travelId") Long travelId,  // 이름 명시
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
+		travelService.deleteTravel(travelId, customOAuth2User.getEmail());
 		return ResponseEntity.ok("여행 요청 글이 삭제되었습니다.");
 	}
 }
