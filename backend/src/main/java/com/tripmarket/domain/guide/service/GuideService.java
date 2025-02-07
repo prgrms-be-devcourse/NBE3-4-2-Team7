@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.repository.GuideRepository;
@@ -37,10 +38,18 @@ public class GuideService {
 	}
 
 	@Transactional
-	public void create(GuideDto guideDto) {
-		Member member = memberRepository.findById(guideDto.getUserId())
+	public void create(GuideCreateRequest createRequest, String email) {
+		Member member = memberRepository.findByEmail(email)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-		Guide guide = GuideDto.toEntity(guideDto);
+
+		// 이미 가이드 프로필이 존재하는지 확인
+		if (member.hasGuideProfile()) {
+			throw new CustomException(ErrorCode.ALREADY_HAS_GUIDE_PROFILE);
+		}
+
+		// Member member = memberRepository.findById(createRequest.getUserId())
+		// 	.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+		Guide guide = GuideCreateRequest.toEntity(createRequest);
 
 		// TODO : 멤버 이름과 Guide 생성할때 이름이 다른 경우엔? (우선은 그냥 하기)
 
