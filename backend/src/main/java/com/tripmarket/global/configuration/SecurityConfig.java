@@ -5,13 +5,14 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,10 +40,7 @@ public class SecurityConfig {
 			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-			// CSRF 설정 - 쿠키 사용시 CSRF 보호 활성화
-			.csrf(csrf -> csrf
-				.ignoringRequestMatchers("/h2-console/**") // H2 콘솔은 CSRF 검사 제외
-				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+			.csrf(AbstractHttpConfigurer::disable)
 
 			// H2 콘솔 설정 추가
 			.headers(headers ->
@@ -68,10 +66,15 @@ public class SecurityConfig {
 					// H2 콘솔 관련 경로
 					.requestMatchers("/h2-console/**").permitAll()
 
-					// Swagger UI 관련 경로
-					.requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
-
+					// Swagger UI 관련 경로 (swagger-ui.html 추가)
+					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+					.requestMatchers(HttpMethod.GET, "/travels/*").permitAll()
+					.requestMatchers(HttpMethod.GET, "/travels/**").permitAll()
+					.requestMatchers(HttpMethod.GET, "/guides/*").permitAll()
+					.requestMatchers(HttpMethod.GET, "/guides/**").permitAll()
+
+					.requestMatchers("/guide-requests/**").permitAll()
 
 					.anyRequest().authenticated()
 			)
