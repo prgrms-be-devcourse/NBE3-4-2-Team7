@@ -8,7 +8,7 @@ import lombok.Builder;
 public record ChattingRoomRequestDto(
 	@NotEmpty
 	@Email
-	String target
+	String receiver
 ) {
 }
 

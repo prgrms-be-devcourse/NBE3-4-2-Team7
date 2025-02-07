@@ -45,7 +45,7 @@ public class ChattingRoomController {
 	public ResponseEntity<?> createChatRoom(@RequestBody @Valid ChattingRoomRequestDto request,
 		@AuthenticationPrincipal CustomOAuth2User user) {
 
-		chattingRoomService.create(user.getEmail(), request.getTarget());
+		chattingRoomService.create(user.getEmail(), request.receiver());
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(null);
 	}

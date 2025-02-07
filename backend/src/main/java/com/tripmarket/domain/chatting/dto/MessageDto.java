@@ -10,17 +10,17 @@ public record MessageDto(
 	@NotEmpty
 	String roomId,
 	@NotEmpty
-	String senderId,
+	String sender,
 	@NotEmpty
-	String targetId,
+	String receiver,
 	@NotEmpty
 	String content
 ) {
 	public Message toMessageEntity() {
 		return Message.builder()
 			.roomId(roomId)
-			.senderId(senderId)
-			.toUserId(targetId)
+			.sender(sender)
+			.receiver(receiver)
 			.content(content)
 			.build();
 	}
