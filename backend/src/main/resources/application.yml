@@ -32,8 +32,7 @@ spring:
       path: /h2-console
 
   datasource:
-    # url: jdbc:h2:mem:tripmarket;MODE=MYSQL
-    url: jdbc:h2:./backend/db/tripmarket;MODE=MYSQL
+    url: jdbc:h2:file:./backend/db/tripmarket;MODE=MYSQL
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -51,6 +50,10 @@ spring:
         highlight_sql: true
         use_sql_comments: true
     defer-datasource-initialization: true
+
+  #    sql:
+  #      init:
+  #        mode: never
 
   data:
     redis:

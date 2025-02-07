@@ -1,4 +1,4 @@
-package com.tripmarket.domain.match.dto;
+package com.tripmarket.domain.match.dto.request;
 
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.match.entity.GuideRequest;
@@ -24,7 +24,7 @@ public class GuideRequestCreate {
 
 	public GuideRequest toEntity(Member member, Guide guide, Travel travel) {
 		return GuideRequest.builder()
-			.user(member)
+			.member(member)
 			.guide(guide)
 			.travel(travel)
 			.status(GuideRequest.RequestStatus.PENDING)

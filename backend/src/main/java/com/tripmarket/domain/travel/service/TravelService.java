@@ -28,8 +28,8 @@ public class TravelService {
 	private final TravelRepository travelRepository;
 
 	@Transactional
-	public TravelDto createTravel(Long userId, TravelCreateRequest requestDto) {
-		Member member = memberService.getMemberById(userId);
+	public TravelDto createTravel(String email, TravelCreateRequest requestDto) {
+		Member member = memberService.getMemberByEmail(email);
 		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.getCategoryId());
 		Travel travel = requestDto.toEntity(member, category);
 		travelRepository.save(travel);
@@ -37,9 +37,10 @@ public class TravelService {
 	}
 
 	@Transactional
-	public TravelDto updateTravel(Long travelId, Long userId, TravelUpdateRequest requestDto) {
+	public TravelDto updateTravel(Long travelId, String email, TravelUpdateRequest requestDto) {
+		Member member = memberService.getMemberByEmail(email);
 		Travel travel = getTravel(travelId);
-		validateOwnership(userId, travel);
+		validateOwnership(member, travel);
 		validateMatchStatus(travel);
 		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.getCategoryId());
 
@@ -61,9 +62,10 @@ public class TravelService {
 	}
 
 	@Transactional
-	public void deleteTravel(Long travelId, Long userId) {
+	public void deleteTravel(Long travelId, String email) {
+		Member member = memberService.getMemberByEmail(email);
 		Travel travel = getTravel(travelId);
-		validateOwnership(userId, travel);
+		validateOwnership(member, travel);
 		travel.markAsDeleted();
 	}
 
@@ -73,8 +75,8 @@ public class TravelService {
 		}
 	}
 
-	public void validateOwnership(Long userId, Travel travel) {
-		if (!travel.getUser().getId().equals(userId)) {
+	public void validateOwnership(Member member, Travel travel) {
+		if (!travel.getUser().getId().equals(member.getId())) {
 			throw new CustomException(ErrorCode.TRAVEL_ACCESS_DENIED);
 		}
 	}

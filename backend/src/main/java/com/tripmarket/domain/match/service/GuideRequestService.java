@@ -5,11 +5,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.service.GuideService;
-import com.tripmarket.domain.match.dto.GuideRequestCreate;
+import com.tripmarket.domain.match.dto.request.GuideRequestCreate;
 import com.tripmarket.domain.match.entity.GuideRequest;
 import com.tripmarket.domain.match.repository.GuideRequestRepository;
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.member.service.MemberService;
+import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.domain.travel.entity.Travel;
 import com.tripmarket.domain.travel.service.TravelService;
 import com.tripmarket.global.exception.CustomException;
@@ -21,20 +21,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GuideRequestService {
 
-	private final MemberService memberService;
+	private final MemberRepository memberRepository;
 	private final GuideService guideService;
 	private final TravelService travelService;
 	private final GuideRequestRepository guideRequestRepository;
 
 	@Transactional
-	public void createGuideRequest(Long userId, Long guideId, GuideRequestCreate requestDto) {
-		Member member = memberService.getMemberById(userId);
+	public void createGuideRequest(String email, Long guideId, GuideRequestCreate requestDto) {
+		Member member = memberRepository.findByEmail(email)
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
 		Guide guide = guideService.getGuide(guideId);
-		validateSelfRequest(userId, guide);
-		validateDuplicateRequest(userId, guideId, requestDto.getTravelId());
+		validateSelfRequest(member, guide);
+		validateDuplicateRequest(member.getId(), guideId, requestDto.getTravelId());
 
 		Travel travel = travelService.getTravel(requestDto.getTravelId());
-		travelService.validateOwnership(userId, travel);
+		// travelService.validateOwnership(member, travel);
 		travel.updateTravelStatus(Travel.Status.IN_PROGRESS);
 
 		GuideRequest guideRequest = requestDto.toEntity(member, guide, travel);
@@ -51,15 +53,15 @@ public class GuideRequestService {
 	}
 
 	public void validateDuplicateRequest(Long userId, Long guideId, Long travelId) {
-		boolean alreadyRequested = guideRequestRepository.existsByUserIdAndGuideIdAndTravelId(userId, guideId,
+		boolean alreadyRequested = guideRequestRepository.existsByMemberIdAndGuideIdAndTravelId(userId, guideId,
 			travelId);
 		if (alreadyRequested) {
 			throw new CustomException(ErrorCode.DUPLICATE_REQUEST);
 		}
 	}
 
-	public void validateSelfRequest(Long userId, Guide guide) {
-		if (userId.equals(guide.getMember().getId())) {
+	public void validateSelfRequest(Member member, Guide guide) {
+		if (member.getId().equals(guide.getMember().getId())) {
 			throw new CustomException(ErrorCode.SELF_REQUEST_NOT_ALLOWED);
 		}
 	}

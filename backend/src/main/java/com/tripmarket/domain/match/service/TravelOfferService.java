@@ -7,6 +7,8 @@ import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.service.GuideService;
 import com.tripmarket.domain.match.entity.TravelOffer;
 import com.tripmarket.domain.match.repository.TravelOfferRepository;
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.entity.Travel;
 import com.tripmarket.domain.travel.service.TravelService;
 import com.tripmarket.global.exception.CustomException;
@@ -21,10 +23,12 @@ public class TravelOfferService {
 	private final GuideService guideService;
 	private final TravelService travelService;
 	private final TravelOfferRepository travelOfferRepository;
+	private final MemberService memberService;
 
 	@Transactional
-	public void createTravelOffer(Long userId, Long travelId) {
-		Guide guide = guideService.getGuideByMember(userId);
+	public void createTravelOffer(String email, Long travelId) {
+		Member member = memberService.getMemberByEmail(email);
+		Guide guide = guideService.getGuideByMember(member.getId());
 		Travel travel = travelService.getTravel(travelId);
 		validateSelfResponse(guide, travel);
 		validateDuplicateTravelOffer(guide, travelId);
@@ -40,9 +44,10 @@ public class TravelOfferService {
 	}
 
 	@Transactional
-	public void matchTravelOffer(Long requestId, Long userId, TravelOffer.RequestStatus status) {
+	public void matchTravelOffer(Long requestId, String email, TravelOffer.RequestStatus status) {
+		Member member = memberService.getMemberByEmail(email);
 		TravelOffer travelOffer = getTravelOffer(requestId);
-		validateTravelOfferOwnership(travelOffer, userId);
+		validateTravelOfferOwnership(travelOffer, member);
 
 		travelOffer.updateStatus(status);
 		travelOfferRepository.save(travelOffer);
@@ -61,9 +66,9 @@ public class TravelOfferService {
 		}
 	}
 
-	public void validateTravelOfferOwnership(TravelOffer travelOffer, Long userId) {
+	public void validateTravelOfferOwnership(TravelOffer travelOffer, Member member) {
 		Travel travel = travelOffer.getTravel();
-		if (!travel.getUser().getId().equals(userId)) {
+		if (!travel.getUser().getId().equals(member.getId())) {
 			throw new CustomException(ErrorCode.MEMBER_ACCESS_DENIED);
 		}
 	}

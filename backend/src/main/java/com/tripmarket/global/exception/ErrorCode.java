@@ -25,6 +25,7 @@ public enum ErrorCode {
 	GUIDE_NOT_FOUND(NOT_FOUND, "가이드가 존재하지 않습니다."),
 	SELF_REQUEST_NOT_ALLOWED(FORBIDDEN, "본인의 가이드 프로필에는 매칭 요청할 수 없습니다."),
 	GUIDE_PROFILE_NOT_FOUND(NOT_FOUND, "해당 사용자는 가이더로 등록되지 않았습니다."),
+	ALREADY_HAS_GUIDE_PROFILE(BAD_REQUEST, "이미 가이더로 등록한 사용자입니다."),
 
 	//GuideRequest
 	DUPLICATE_REQUEST(BAD_REQUEST, "해당 사용자는 이미 해당 가이더에게 매칭 요청을 보냈습니다.중복해서 요청할 수 없습니다."),

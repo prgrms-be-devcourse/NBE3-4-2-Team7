@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import Link from "next/link";
-import {getTravelDetail, TravelDto} from "../../travel/services/travelService";
+import {createTravelOffer, getTravelDetail, TravelDto} from "../../travel/services/travelService";
 
 const TravelDetailPage: React.FC = () => {
     const params = useParams();
@@ -11,6 +11,7 @@ const TravelDetailPage: React.FC = () => {
     const [travel, setTravel] = useState<TravelDto | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [offerStatus, setOfferStatus] = useState<string | null>(null);
 
     useEffect(() => {
         if (travelId) {
@@ -26,6 +27,17 @@ const TravelDetailPage: React.FC = () => {
                 .finally(() => setLoading(false));
         }
     }, [travelId]);
+
+    const handleTravelOfferRequest = async () => {
+        if (!travelId) return;
+
+        try {
+            await createTravelOffer(travelId);
+            setOfferStatus("여행 제안 요청이 성공적으로 완료되었습니다.");
+        } catch (error) {
+            setOfferStatus("여행 제안 요청 중 오류가 발생했습니다.");
+        }
+    };
 
     if (loading) return <div style={styles.loading}>로딩 중...</div>;
     if (error) return <div style={styles.error}>{error}</div>;
@@ -43,12 +55,17 @@ const TravelDetailPage: React.FC = () => {
                 <p style={styles.content}><strong>상세 내용:</strong> {travel.content}</p>
                 <p style={styles.date}><strong>작성일:</strong> {new Date(travel.createdAt).toLocaleString()}</p>
                 <p style={styles.date}><strong>수정일:</strong> {new Date(travel.updatedAt).toLocaleString()}</p>
+
                 <div style={styles.buttonContainer}>
-                    <button style={styles.guideRequestButton}>가이드 요청하기</button>
+                    <button style={styles.guideRequestButton} onClick={handleTravelOfferRequest}>
+                        여행 제안 요청하기
+                    </button>
                     <Link href="/travels">
                         <button style={styles.backButton}>← 목록으로 돌아가기</button>
                     </Link>
                 </div>
+
+                {offerStatus && <p style={styles.statusMessage}>{offerStatus}</p>}
             </div>
         </div>
     );
@@ -119,6 +136,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: "none",
         borderRadius: "4px",
         cursor: "pointer",
+        fontWeight: "bold",
+    },
+    statusMessage: {
+        marginTop: "1rem",
+        fontSize: "1rem",
+        color: "#1565C0",
         fontWeight: "bold",
     },
     loading: {

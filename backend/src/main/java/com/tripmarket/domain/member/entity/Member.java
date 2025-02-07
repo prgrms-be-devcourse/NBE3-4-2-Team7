@@ -17,7 +17,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
+@Entity(name = "member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
 
@@ -68,5 +68,9 @@ public class Member extends BaseEntity {
 	public void updateOAuth2Profile(String name, String imageUrl) {
 		this.name = name;
 		this.imageUrl = imageUrl;
+	}
+
+	public boolean hasGuideProfile() {
+		return this.hasGuideProfile;
 	}
 }
