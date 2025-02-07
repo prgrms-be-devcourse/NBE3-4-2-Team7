@@ -63,17 +63,4 @@ public class GlobalExceptionHandler {
 			ex.getErrorMessage());
 		return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
 	}
-
-	@ExceptionHandler(MessageSendException.class)
-	public ResponseEntity<ErrorResponse> handleMessageSendException(MessageSendException e) {
-		ErrorResponse errorResponse = ErrorResponse.builder()
-			.status(HttpStatus.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()))
-			.message(e.getMessage())
-			.code("MESSAGE_SEND_FAILURE")
-			.build();
-
-		return ResponseEntity
-			.status(HttpStatus.INTERNAL_SERVER_ERROR)
-			.body(errorResponse);
-	}
 }
