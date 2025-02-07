@@ -24,19 +24,17 @@ body {
   user-select: none;
 }
 
-/* 버튼, 입력 필드, 링크 등 인터랙티브 요소에 대한 예외 처리 */
-button,
-input,
-textarea,
-[contenteditable="true"],
-a {
-  user-select: text;
-  cursor: pointer;
-}
-
-/* 입력 필드에 대한 커서 스타일 */
+/* 입력 필드에만 텍스트 선택과 텍스트 커서 허용 */
 input,
 textarea,
 [contenteditable="true"] {
+  user-select: text;
   cursor: text;
+}
+
+/* 버튼과 링크는 포인터 커서만 허용하고 텍스트 선택은 비활성화 */
+button,
+a {
+  cursor: pointer;
+  user-select: none;
 }
