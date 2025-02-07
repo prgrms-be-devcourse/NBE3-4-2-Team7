@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.service.GuideService;
+import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,8 +46,9 @@ public class GuideController {
 	@Operation(summary = "가이드 생성")
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public void createGuide(@Valid @RequestBody GuideDto guideDto) {
-		guideService.create(guideDto);
+	public void createGuide(@Valid @RequestBody GuideCreateRequest guideDto,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
+		guideService.create(guideDto, customOAuth2User.getEmail());
 	}
 
 	@Operation(summary = "가이드 리스트 조회")

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,6 +22,7 @@ import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationFailureHandler;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -38,12 +40,20 @@ public class SecurityConfig {
 			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-			// CSRF 설정 비활성화 - REST API에서는 불필요
 			.csrf(AbstractHttpConfigurer::disable)
 
 			// H2 콘솔 설정 추가
 			.headers(headers ->
 				headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+
+			// 인증 실패 처리 추가
+			.exceptionHandling(exception -> exception
+				.authenticationEntryPoint((request, response, authException) -> {
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					response.setContentType("application/json; charset=utf-8");
+					response.getWriter().write("{\"message\": \"인증되지 않은 사용자입니다.\"");
+				})
+			)
 
 			// 세션 설정 - JWT를 사용하므로 세션을 생성하지 않음
 			.sessionManagement((sessionManagement) ->
@@ -53,8 +63,19 @@ public class SecurityConfig {
 			// 요청에 대한 권한 설정
 			.authorizeHttpRequests((authorizeHttpRequests) ->
 				authorizeHttpRequests
+					// H2 콘솔 관련 경로
 					.requestMatchers("/h2-console/**").permitAll()
-					.requestMatchers("/auth/**", "/oauth2/**").permitAll()
+
+					// Swagger UI 관련 경로 (swagger-ui.html 추가)
+					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+					.requestMatchers(HttpMethod.GET, "/travels/*").permitAll()
+					.requestMatchers(HttpMethod.GET, "/travels/**").permitAll()
+					.requestMatchers(HttpMethod.GET, "/guides/*").permitAll()
+					.requestMatchers(HttpMethod.GET, "/guides/**").permitAll()
+
+					.requestMatchers("/guide-requests/**").permitAll()
+
 					.anyRequest().authenticated()
 			)
 

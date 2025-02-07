@@ -15,29 +15,23 @@ import lombok.Getter;
 @Getter
 public class CustomOAuth2User extends DefaultOAuth2User {
 
-	private String email; // 이메일
-	private String name; // 이름
-	private String imageUrl; // 프로필 이미지 URL
+	private String email; // 사용자 식별용 이메일
 
 	/**
-	 * @param authorities 권한 정보
-	 * @param attributes OAuth2 제공자로부터 받은 유저 정보
-	 * @param nameAttributeKey OAuth2 제공자가 사용하는 유저 식별자의 키값
-	 * @param email 유저 이메일
-	 * @param name 유저 이름
-	 * @param imageUrl 프로필 이미지 URL
+	 * JWT 토큰 검증 후 인증 객체 생성을 위한 생성자
+	 *
+	 * @param authorities 사용자의 권한 정보 컬렉션 (예: ROLE_USER)
+	 * @param attributes OAuth2 제공자로부터 받은 사용자 정보를 담은 Map (최소한 email은 포함)
+	 * @param nameAttributeKey OAuth2 제공자가 사용하는 사용자 식별자의 키값 (예: "email")
+	 * @param email 사용자 식별용 이메일
 	 */
 	public CustomOAuth2User(
 		Collection<? extends GrantedAuthority> authorities,
 		Map<String, Object> attributes,
 		String nameAttributeKey,
-		String email,
-		String name,
-		String imageUrl
+		String email
 	) {
 		super(authorities, attributes, nameAttributeKey);
 		this.email = email;
-		this.name = name;
-		this.imageUrl = imageUrl;
 	}
 }

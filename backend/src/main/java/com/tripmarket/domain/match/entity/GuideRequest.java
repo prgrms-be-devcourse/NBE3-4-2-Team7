@@ -34,7 +34,7 @@ public class GuideRequest {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
-	private Member user; // 요청한 사용자
+	private Member member; // 요청한 사용자
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "guide_id", nullable = false)
