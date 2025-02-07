@@ -40,7 +40,8 @@ public enum ErrorCode {
 	MEMBER_ACCESS_DENIED(FORBIDDEN, "현재 사용자는 매칭 요청을 당한 사용자가 아닙니다."),
 
 	//Chatting
-	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다.");
+	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다."),
+	FAIL_MESSAGE_SEND(SERVICE_UNAVAILABLE,"메시지 전송에 실패했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
