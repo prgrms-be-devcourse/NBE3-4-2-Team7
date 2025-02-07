@@ -9,6 +9,26 @@ const nextConfig = {
             },
         ],
     },
+    async rewrites() {
+        return [
+            {
+                source: '/api/:path*',
+                destination: 'http://localhost:8080/:path*',
+            },
+            {
+                source: '/oauth2/:path*',
+                destination: 'http://localhost:8080/oauth2/:path*',
+            },
+            {
+                source: '/auth/:path*',
+                destination: 'http://localhost:8080/auth/:path*',
+            },
+            {
+                source: '/members/:path*',
+                destination: 'http://localhost:8080/members/:path*',
+            }
+        ];
+    },
 }
 
 module.exports = nextConfig 

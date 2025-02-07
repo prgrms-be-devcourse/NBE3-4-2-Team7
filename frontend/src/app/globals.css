@@ -18,3 +18,25 @@ body {
   color: var(--foreground);
   background: var(--background);
 }
+
+/* 전역 커서 설정 */
+* {
+  user-select: none;
+}
+
+/* 버튼, 입력 필드, 링크 등 인터랙티브 요소에 대한 예외 처리 */
+button,
+input,
+textarea,
+[contenteditable="true"],
+a {
+  user-select: text;
+  cursor: pointer;
+}
+
+/* 입력 필드에 대한 커서 스타일 */
+input,
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}

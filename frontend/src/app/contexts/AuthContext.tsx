@@ -16,7 +16,12 @@ interface AuthContextType {
     logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+    user: null,
+    loading: true,
+    isInitialized: false,
+    logout: async () => {}
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -27,7 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const checkAuth = async () => {
             try {
                 const userData = await authService.checkLoginStatus();
-                setUser(userData);
+                if (userData) {
+                    setUser(userData);
+                } else {
+                    setUser(null);
+                }
             } catch (error) {
                 console.error('인증 확인 실패:', error);
                 setUser(null);
@@ -45,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             value={{ 
                 user, 
                 loading, 
-                isInitialized, 
+                isInitialized,
                 logout: authService.logout
             }}
         >
@@ -56,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;

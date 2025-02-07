@@ -14,8 +14,9 @@ const GuestHeader: React.FC = () => {
         <header className="w-full bg-white shadow-sm">
             <div className="w-full h-16 flex items-center justify-between px-0">
                 <div className="flex items-center pl-4">
-                    <Link href="/travels">
-                        <h1 className={`${playfair.className} text-2xl font-bold text-blue-600 tracking-wide`}>
+                    <Link href="/main">
+                        <h1 className={`${playfair.className} text-2xl font-bold text-blue-600 tracking-wide
+                                        hover:opacity-80 transition-opacity duration-300`}>
                             <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                                 내 여행의 완성,{' '}
                             </span>

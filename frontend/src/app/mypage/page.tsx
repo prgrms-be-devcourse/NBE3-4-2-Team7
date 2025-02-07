@@ -76,15 +76,18 @@ const MyPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-gray-50 pt-24 pb-8">
             <div className="max-w-4xl mx-auto px-4">
                 {/* 뒤로가기 버튼 */}
                 <button 
                     onClick={() => router.back()}
-                    className="flex items-center text-gray-600 hover:text-gray-800 mb-6 group transition-colors"
+                    className="flex items-center text-gray-600 hover:text-blue-600 mb-8 group 
+                             transition-all duration-300 ease-in-out px-4 py-2 rounded-lg
+                             hover:bg-blue-50 border border-transparent hover:border-blue-100"
                 >
-                    <IoChevronBack className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
-                    <span className="ml-1 text-lg">뒤로가기</span>
+                    <IoChevronBack className="w-6 h-6 transform group-hover:-translate-x-1 
+                                           transition-transform duration-300 ease-in-out" />
+                    <span className="ml-2 text-lg font-medium">이전 페이지로</span>
                 </button>
 
                 {/* 프로필 섹션 */}
@@ -95,10 +98,10 @@ const MyPage = () => {
                                 src={user?.imageUrl || '/default-profile.png'}
                                 alt="프로필 이미지"
                                 fill
-                                className="rounded-full object-cover"
+                                className="rounded-full object-cover pointer-events-none"
                             />
                         </div>
-                        <div className="select-none">
+                        <div className="pointer-events-none">
                             <h1 className="text-3xl font-bold text-gray-800 mb-2">
                                 {user?.name || '사용자'}
                             </h1>

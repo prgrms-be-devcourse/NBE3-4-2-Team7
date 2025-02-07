@@ -3,17 +3,30 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "../../components/LoadingScreen";
+import { authService } from "../../auth/services/authService";
 
 const OAuthCallbackPage = () => {
     const router = useRouter();
 
     useEffect(() => {
-        // 로그인 성공 후 travels 페이지로 리다이렉트
-        const timer = setTimeout(() => {
-            router.push("/travels");
-        }, 1500); // 1.5초 후 리다이렉트
+        const checkLoginStatus = async () => {
+            try {
+                // 로그인 상태 확인을 위해 잠시 대기
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const user = await authService.checkLoginStatus();
+                if (user) {
+                    router.push("/travels");
+                } else {
+                    throw new Error("로그인 실패");
+                }
+            } catch (error) {
+                console.error("로그인 처리 중 오류 발생:", error);
+                router.push("/login");
+            }
+        };
 
-        return () => clearTimeout(timer);
+        checkLoginStatus();
     }, [router]);
 
     return <LoadingScreen />;
