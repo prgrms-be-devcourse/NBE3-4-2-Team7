@@ -12,7 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.service.GuideService;
-import com.tripmarket.domain.match.dto.GuideRequestCreate;
+import com.tripmarket.domain.match.dto.request.GuideRequestCreate;
 import com.tripmarket.domain.match.entity.GuideRequest;
 import com.tripmarket.domain.match.repository.GuideRequestRepository;
 import com.tripmarket.domain.match.service.GuideRequestService;
@@ -58,7 +58,7 @@ class GuideRequestServiceTest {
 
 		when(memberService.getMember(userId)).thenReturn(mockMember);
 		when(guideService.getGuide(guideId)).thenReturn(mockGuide);
-		when(guideRequestRepository.existsByUserIdAndGuideIdAndTravelId(userId, guideId, travelId))
+		when(guideRequestRepository.existsByMemberIdAndGuideIdAndTravelId(userId, guideId, travelId))
 			.thenReturn(false);
 		when(travelService.getTravel(travelId)).thenReturn(mockTravel);
 
@@ -81,7 +81,7 @@ class GuideRequestServiceTest {
 			.travelId(travelId)
 			.build();
 
-		when(guideRequestRepository.existsByUserIdAndGuideIdAndTravelId(userId, guideId, travelId))
+		when(guideRequestRepository.existsByMemberIdAndGuideIdAndTravelId(userId, guideId, travelId))
 			.thenReturn(true);
 
 		// When & Then
