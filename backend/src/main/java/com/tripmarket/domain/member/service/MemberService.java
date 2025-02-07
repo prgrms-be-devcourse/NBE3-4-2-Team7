@@ -18,7 +18,6 @@ import com.tripmarket.domain.travel.entity.Travel;
 import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
-import com.tripmarket.global.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +33,14 @@ public class MemberService {
 	private final TravelOfferRepository travelOfferRepository;
 
 	@Transactional(readOnly = true)
-	public MemberResponseDTO getMyInfo(String email) {
-		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new ResourceNotFoundException("해당 이메일의 회원을 찾을 수 없습니다."));
-
-		return MemberResponseDTO.from(member);
+	public Member getMemberById(Long userId) {
+		return memberRepository.findById(userId)
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 	}
 
-	public Member getMember(Long userId) {
-		return memberRepository.findById(userId)
+	@Transactional(readOnly = true)
+	public Member getMemberByEmail(String email) {
+		return memberRepository.findByEmail(email)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 	}
 

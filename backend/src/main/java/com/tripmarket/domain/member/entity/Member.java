@@ -55,17 +55,16 @@ public class Member extends BaseEntity {
 		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = imageUrl;
-		this.role = Role.USER;
+		this.role = Role.ROLE_USER;
 	}
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
 	 * 소셜 로그인(카카오, 구글 등) 프로필 정보가 변경되었을 때 호출
 	 */
-	public Member updateOAuth2Profile(String name, String imageUrl) {
+	public void updateOAuth2Profile(String name, String imageUrl) {
 		this.name = name;
 		this.imageUrl = imageUrl;
-		return this;
 	}
 
 	public boolean hasGuideProfile() {

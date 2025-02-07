@@ -71,7 +71,7 @@ class TravelServiceTest {
 		TravelCategory mockCategory = new TravelCategory("힐링");
 		Travel mockTravel = request.toEntity(mockMember, mockCategory);
 
-		when(memberService.getMember(userId)).thenReturn(mockMember);
+		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(travelCategoryService.getTravelCategory(categoryId)).thenReturn(mockCategory);
 		when(travelRepository.save(any(Travel.class))).thenReturn(mockTravel);
 
@@ -84,7 +84,7 @@ class TravelServiceTest {
 		assertEquals(2, result.getParticipants());
 		assertEquals(Travel.Status.WAITING_FOR_MATCHING, result.getStatus());
 
-		verify(memberService, times(1)).getMember(userId);
+		verify(memberService, times(1)).getMemberById(userId);
 		verify(travelCategoryService, times(1)).getTravelCategory(categoryId);
 		verify(travelRepository, times(1)).save(any(Travel.class));
 	}
@@ -106,7 +106,7 @@ class TravelServiceTest {
 			.content("파리 야경을 중심으로 여행하고 싶어요.")
 			.build();
 
-		when(memberService.getMember(userId)).thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+		when(memberService.getMemberById(userId)).thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		// When & Then
 		CustomException exception = assertThrows(CustomException.class, () -> {
@@ -137,7 +137,7 @@ class TravelServiceTest {
 
 		Member mockMember = new Member("asd@naver.com", "testPassword", "John Doe", Role.USER);
 
-		when(memberService.getMember(userId)).thenReturn(mockMember);
+		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(travelCategoryService.getTravelCategory(invalidCategoryId))
 			.thenThrow(new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 

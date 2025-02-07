@@ -56,7 +56,7 @@ class GuideRequestServiceTest {
 			.travelId(travelId)
 			.build();
 
-		when(memberService.getMember(userId)).thenReturn(mockMember);
+		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(guideService.getGuide(guideId)).thenReturn(mockGuide);
 		when(guideRequestRepository.existsByMemberIdAndGuideIdAndTravelId(userId, guideId, travelId))
 			.thenReturn(false);

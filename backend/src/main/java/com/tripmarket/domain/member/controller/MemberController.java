@@ -12,6 +12,7 @@ import com.tripmarket.domain.match.dto.GuideRequestDto;
 import com.tripmarket.domain.match.dto.TravelOfferDto;
 import com.tripmarket.domain.match.service.GuideRequestService;
 import com.tripmarket.domain.member.dto.MemberResponseDTO;
+import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.global.exception.UnauthorizedException;
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "Members", description = "회원 관리 API")
 public class MemberController {
@@ -35,13 +36,9 @@ public class MemberController {
 	@GetMapping("/me")
 	@Operation(summary = "내 정보 조회")
 	public ResponseEntity<MemberResponseDTO> getMyInfo(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
-		if (oAuth2User == null) {
-			throw new UnauthorizedException("로그인이 필요합니다.");
-		}
 		log.debug("OAuth2User: {}", oAuth2User);
-		MemberResponseDTO memberResponseDTO = memberService.getMyInfo(oAuth2User.getEmail());
-
-		return ResponseEntity.ok(memberResponseDTO);
+		Member member = memberService.getMemberById(oAuth2User.getId());
+		return ResponseEntity.ok(MemberResponseDTO.from(member));
 	}
 
 	@GetMapping("/me/matchings/requester")
