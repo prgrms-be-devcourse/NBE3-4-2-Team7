@@ -70,4 +70,20 @@ public class Member extends BaseEntity {
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
+       
+	public Member(String name, String email, String password, Role role, boolean hasGuideProfile) {
+		this.name = name;
+		this.emailId = email;
+		this.password = password;
+		this.role = role;
+		this.hasGuideProfile = hasGuideProfile;
+	}
+
+	public boolean isAdmin() {
+		return this.role == Role.ADMIN;
+	}
+
+	public String getEmail() {
+		return this.emailId;
+	}
 }
