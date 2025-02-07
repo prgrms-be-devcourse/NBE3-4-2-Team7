@@ -8,8 +8,9 @@ public class DateUtil {
 
 	private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 	private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("M월 d일");
+	private static final DateTimeFormatter AM_PM_FORMATTER = DateTimeFormatter.ofPattern("a h:mm");
 
-	public static String convertTime(LocalDateTime messageTime) {
+	public static String convertDateOrTime(LocalDateTime messageTime) {
 		LocalDateTime now = LocalDateTime.now();
 		LocalDate messageDate = messageTime.toLocalDate();
 		LocalDate today = now.toLocalDate();
@@ -22,5 +23,10 @@ public class DateUtil {
 		} else {
 			return messageTime.format(dateFormatter);
 		}
+	}
+
+	public static String convertTime(LocalDateTime dateTime) {
+		String formattedTime = dateTime.format(AM_PM_FORMATTER);
+		return formattedTime.replace("AM", "오전").replace("PM", "오후");
 	}
 }
