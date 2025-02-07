@@ -43,9 +43,9 @@ public class ReviewService {
 
 	@Transactional
 	public void createReview(ReviewCreateRequestDto requestDto, Long memberId) {
-		log.debug(" [DEBUG] 리뷰 생성 메서드 실행됨. memberId: {}, travelId: {}", memberId, requestDto.travelId());
+		log.debug(" 리뷰 생성 메서드 실행됨. memberId: {}, travelId: {}", memberId, requestDto.travelId());
 
-		// 현재 로그인한 유저의 존재 여부 확인
+		// 현재 로그인한 유저의 존재 여부 확인: 인증된 유저가 맞는지 검증하는걸로 바꿔야함
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -53,8 +53,8 @@ public class ReviewService {
 		Travel travel = travelRepository.findById(requestDto.travelId())
 			.orElseThrow(() -> new CustomException(ErrorCode.TRAVEL_NOT_FOUND));
 
-		log.info("리뷰 생성 요청: memberId: {}, travelId: {}", memberId, requestDto.travelId());
-		log.info("여행 상태: {}", travel.getStatus());
+		log.debug("리뷰 생성 요청: memberId: {}, travelId: {}", memberId, requestDto.travelId());
+		log.debug("여행 상태: {}", travel.getStatus());
 
 		// 여행이 완료 상태인지 확인
 		if (!travel.isCompleted()) {
@@ -69,9 +69,9 @@ public class ReviewService {
 			.findFirst()
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_NOT_FOUND));
 
-		log.info("가이드 조회 완료: guideId: {}", guideId);
+		log.debug("가이드 조회 완료: guideId: {}", guideId);
 
-		// 특정 사용자가 해당 여행에 대한 리뷰를 이미 작성했는지 확인 (중복 방지)
+		// 작성자가 해당 여행에 대한 리뷰를 이미 작성했는지 확인 (중복 방지)
 		if (reviewRepository.existsByMemberAndTravelAndIsDeletedFalse(member, travel)) {
 			throw new CustomException(ErrorCode.REVIEW_ALREADY_EXISTS);
 		}
@@ -86,7 +86,7 @@ public class ReviewService {
 			.build();
 
 		reviewRepository.save(review);
-		log.info("리뷰 저장 완료 - reviewId: {}", review.getId());
+		log.debug("리뷰 저장 완료 - reviewId: {}", review.getId());
 	}
 
 	// 이하 리뷰 조회
@@ -100,13 +100,13 @@ public class ReviewService {
 
 	@Transactional(readOnly = true)
 	public List<ReviewResponseDto> getReviewsByGuide(Long guideId) {
-		log.info(" 특정 가이드 리뷰 조회 요청 - guideId: {}", guideId);
+		log.debug(" 특정 가이드 리뷰 조회 요청 - guideId: {}", guideId);
 
 		// 가이드 존재 여부 확인
 		Guide guide = guideRepository.findById(guideId)
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_NOT_FOUND));
 
-		log.info(" 가이드 확인 완료 - guideId: {}", guideId);
+		log.debug(" 가이드 확인 완료 - guideId: {}", guideId);
 
 		// GuideRequest & TravelOffer에서 해당 가이드가 참여한 여행 ID 조회
 		Set<Long> uniqueTravelIds = Stream.concat(
@@ -115,20 +115,20 @@ public class ReviewService {
 			)
 			.collect(Collectors.toSet());
 
-		log.info(" 가이드가 참여한 여행 ID 조회 완료 - 여행 개수: {}", uniqueTravelIds.size());
+		log.debug(" 가이드가 참여한 여행 ID 조회 완료 - 여행 개수: {}", uniqueTravelIds.size());
 
 		// 해당 가이드가 참여한 여행이 없다면 빈 리스트 반환
 		if (uniqueTravelIds.isEmpty()) {
-			log.info(" 해당 가이드가 참여한 여행 없음 - guideId: {}", guideId);
+			log.debug(" 해당 가이드가 참여한 여행 없음 - guideId: {}", guideId);
 			return Collections.emptyList();
 		}
 
 		// 여행 객체 리스트 조회
 		List<Travel> travelList = travelRepository.findAllById(uniqueTravelIds);
-		log.info(" 가이드가 참여한 여행 리스트 조회 완료 - 개수: {}", travelList.size());
+		log.debug(" 가이드가 참여한 여행 리스트 조회 완료 - 개수: {}", travelList.size());
 
 		if (travelList.isEmpty()) {
-			log.info(" 해당 가이드가 참여한 여행 없음 - guideId: {}", guideId);
+			log.debug(" 해당 가이드가 참여한 여행 없음 - guideId: {}", guideId);
 			return Collections.emptyList();
 		}
 
@@ -141,7 +141,7 @@ public class ReviewService {
 			.map(ReviewResponseDto::fromEntity)
 			.collect(Collectors.toList());
 
-		log.info(" 특정 가이드 리뷰 조회 완료 - 리뷰 개수: {}", reviewDtos.size());
+		log.debug(" 특정 가이드 리뷰 조회 완료 - 리뷰 개수: {}", reviewDtos.size());
 
 		return reviewDtos;
 	}
@@ -168,7 +168,7 @@ public class ReviewService {
 		// 삭제된 상태 저장
 		reviewRepository.save(review);
 
-		log.info("리뷰 삭제 완료 - reviewId: {}", review.getId());
+		log.debug("리뷰 삭제 완료 - reviewId: {}", review.getId());
 	}
 
 	@Transactional
@@ -194,7 +194,7 @@ public class ReviewService {
 		// 리뷰 내용 & 평점 수정
 		review.update(requestDto.comment(), requestDto.reviewScore());
 
-		log.info("리뷰 수정 완료 - reviewId: {}, memberId: {}", reviewId, memberId);
+		log.debug("리뷰 수정 완료 - reviewId: {}, memberId: {}", reviewId, memberId);
 	}
 
 }
