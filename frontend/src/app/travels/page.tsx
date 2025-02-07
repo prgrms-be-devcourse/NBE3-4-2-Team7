@@ -4,7 +4,7 @@ import React, {useEffect, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {getTravels, TravelDto} from "../travel/services/travelService";
-import {getGuides, GuideDto} from "../guide/services/guideService";
+import {getGuides, GuideDto} from "@/app/guides/services/guideService";
 
 const TravelListPage: React.FC = () => {
     const [travels, setTravels] = useState<TravelDto[]>([]);
@@ -29,7 +29,7 @@ const TravelListPage: React.FC = () => {
 
     return (
         <div style={styles.container}>
-            {/* 서비스 소개 섹션 */}
+            {/* 상단 서비스 소개 섹션 */}
             <div style={styles.banner}>
                 <h1 style={styles.bannerTitle}>여행 가이드 서비스</h1>
                 <p style={styles.bannerText}>
@@ -43,6 +43,9 @@ const TravelListPage: React.FC = () => {
                     <Link href="/mypage">
                         <button style={styles.secondaryButton}>마이페이지</button>
                     </Link>
+                    <button style={styles.guideRegisterButton} onClick={() => router.push("/guides/register")}>
+                        가이더로 등록하기
+                    </button>
                 </div>
             </div>
 
@@ -76,7 +79,7 @@ const TravelListPage: React.FC = () => {
                             <div
                                 key={guide.id}
                                 style={styles.card}
-                                onClick={() => router.push(`/guide/${guide.id}`)}
+                                onClick={() => router.push(`/guides/${guide.id}`)}
                             >
                                 <h3 style={styles.cardTitle}>{guide.name}</h3>
                                 <p style={styles.cardContent}>활동 지역: {guide.activityRegion}</p>
@@ -88,7 +91,6 @@ const TravelListPage: React.FC = () => {
         </div>
     );
 };
-
 const styles: { [key: string]: React.CSSProperties } = {
     container: {
         backgroundColor: "#E3F2FD",
@@ -195,6 +197,15 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: "1.25rem",
         color: "red",
         textAlign: "center",
+    },
+    guideRegisterButton: {
+        backgroundColor: "#FF7043",
+        color: "#fff",
+        border: "none",
+        padding: "0.75rem 1.5rem",
+        borderRadius: "4px",
+        cursor: "pointer",
+        fontWeight: "bold",
     },
 };
 
