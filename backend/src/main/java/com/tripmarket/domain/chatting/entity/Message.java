@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(collection = "message")
 @CompoundIndexes({
-	@CompoundIndex(name = "room_createdAt_idx", def = "{'roomId': 1, 'createdAt': -1}")
+	@CompoundIndex(name = "room_createdAt_idx", def = "{'roomId': 1, 'createdAt': -1}"),
+	@CompoundIndex(name = "room_idx", def = "{'roomId': 1}")
 })
 public class Message  {
 
