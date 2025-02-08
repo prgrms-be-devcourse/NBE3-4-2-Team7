@@ -41,6 +41,7 @@ public class TravelOffer {
 
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
+	@Builder.Default
 	private RequestStatus status = RequestStatus.PENDING;
 
 	@Column(columnDefinition = "TEXT")
