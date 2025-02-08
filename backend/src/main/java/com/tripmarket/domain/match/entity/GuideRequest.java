@@ -33,7 +33,7 @@ public class GuideRequest {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@JoinColumn(name = "member_id", nullable = false)
 	private Member member; // 요청한 사용자
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -46,6 +46,7 @@ public class GuideRequest {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
+	@Builder.Default
 	private RequestStatus status = RequestStatus.PENDING;
 
 	public void updateStatus(RequestStatus newStatus) {
