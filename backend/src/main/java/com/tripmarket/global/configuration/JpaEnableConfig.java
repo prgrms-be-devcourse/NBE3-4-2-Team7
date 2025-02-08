@@ -8,6 +8,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EnableJpaRepositories(basePackages = {"com.tripmarket.domain"})
 @EntityScan(basePackages = {"com.tripmarket.domain"})
-@EnableJpaAuditing
 public class JpaEnableConfig {
 }
