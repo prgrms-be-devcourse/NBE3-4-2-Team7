@@ -56,9 +56,9 @@ public class Guide extends BaseEntity {
 	@Builder.Default
 	private boolean isDeleted = false;
 
-	// 가이드의 리뷰 리스트
-	@OneToMany(mappedBy = "guide")
-	List<Review> reviews;
+	// // 가이드의 리뷰 리스트
+	// @OneToMany(mappedBy = "guide")
+	// List<Review> reviews;
 
 	// 리뷰 통계 테이블
 	// @OneToOne
