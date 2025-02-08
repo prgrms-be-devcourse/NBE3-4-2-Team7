@@ -23,7 +23,7 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 	private final JPAQueryFactory queryFactory;
 
 	@Override
-	public boolean findRoomByParticipants(String email1, String email2) {
+	public Optional<ChattingRoom> findRoomByParticipants(String email1, String email2) {
 		QChattingRoom chattingRoom = QChattingRoom.chattingRoom;
 		QChattingRoomParticipant participant1 = new QChattingRoomParticipant("participant1");
 		QChattingRoomParticipant participant2 = new QChattingRoomParticipant("participant2");
@@ -31,12 +31,15 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 		BooleanExpression condition = (participant1.member.email.eq(email1).and(participant2.member.email.eq(email2)))
 			.or(participant1.member.email.eq(email2).and(participant2.member.email.eq(email1)));
 
-		return queryFactory.selectOne()
-			.from(chattingRoom)
-			.join(chattingRoom.participants, participant1)
-			.join(chattingRoom.participants, participant2)
-			.where(condition)
-			.fetchOne() != null;
+		return Optional.ofNullable(
+			queryFactory.selectFrom(chattingRoom)
+				.join(chattingRoom.participants, participant1)
+				.join(chattingRoom.participants, participant2)
+				.where(
+					chattingRoom.isDelete.isFalse(),
+					(participant1.member.email.eq(email1).and(participant2.member.email.eq(email2)))
+						.or(participant1.member.email.eq(email2).and(participant2.member.email.eq(email1)))
+				).fetchOne());
 	}
 
 	@Override
