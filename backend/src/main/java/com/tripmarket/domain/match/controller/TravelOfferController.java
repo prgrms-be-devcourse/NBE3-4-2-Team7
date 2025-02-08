@@ -1,8 +1,11 @@
 package com.tripmarket.domain.match.controller;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,5 +48,14 @@ public class TravelOfferController {
 	) {
 		travelOfferService.matchTravelOffer(requestId, customOAuth2User.getEmail(), status);
 		return ResponseEntity.ok("가이더 요청 상태가 업데이트되었습니다.");
+	}
+
+	@Operation(summary = "가이더가 자기 자신의 요청 글에 매칭을 보내는지 검사")
+	@GetMapping("/{travelId}")
+	public boolean validateSelfOffer(
+		@PathVariable(name = "travelId") Long travelId,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+	){
+		return Objects.equals(customOAuth2User.getId(), travelId) ;
 	}
 }

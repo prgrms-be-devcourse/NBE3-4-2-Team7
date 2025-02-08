@@ -103,6 +103,13 @@ export const updateGuideRequestStatus = async (
     });
 };
 
+// 가이더가 자신의 여행 요청에 응답(travel-offers)하려는지 검사
+export const validateSelfOffer = async (
+    travelId: number
+) => {
+    return axiosInstance.get(`/travel-offers/${travelId}`)
+}
+
 
 
 
