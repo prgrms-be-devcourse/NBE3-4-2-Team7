@@ -47,4 +47,10 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 
 		return new PageImpl<>(messages, pageable, count);
 	}
+
+	@Override
+	public void deleteByRoomId(String roomId) {
+		Query query = new Query(Criteria.where("roomId").is(roomId));
+		mongoTemplate.remove(query, Message.class);
+	}
 }

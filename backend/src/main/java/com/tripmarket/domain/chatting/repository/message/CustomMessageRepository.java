@@ -11,4 +11,5 @@ import com.tripmarket.domain.chatting.entity.Message;
 public interface CustomMessageRepository {
 	List<Message> findLatestMessages(List<String> roomIds);
 	Page<Message> findMessagesByRoom(String roomId, Pageable pageable);
+	void deleteByRoomId(String roomId);
 }
