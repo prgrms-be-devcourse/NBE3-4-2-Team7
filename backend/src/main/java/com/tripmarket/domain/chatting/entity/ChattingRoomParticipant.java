@@ -28,4 +28,18 @@ public class ChattingRoomParticipant extends BaseEntity {
 	@JoinColumn(name = "member_id")
 	private Member member;
 
+	private boolean isActive;
+
+	public void updateActive() {
+		this.isActive = !this.isActive;
+	}
+
+	public static ChattingRoomParticipant create(ChattingRoom chattingRoom, Member member) {
+		return ChattingRoomParticipant.builder()
+			.chattingRoom(chattingRoom)
+			.member(member)
+			.isActive(true)
+			.build();
+	}
+
 }
