@@ -1,6 +1,8 @@
 package com.tripmarket.domain.chatting.repository.chattingroom;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -56,12 +58,25 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 			.limit(pageable.getPageSize())
 			.fetch();
 
-		long total = queryFactory.selectFrom(chattingRoom)
-			.join(chattingRoom.participants, participant)
-			.where(condition)
-			.fetchCount();
+		long total = Optional.ofNullable(
+			queryFactory.select(chattingRoom.count())
+				.from(chattingRoom)
+				.join(chattingRoom.participants, participant)
+				.where(condition)
+				.fetchOne()
+		).orElse(0L);
 
 		// Page로 변환해서 반환
 		return new PageImpl<>(chattingRooms, pageable, total);
+	}
+
+	@Override
+	public List<ChattingRoom> findChattingRoomsISDelete(LocalDateTime now) {
+		QChattingRoom chattingRoom = QChattingRoom.chattingRoom;
+
+		return queryFactory.selectFrom(chattingRoom)
+			.where(chattingRoom.isDelete.isTrue()
+				.and(chattingRoom.deleteDate.loe(now)))
+			.fetch();
 	}
 }
