@@ -97,7 +97,7 @@ public class ReviewService {
 
 		return reviewRepository.findByTravelAndIsDeletedFalse(travel);
 	}
-
+	// 특정 가이드의 리뷰 조회
 	@Transactional(readOnly = true)
 	public List<ReviewResponseDto> getReviewsByGuide(Long guideId) {
 		log.debug(" 특정 가이드 리뷰 조회 요청 - guideId: {}", guideId);
