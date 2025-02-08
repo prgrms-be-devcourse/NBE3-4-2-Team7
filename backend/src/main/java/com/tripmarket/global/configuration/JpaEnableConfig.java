@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.tripmarket.domain.chatting.repository.message.MessageRepository;
 
@@ -15,5 +16,6 @@ import com.tripmarket.domain.chatting.repository.message.MessageRepository;
 })
 @EntityScan(basePackages = {"com.tripmarket.domain"})
 @EnableJpaAuditing
+@EnableScheduling
 public class JpaEnableConfig {
 }
