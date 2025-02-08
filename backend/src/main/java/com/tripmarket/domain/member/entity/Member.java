@@ -73,17 +73,14 @@ public class Member extends BaseEntity {
        
 	public Member(String name, String email, String password, Role role, boolean hasGuideProfile) {
 		this.name = name;
-		this.emailId = email;
+		this.email = email;
 		this.password = password;
 		this.role = role;
 		this.hasGuideProfile = hasGuideProfile;
 	}
 
 	public boolean isAdmin() {
-		return this.role == Role.ADMIN;
+		return this.role == Role.ROLE_ADMIN;
 	}
 
-	public String getEmail() {
-		return this.emailId;
-	}
 }
