@@ -1,5 +1,6 @@
 package com.tripmarket.domain.chatting.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,8 +27,24 @@ public class ChattingRoom extends BaseTimeEntity {
 	@Column(length = 36, nullable = false, updatable = false)
 	private String id;
 
+	private boolean isDelete;
+	private LocalDateTime deleteDate;
+
 	@OneToMany(mappedBy = "chattingRoom", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ChattingRoomParticipant> participants = new HashSet<>();
+
+	public void deleteRoom() {
+		this.isDelete = true;
+		this.deleteDate = LocalDateTime.now().plusDays(7);
+	}
+
+	public static ChattingRoom create(){
+		return ChattingRoom.builder()
+			.participants(new HashSet<>())
+			.isDelete(false)
+			.deleteDate(null)
+			.build();
+	}
 
 	// 참여자 이메일
 	public Set<String> getParticipantEmails() {
