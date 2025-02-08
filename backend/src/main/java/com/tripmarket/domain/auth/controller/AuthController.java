@@ -72,8 +72,8 @@ public class AuthController {
 			// 6. 새로운 Access Token을 쿠키에 저장
 			ResponseCookie accessTokenCookie = jwtTokenProvider.createAccessTokenCookie(newAccessToken);
 			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
-
 			log.info("Token refreshed for user: {}", userId);
+
 		} catch (Exception e) {
 			log.error("Token refresh failed", e);
 			throw new JwtAuthenticationException("토큰 갱신 실패");

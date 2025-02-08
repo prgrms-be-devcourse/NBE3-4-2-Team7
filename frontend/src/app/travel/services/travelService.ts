@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosInstance from '../../utils/axios';
 
 // 백엔드 API 기본 URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
@@ -49,37 +50,43 @@ export interface GuideRequestDto {
 }
 
 // 📌 여행 요청 전체 조회 (페이징 및 선택적 카테고리 필터)
-export const getTravels = (categoryId?: number, page: number = 0, size: number = 10) => {
-    let url = `${API_BASE_URL}/travels?page=${page}&size=${size}`;
-    if (categoryId) {
-        url += `&categoryId=${categoryId}`;
+export const getTravels = async (categoryId?: number, page: number = 0, size: number = 10) => {
+    try {
+        let url = `/travels?page=${page}&size=${size}`;
+        if (categoryId) {
+            url += `&categoryId=${categoryId}`;
+        }
+        const response = await axiosInstance.get(url);
+        return response;
+    } catch (error) {
+        console.error('여행 목록 조회 실패:', error);
+        return { data: { content: [] } };
     }
-    return axios.get<TravelDto[]>(url);
 };
 
 // 📌 특정 여행 요청 상세 조회
 export const getTravelDetail = (travelId: number | string) => {
-    return axios.get<TravelDto>(`${API_BASE_URL}/travels/${travelId}`);
+    return axiosInstance.get<TravelDto>(`/travels/${travelId}`);
 };
 
 // 📌 여행 요청 생성
 export const createTravel = (data: TravelCreateRequest) => {
-    return axios.post(`${API_BASE_URL}/travels`, data);
+    return axiosInstance.post('/travels', data);
 };
 
 // 📌 내가 요청한 가이드 요청 내역 조회
 export const getGuideRequestsByRequester = () => {
-    return axios.get<GuideRequestDto[]>(`${API_BASE_URL}/members/me/matchings/requester`);
+    return axiosInstance.get<GuideRequestDto[]>('/members/me/matchings/requester');
 };
 
 // 📌 내가 작성한 여행 요청 글 조회
 export const getMyTravels = () => {
-    return axios.get<TravelDto[]>(`${API_BASE_URL}/members/me/travels`);
+    return axiosInstance.get<TravelDto[]>('/members/me/travels');
 };
 
 // 📌 가이드가 사용자의 여행 요청 글에 매칭 요청
 export const createTravelOffer = (travelId: number | string) => {
-    return axios.post(`${API_BASE_URL}/travel-offers/${travelId}`);
+    return axiosInstance.post(`/travel-offers/${travelId}`);
 };
 
 // 📌 가이드 요청 상태 업데이트 API
@@ -88,7 +95,7 @@ export const updateGuideRequestStatus = async (
     guideId: number,
     status: "ACCEPTED" | "REJECTED"
 ) => {
-    return axios.patch(`${API_BASE_URL}/guide-requests/${requestId}/match`, null, {
+    return axiosInstance.patch(`/guide-requests/${requestId}/match`, null, {
         params: {
             guideId: guideId,
             status: status,
