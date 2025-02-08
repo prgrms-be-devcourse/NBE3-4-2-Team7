@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,12 +45,12 @@ public class ChattingRoomController {
 		@ApiResponse(responseCode = "404", description = "존재하지 않는 유저입니다."),
 		@ApiResponse(responseCode = "409", description = "채팅방이 이미 존재"),
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
-	public ResponseEntity<?> createChatRoom(@RequestBody @Valid ChattingRoomRequestDto request,
+	public ResponseEntity<String> createChatRoom(@RequestBody @Valid ChattingRoomRequestDto request,
 		@AuthenticationPrincipal CustomOAuth2User user) {
 
 		chattingRoomService.create(user.getEmail(), request.receiver());
 
-		return ResponseEntity.status(HttpStatus.CREATED).body(null);
+		return ResponseEntity.status(HttpStatus.CREATED).body("채팅방이 생성되었습니다.");
 	}
 
 	@GetMapping("/my-list")
@@ -83,5 +84,18 @@ public class ChattingRoomController {
 		Page<ChattingResponseDto> messages = chattingRoomService.getChattingMessages(roomId,
 			PageRequest.of(page, size));
 		return ResponseEntity.ok(messages);
+	}
+
+	@PatchMapping("/{roomId}/leave")
+	@Operation(summary = "채팅방 나가기", description = "사용자가 채팅방을 나가는 API")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "채팅 내역 확인"),
+		@ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음"),
+		@ApiResponse(responseCode = "500", description = "서버 오류")})
+	public ResponseEntity<Void> leaveChatRoom(
+		@PathVariable String roomId,
+		@AuthenticationPrincipal CustomOAuth2User user) {
+		chattingRoomService.leaveChattingRoom(user.getEmail(), roomId);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
 	}
 }

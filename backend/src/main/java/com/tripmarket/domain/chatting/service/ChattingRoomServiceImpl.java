@@ -36,6 +36,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	private final MemberRepository memberRepository;
 	private final MessageRepository messageRepository;
 
+	@Override
 	@Transactional
 	public void create(String userEmail, String receiverEmail) {
 		Member user = findMember(userEmail);
@@ -69,6 +70,26 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		Page<Message> messages = messageRepository.findMessagesByRoom(roomId, pageable);
 
 		return getMessages(messages);
+	}
+
+	@Override
+	@Transactional
+	public void leaveChattingRoom(String userEmail, String roomId) {
+		ChattingRoom chattingRoom = findChattingRoom(roomId);
+		chattingRoom.getParticipants().removeIf(
+			participant -> participant.getMember().getEmail().equals(userEmail)
+		);
+
+		if (chattingRoom.getParticipants().isEmpty()) {
+			chattingRoom.deleteRoom();
+		}
+	}
+
+	private ChattingRoom findChattingRoom(String roomId) {
+		ChattingRoom chattingRoom = chattingRoomRepository.findById(roomId)
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAT_ROOM));
+		log.debug("채팅방을 찾았습니다 : {}", chattingRoom.getId());
+		return chattingRoom;
 	}
 
 	private Page<ChattingResponseDto> getMessages(Page<Message> messages) {
@@ -124,9 +145,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	}
 
 	private ChattingRoom addParticipants(Member user, Member receiver) {
-		ChattingRoom chattingRoom = ChattingRoom.builder()
-			.participants(new HashSet<>())
-			.build();
+		ChattingRoom chattingRoom = ChattingRoom.create();
 		Set<ChattingRoomParticipant> participants = new HashSet<>();
 		participants.add(new ChattingRoomParticipant(chattingRoom, user));
 		participants.add(new ChattingRoomParticipant(chattingRoom, receiver));

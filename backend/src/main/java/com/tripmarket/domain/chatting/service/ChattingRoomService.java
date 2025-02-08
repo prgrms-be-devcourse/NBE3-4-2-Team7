@@ -10,4 +10,5 @@ public interface ChattingRoomService {
 	void create(String userEmail, String targetEmail);
 	Page<ChattingRoomsResponseDto> findChattingRooms(String userEmail, String search, Pageable pageable);
 	Page<ChattingResponseDto> getChattingMessages(String roomId, Pageable pageable);
+	void leaveChattingRoom(String userEmail, String roomId);
 }
