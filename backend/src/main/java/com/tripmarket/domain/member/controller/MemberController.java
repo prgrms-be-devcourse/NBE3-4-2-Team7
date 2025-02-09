@@ -2,10 +2,12 @@ package com.tripmarket.domain.member.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripmarket.domain.match.dto.GuideRequestDto;
@@ -38,6 +40,16 @@ public class MemberController {
 		log.debug("OAuth2User: {}", oAuth2User);
 		Member member = memberService.getMemberById(oAuth2User.getId());
 		return ResponseEntity.ok(MemberResponseDTO.from(member));
+	}
+
+	/**
+	 * 유저가 자신의 가이드 프로필이 존재하는지 검사
+	 * */
+	@GetMapping("/me/guide")
+	@Operation(summary = "내 가이드 프로필이 존재하는지 검사")
+	@ResponseStatus(HttpStatus.OK)
+	public boolean hasGuideProfile(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		return memberService.hasGuideProfile(oAuth2User.getId());
 	}
 
 	@GetMapping("/me/matchings/requester")
