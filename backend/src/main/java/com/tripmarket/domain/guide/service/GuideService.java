@@ -47,19 +47,15 @@ public class GuideService {
 			throw new CustomException(ErrorCode.ALREADY_HAS_GUIDE_PROFILE);
 		}
 
-		// Member member = memberRepository.findById(createRequest.getUserId())
-		// 	.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 		Guide guide = GuideCreateRequest.toEntity(createRequest);
-
-		// TODO : 멤버 이름과 Guide 생성할때 이름이 다른 경우엔? (우선은 그냥 하기)
 
 		// 가이드 수정
 		guide.setMember(member);
-		guideRepository.save(guide);
 
 		// 멤버 수정
-		member.setGuide(guide);
-		member.setHasGuideProfile(true);
+		member.addGuideProfile(guide);
+
+		guideRepository.save(guide);
 		memberRepository.save(member);
 	}
 
@@ -69,12 +65,9 @@ public class GuideService {
 	}
 
 	@Transactional
-	public void update(GuideDto guideDto) {
-		Member member = memberRepository.findById(guideDto.getUserId())
-			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-		Guide guide = guideRepository.findById(member.getGuide().getId())
-			.orElseThrow(() -> new IllegalArgumentException("가이드를 찾을 수 없습니다."));
+	public void update(Long guideId, GuideDto guideDto) {
+		Guide guide = guideRepository.findById(guideId)
+			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_PROFILE_NOT_FOUND));
 
 		guide.updateGuide(guideDto);
 		guideRepository.save(guide);

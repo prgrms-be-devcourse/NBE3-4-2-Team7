@@ -70,6 +70,14 @@ public class Member extends BaseEntity {
 		this.imageUrl = imageUrl;
 	}
 
+	/**
+	 * 	멤버에 가이드 프로필 추가하는 함수
+	 * */
+	public void addGuideProfile(Guide guide) {
+		this.guide = guide;
+		this.hasGuideProfile = true;
+	}
+
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
