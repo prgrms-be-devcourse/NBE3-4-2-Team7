@@ -9,7 +9,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.chatting.entity.QChattingRoom;
@@ -28,18 +27,17 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 		QChattingRoomParticipant participant1 = new QChattingRoomParticipant("participant1");
 		QChattingRoomParticipant participant2 = new QChattingRoomParticipant("participant2");
 
-		BooleanExpression condition = (participant1.member.email.eq(email1).and(participant2.member.email.eq(email2)))
+		BooleanBuilder condition = new BooleanBuilder();
+		condition.and(chattingRoom.isDelete.isFalse());
+		condition.and(participant1.member.email.eq(email1).and(participant2.member.email.eq(email2)))
 			.or(participant1.member.email.eq(email2).and(participant2.member.email.eq(email1)));
 
 		return Optional.ofNullable(
 			queryFactory.selectFrom(chattingRoom)
 				.join(chattingRoom.participants, participant1)
 				.join(chattingRoom.participants, participant2)
-				.where(
-					chattingRoom.isDelete.isFalse(),
-					(participant1.member.email.eq(email1).and(participant2.member.email.eq(email2)))
-						.or(participant1.member.email.eq(email2).and(participant2.member.email.eq(email1)))
-				).fetchOne());
+				.where(condition)
+				.fetchOne());
 	}
 
 	@Override
@@ -48,7 +46,9 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 		QChattingRoomParticipant participant = QChattingRoomParticipant.chattingRoomParticipant;
 
 		BooleanBuilder condition = new BooleanBuilder();
+		condition.and(chattingRoom.isDelete.isFalse());
 		condition.and(participant.member.email.eq(userEmail));
+		condition.and(participant.isActive.isTrue());
 
 		if (search != null && !search.isEmpty()) {
 			condition.and(chattingRoom.participants.any().member.name.containsIgnoreCase(search));
