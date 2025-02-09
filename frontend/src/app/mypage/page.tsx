@@ -149,7 +149,7 @@ const MyPage = () => {
                             {/* 프로필 수정 버튼 추가 */}
                             <div className="flex justify-end mt-4">
                                 <button
-                                    onClick={() => router.push('/mypage/guide/edit')}
+                                    onClick={() => router.push('/mypage/guide/${user.id}')}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg
                                              hover:bg-blue-700 transition-colors duration-200
                                              flex items-center space-x-2 text-sm font-medium"
