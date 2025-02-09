@@ -43,7 +43,7 @@ public class GuideController {
 		return guideService.getGuideDto(id);
 	}
 
-	@Operation(summary = "유저가 자신의 가이드 정보 조회할때 (id 필요없이)")
+	@Operation(summary = "유저가 자신의 가이드 정보 조회할 때")
 	@GetMapping("/me")
 	@ResponseStatus(HttpStatus.OK)
 	public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {

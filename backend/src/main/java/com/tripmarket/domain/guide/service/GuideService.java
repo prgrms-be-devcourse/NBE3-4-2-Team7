@@ -31,10 +31,14 @@ public class GuideService {
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_NOT_FOUND));
 	}
 
+	/**
+	* 유저가 마이페이지에서 자신의 가이드 프로필 조회
+	* 
+	* */
 	public GuideDto getGuideDto(Long id) {
-		Guide guide = guideRepository.findById(id)
-			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_NOT_FOUND));
-		return GuideDto.fromEntity(guide);
+		Member member = memberRepository.findById(id)
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+		return GuideDto.fromEntity(member.getGuide());
 	}
 
 	@Transactional
@@ -65,10 +69,10 @@ public class GuideService {
 	}
 
 	@Transactional
-	public void update(Long guideId, GuideDto guideDto) {
-		Guide guide = guideRepository.findById(guideId)
-			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_PROFILE_NOT_FOUND));
-
+	public void update(Long memberId, GuideDto guideDto) {
+		Guide guide = memberRepository.findById(memberId)
+				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
+			.getGuide();
 		guide.updateGuide(guideDto);
 		guideRepository.save(guide);
 	}
