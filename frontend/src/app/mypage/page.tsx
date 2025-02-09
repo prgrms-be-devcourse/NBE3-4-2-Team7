@@ -5,13 +5,15 @@ import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { IoChevronBack, IoChevronDown, IoChevronUp } from "react-icons/io5";
-import {getGuideDetailByUser} from "@/app/guides/services/guideService";
+import { getGuideDetailByUser} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
+import {hasGuideProfile} from "@/app/members/services/memberService";
 
 const MyPage = () => {
     const { user } = useAuth();
     const router = useRouter();
     const [isGuideProfileOpen, setIsGuideProfileOpen] = useState(false);
+    const [isGuideProfileAvailable, setIsGuideProfileAvailable] = useState(false);
     const [guideData, setGuideData] = useState({});
 
 
@@ -25,7 +27,16 @@ const MyPage = () => {
             }
         };
 
+        const fetchHasGuideProfile = async () => {
+            try {
+                const response = await hasGuideProfile();
+                setIsGuideProfileAvailable(response.data);
+            } catch(error){
+                console.error('가이드 프로필 유무 조회 실패', error);
+            }
+        }
         fetchGuideDetail();
+        fetchHasGuideProfile()
     }, []);
 
     // 임시 더미 데이터
@@ -83,6 +94,11 @@ const MyPage = () => {
         console.log('Delete travel:', id);
     };
 
+    // 가이드 생성 페이지로 이동
+    const handleGuideCreate = () => {
+        router.push("/guides/register");
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-8">
             <div className="max-w-4xl mx-auto px-4">
@@ -121,53 +137,74 @@ const MyPage = () => {
                 </div>
 
                 {/* 가이드 프로필 섹션 */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <button 
-                        onClick={() => setIsGuideProfileOpen(!isGuideProfileOpen)}
-                        className="w-full flex items-center justify-between text-left"
-                    >
-                        <h2 className="text-2xl font-bold text-gray-800">가이드 프로필</h2>
-                        {isGuideProfileOpen ? 
-                            <IoChevronUp className="w-6 h-6 text-gray-600" /> : 
-                            <IoChevronDown className="w-6 h-6 text-gray-600" />
-                        }
-                    </button>
-                    
-                    {isGuideProfileOpen && (
-                        <div className="mt-6 space-y-4 animate-fade-in">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
-                                    <p className="text-gray-800">{guideData.activityRegion}</p>
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
-                                    <p className="text-gray-800">{guideData.languages}</p>
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
-                                    <p className="text-gray-800">{guideData.experienceYears}년</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
-                                <p className="text-gray-800">{guideData.introduction}</p>
-                            </div>
-                            
-                            {/* 프로필 수정 버튼 추가 */}
-                            <div className="flex justify-end mt-4">
-                                <button
-                                    onClick={() => router.push('/mypage/guide/edit')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                {isGuideProfileAvailable ? (
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <button
+                                onClick={() => setIsGuideProfileOpen(!isGuideProfileOpen)}
+                                className="w-full flex items-center justify-between text-left"
+                            >
+                                <h2 className="text-2xl font-bold text-gray-800">가이드 프로필</h2>
+                                {isGuideProfileOpen ?
+                                    <IoChevronUp className="w-6 h-6 text-gray-600"/> :
+                                    <IoChevronDown className="w-6 h-6 text-gray-600"/>
+                                }
+                            </button>
+                            {isGuideProfileOpen && (
+                                <div className="mt-6 space-y-4 animate-fade-in">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
+                                            <p className="text-gray-800">{guideData.activityRegion}</p>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
+                                            <p className="text-gray-800">{guideData.languages}</p>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
+                                            <p className="text-gray-800">{guideData.experienceYears}년</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
+                                        <p className="text-gray-800">{guideData.introduction}</p>
+                                    </div>
+
+                                    {/* 프로필 수정 버튼 추가 */}
+                                    <div className="flex justify-end mt-4">
+                                        <button
+                                            onClick={() => router.push('/mypage/guide/edit')}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg
                                              hover:bg-blue-700 transition-colors duration-200
                                              flex items-center space-x-2 text-sm font-medium"
-                                >
-                                    <span>프로필 수정</span>
-                                </button>
-                            </div>
+                                        >
+                                            <span>프로필 수정</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    ) :
+                    (
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-center">
+                                <button
+                                    style={{
+                                        backgroundColor: "#1E88E5",
+                                        color: "#FFFFFF",
+                                        padding: "0.75rem 1rem",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                        fontWeight: "bold"
+                                    }}
+                                    onClick={handleGuideCreate}
+                                >
+                                    가이드 프로필 생성
+                                </button>
+                        </div>
+                    )
+                }
+
 
                 {/* 여행 매칭 목록 섹션 */}
                 <div className="bg-white rounded-lg shadow-md p-8">
@@ -177,12 +214,14 @@ const MyPage = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b-2 border-gray-200">
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">No.</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청 명</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청상태</th>
-                                    <th className="px-6 py-3 text-center text-sm font-semibold text-gray-600">관리</th>
-                                </tr>
+                            <tr className="border-b-2 border-gray-200">
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">No.</th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청
+                                    명
+                                </th>
+                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청상태</th>
+                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-600">관리</th>
+                            </tr>
                             </thead>
                             <tbody>
                                 {dummyTravels.map((travel, index) => (
@@ -194,25 +233,31 @@ const MyPage = () => {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-center">
                                             <div className="flex justify-center gap-2">
-                                                <button 
+                                                <button
                                                     className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md
-                                                             hover:bg-blue-100 transition-colors duration-200
-                                                             flex items-center gap-1 text-sm font-medium"
+                                                     hover:bg-blue-100 transition-colors duration-200
+                                                     flex items-center gap-1 text-sm font-medium"
                                                     onClick={() => handleEdit(travel.id)}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
+                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round"
+                                                              strokeWidth={2}
+                                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                     </svg>
                                                     수정
                                                 </button>
-                                                <button 
+                                                <button
                                                     className="px-3 py-1.5 bg-red-50 text-red-600 rounded-md
-                                                             hover:bg-red-100 transition-colors duration-200
-                                                             flex items-center gap-1 text-sm font-medium"
+                                                     hover:bg-red-100 transition-colors duration-200
+                                                     flex items-center gap-1 text-sm font-medium"
                                                     onClick={() => handleDelete(travel.id)}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
+                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round"
+                                                              strokeWidth={2}
+                                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                     </svg>
                                                     삭제
                                                 </button>
