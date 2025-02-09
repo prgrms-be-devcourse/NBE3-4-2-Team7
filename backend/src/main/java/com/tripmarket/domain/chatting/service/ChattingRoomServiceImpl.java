@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,12 +42,21 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	public void create(String userEmail, String receiverEmail) {
 		Member user = findMember(userEmail);
 		Member receiver = findMember(receiverEmail);
-		validateChattingRoom(userEmail, receiverEmail);
-
-		ChattingRoom chattingRoom = addParticipants(user, receiver);
-
-		ChattingRoom save = chattingRoomRepository.save(chattingRoom);
-		log.debug("채팅방이 생성되었습니다. 채팅방 참여자: {}", String.join(", ", save.getParticipantEmails()));
+		Optional<ChattingRoom> optionalChattingRoom = chattingRoomRepository.findRoomByParticipants(userEmail,
+			receiverEmail);
+		if (optionalChattingRoom.isPresent()) {
+			ChattingRoom chattingRoom = optionalChattingRoom.get();
+			boolean isLeftRoom = updateActivate(chattingRoom);
+			if (isLeftRoom) {
+				log.debug("기존 채팅방에 연결되었습니다. 채팅방 ID: {}", chattingRoom.getId());
+				return;
+			}
+			throw new CustomException(ErrorCode.DUPLICATE_CHAT_ROOM);
+		} else {
+			ChattingRoom chattingRoom = addParticipants(user, receiver);
+			ChattingRoom save = chattingRoomRepository.save(chattingRoom);
+			log.debug("채팅방이 생성되었습니다. 채팅방 참여자: {}", String.join(", ", save.getParticipantEmails()));
+		}
 	}
 
 	@Override
@@ -76,13 +86,30 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	@Transactional
 	public void leaveChattingRoom(String userEmail, String roomId) {
 		ChattingRoom chattingRoom = findChattingRoom(roomId);
-		chattingRoom.getParticipants().removeIf(
-			participant -> participant.getMember().getEmail().equals(userEmail)
-		);
-
-		if (chattingRoom.getParticipants().isEmpty()) {
+		updateActivateParticipant(userEmail, chattingRoom);
+		boolean checkParticipants = chattingRoom.getParticipants().stream()
+			.noneMatch(ChattingRoomParticipant::isActive);
+		if (checkParticipants) {
 			chattingRoom.deleteRoom();
+			chattingRoom.getParticipants().clear();
 		}
+	}
+
+	// 채팅방 한명만 나갔을경우 다시 기존방에 들어가는 메서드
+	private static boolean updateActivate(ChattingRoom chattingRoom) {
+		return chattingRoom.getParticipants().stream()
+			.filter(participant -> !participant.isActive())
+			.peek(ChattingRoomParticipant::updateActive)
+			.findAny()
+			.isPresent();
+	}
+
+	//채팅방 나갈때 쓰이는 메서드
+	private static void updateActivateParticipant(String userEmail, ChattingRoom chattingRoom) {
+		chattingRoom.getParticipants().stream()
+			.filter(participant -> participant.getMember().getEmail().equals(userEmail))
+			.findFirst()
+			.ifPresent(ChattingRoomParticipant::updateActive);
 	}
 
 	private ChattingRoom findChattingRoom(String roomId) {
@@ -144,19 +171,13 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		return chattingRoomRepository.findChattingRooms(userEmail, search, pageable);
 	}
 
-	private ChattingRoom addParticipants(Member user, Member receiver) {
+	private ChattingRoom addParticipants(Member sender, Member receiver) {
 		ChattingRoom chattingRoom = ChattingRoom.create();
 		Set<ChattingRoomParticipant> participants = new HashSet<>();
-		participants.add(new ChattingRoomParticipant(chattingRoom, user));
-		participants.add(new ChattingRoomParticipant(chattingRoom, receiver));
+		participants.add(ChattingRoomParticipant.create(chattingRoom, sender));
+		participants.add(ChattingRoomParticipant.create(chattingRoom, receiver));
 		chattingRoom.getParticipants().addAll(participants);
 		return chattingRoom;
-	}
-
-	private void validateChattingRoom(String userEmail, String targetEmail) {
-		if (chattingRoomRepository.findRoomByParticipants(userEmail, targetEmail)) {
-			throw new CustomException(ErrorCode.DUPLICATE_CHAT_ROOM);
-		}
 	}
 
 	private Member findMember(String email) {
