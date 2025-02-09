@@ -12,3 +12,10 @@ export const convertToGuideDto = (formData: any): Partial<GuideDto> => {
     };
     return dto;
 }
+
+// 백엔드에서 전달받은 GuideDto 를 guideData로 변환
+export function convertFromGuideDto(guide: GuideDto): any {
+    return {
+        ...guide,
+    };
+}

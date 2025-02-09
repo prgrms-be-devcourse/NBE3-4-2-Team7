@@ -1,15 +1,32 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { IoChevronBack, IoChevronDown, IoChevronUp } from "react-icons/io5";
+import {getGuideDetailByUser} from "@/app/guides/services/guideService";
+import {convertFromGuideDto} from "@/app/utils/converters";
 
 const MyPage = () => {
     const { user } = useAuth();
     const router = useRouter();
     const [isGuideProfileOpen, setIsGuideProfileOpen] = useState(false);
+    const [guideData, setGuideData] = useState({});
+
+
+    useEffect(() => {
+        const fetchGuideDetail = async () => {
+            try {
+                const guideDetail = await getGuideDetailByUser();
+                setGuideData(convertFromGuideDto(guideDetail.data));
+            } catch (error) {
+                console.error('가이드 상세 정보 조회 실패:', error);
+            }
+        };
+
+        fetchGuideDetail();
+    }, []);
 
     // 임시 더미 데이터
     const dummyTravels = [
@@ -29,15 +46,6 @@ const MyPage = () => {
             status: "MATCHED"
         }
     ];
-
-    // 임시 가이드 데이터
-    const guideData = {
-        name: "홍길동",
-        activityRegion: "서울, 부산",
-        introduction: "안녕하세요. 한국의 아름다움을 전달하는 가이드입니다.",
-        languages: "한국어, 영어, 일본어",
-        experienceYears: 5
-    };
 
     const getStatusText = (status: string) => {
         switch (status) {
@@ -149,7 +157,7 @@ const MyPage = () => {
                             {/* 프로필 수정 버튼 추가 */}
                             <div className="flex justify-end mt-4">
                                 <button
-                                    onClick={() => router.push('/mypage/guide/${user.id}')}
+                                    onClick={() => router.push('/mypage/guide/edit')}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg
                                              hover:bg-blue-700 transition-colors duration-200
                                              flex items-center space-x-2 text-sm font-medium"
