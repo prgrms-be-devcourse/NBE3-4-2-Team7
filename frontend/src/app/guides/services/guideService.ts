@@ -25,7 +25,7 @@ export const getGuideDetail = (guideId: number) => {
 };
 
 // 가이드 추가
-export const createGuide = (data: GuideDto) => {
+export const createGuide = (data: Partial<GuideDto>) => {
     return axios.post('/guides', data);
 };
 
