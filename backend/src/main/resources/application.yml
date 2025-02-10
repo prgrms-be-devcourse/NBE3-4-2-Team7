@@ -2,6 +2,7 @@ logging:
   level:
     org.springframework.messaging: DEBUG
     org.springframework.web: DEBUG
+    #com.tripmarket: DEBUG
 server:
   port: 8080
 
