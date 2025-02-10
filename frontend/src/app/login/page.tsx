@@ -16,6 +16,9 @@ const LoginPage: React.FC = () => {
         authService.loginWithGoogle();
     };
 
+    const handleGithubLogin = () => {
+        authService.loginWithGithub();
+    };
 
     const handleGuestAccess = () => {
         router.push('/travels');
@@ -32,31 +35,44 @@ const LoginPage: React.FC = () => {
                         onClick={handleKakaoLogin}
                         style={styles.loginButton}
                     >
-                        <Image 
+                        <Image
                             src="/images/kakao-login-logo.png"
-                            alt="카카오 로그인" 
+                            alt="카카오 로그인"
                             width={300}
                             height={45}
-                            priority
+                            style={{ objectFit: "contain" }}
                         />
                     </button>
                     <button
                         onClick={handleGoogleLogin}
                         style={styles.loginButton}
                     >
-                        <Image 
+                        <Image
                             src="/images/google-login-logo.png"
-                            alt="구글 로그인" 
+                            alt="구글 로그인"
                             width={300}
                             height={45}
+                            style={{ objectFit: "contain" }}
+                        />
+                    </button>
+                    <button
+                        onClick={handleGithubLogin}
+                        style={styles.githubButton}
+                    >
+                        <Image
+                            src="/images/github-mark-white.png"
+                            alt=" GitHub로 시작하기 "
+                            width={24}
+                            height={24}
                             priority
                         />
+                        <span style={styles.githubText}>GitHub로 시작하기</span>
                     </button>
                     <button
                         onClick={handleGuestAccess}
                         style={styles.guestButton}
                     >
-                        비회원으로 계속하기
+                        비회원으로 시작하기
                     </button>
                 </div>
             </div>
@@ -103,12 +119,61 @@ const styles: { [key: string]: React.CSSProperties } = {
         gap: "1rem",
         marginTop: "1rem",
     },
-    loginButton: {
+    /* 공통 버튼 스타일 */
+    buttonContent: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+    },
+    buttonText: {
+        fontSize: "16px",
+        fontWeight: "bold",
+    },
+    kakaoButton: {
+        width: "300px",
+        height: "45px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#FEE500",
         border: "none",
-        background: "none",
-        padding: 0,
+        borderRadius: "4px",
+        color: "#000",
+        fontSize: "16px",
+        fontWeight: "bold",
         cursor: "pointer",
-        transition: "transform 0.2s ease",
+        transition: "opacity 0.2s ease",
+    },
+    googleButton: {
+        width: "300px",
+        height: "45px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#FFFFFF",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        color: "#000",
+        fontSize: "16px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        transition: "opacity 0.2s ease",
+    },
+    githubButton: {
+        width: "300px",
+        height: "45px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#333",
+        border: "none",
+        borderRadius: "4px",
+        color: "#FFF",
+        fontSize: "16px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        transition: "opacity 0.2s ease",
     },
     guestButton: {
         width: "300px",
@@ -124,7 +189,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         transition: "all 0.2s ease",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
     },
 };
 
