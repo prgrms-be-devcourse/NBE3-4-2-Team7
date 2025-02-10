@@ -52,10 +52,12 @@ public class TravelOfferController {
 
 	@Operation(summary = "가이더가 자기 자신의 요청 글에 매칭을 보내는지 검사")
 	@GetMapping("/{travelId}")
-	public boolean validateSelfOffer(
+	public ResponseEntity<Boolean> validateSelfOffer(
 		@PathVariable(name = "travelId") Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
-	){
-		return Objects.equals(customOAuth2User.getId(), travelId) ;
+	) {
+		boolean isSelfOffer = Objects.equals(customOAuth2User.getId(), travelId);
+		return ResponseEntity.ok(isSelfOffer);
 	}
+
 }

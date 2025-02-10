@@ -3,10 +3,14 @@ package com.tripmarket.domain.member.entity;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
@@ -20,6 +24,11 @@ import lombok.Setter;
 @Entity(name = "member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 	@Column(nullable = false, length = 50)
 	private String name; // 회원 이름
@@ -43,7 +52,6 @@ public class Member extends BaseEntity {
 	private String providerId; // OAuth2 회원 고유 ID
 
 	private String imageUrl;
-
 
 	private String matchingList;
 
@@ -81,7 +89,7 @@ public class Member extends BaseEntity {
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
-       
+
 	public Member(String name, String email, String password, Role role, boolean hasGuideProfile) {
 		this.name = name;
 		this.email = email;
