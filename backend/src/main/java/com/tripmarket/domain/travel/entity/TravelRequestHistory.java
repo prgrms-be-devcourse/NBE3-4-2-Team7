@@ -1,5 +1,6 @@
 package com.tripmarket.domain.travel.entity;
 
+import com.tripmarket.domain.travel.enums.TravelStatus;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,7 +33,7 @@ public class TravelRequestHistory extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private Travel.Status status; // 변경된 상태 (TravelRequest.TravelRequestStatus Enum 사용)
+	private TravelStatus status; // 변경된 상태 (TravelRequest.TravelRequestStatus Enum 사용)
 
 	@Column(nullable = false)
 	private String description; // 상태 변경에 대한 상세 메시지

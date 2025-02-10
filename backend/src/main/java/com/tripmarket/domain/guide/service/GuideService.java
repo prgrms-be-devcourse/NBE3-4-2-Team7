@@ -2,6 +2,7 @@ package com.tripmarket.domain.guide.service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +73,7 @@ public class GuideService {
 	@Transactional
 	public void update(Long memberId, GuideDto guideDto) {
 		Guide guide = memberRepository.findById(memberId)
-				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
 			.getGuide();
 		guide.updateGuide(guideDto);
 		guideRepository.save(guide);
@@ -100,6 +101,10 @@ public class GuideService {
 	public boolean validateMyGuide(Long memberId, Long guideId) {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-		return Objects.equals(member.getGuide().getId(), guideId);
+
+		return Optional.ofNullable(member.getGuide())
+			.map(guide -> Objects.equals(guide.getId(), guideId))
+			.orElse(false);
 	}
+
 }
