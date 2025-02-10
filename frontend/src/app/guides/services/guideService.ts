@@ -55,3 +55,8 @@ export const updateGuideRequestStatus = (requestId: number, guideId: number, sta
         },
     });
 };
+
+// 내 가이드 프로필인지 검증
+export const verifyMyGuide = (guideId: number) => {
+    return axios.get(`/guides/${guideId}/verify`);
+}

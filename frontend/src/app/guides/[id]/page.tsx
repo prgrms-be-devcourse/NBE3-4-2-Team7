@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import Link from "next/link";
-import {getGuideDetail, GuideDto} from "../services/guideService";
+import {getGuideDetail, GuideDto, verifyMyGuide} from "../services/guideService";
 import {getMyTravels, TravelDto} from "../../travel/services/travelService";
 import axios from "axios";
 
@@ -15,6 +15,7 @@ const GuideDetailPage: React.FC = () => {
     const [travels, setTravels] = useState<TravelDto[]>([]);
     const [selectedTravelId, setSelectedTravelId] = useState<number | null>(null);
     const [requestStatus, setRequestStatus] = useState<string | null>(null);
+    const [isMyGuide, setIsMyGuide] = useState<boolean | null>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -28,6 +29,11 @@ const GuideDetailPage: React.FC = () => {
         getMyTravels()
             .then((response) => setTravels(response.data))
             .catch(() => console.error("여행 목록을 불러오는 데 실패했습니다."));
+
+        // 셀프 요청 검증
+        verifyMyGuide(Number(id))
+            .then((response) => setIsMyGuide(response.data))
+            .catch(() => console.error("가이드 검증에 실패했습니다."));
     }, [id]);
 
     // 가이드 요청 보내기
@@ -91,16 +97,17 @@ const GuideDetailPage: React.FC = () => {
 
                         )}
 
-                        <div style={styles.buttonContainer}>
-                            <button
-                                style={styles.contactButton}
-                                onClick={handleGuideRequest}
-                                disabled={travels.length === 0}
-                            >
-                                가이드 요청하기
-                            </button>
-                        </div>
-
+                        {!isMyGuide && (
+                            <div style={styles.buttonContainer}>
+                                <button
+                                    style={styles.contactButton}
+                                    onClick={handleGuideRequest}
+                                    disabled={travels.length === 0}
+                                >
+                                    가이드 요청하기
+                                </button>
+                            </div>
+                        )}
                         {requestStatus && <p style={styles.statusMessage}>{requestStatus}</p>}
                     </>
                 ) : (
