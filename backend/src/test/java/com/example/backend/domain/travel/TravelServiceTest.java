@@ -24,7 +24,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.member.entity.Role;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.domain.travel.dto.request.TravelCreateRequest;
@@ -67,7 +66,7 @@ class TravelServiceTest {
 			"파리 야경을 중심으로 여행하고 싶어요."
 		);
 
-		Member mockMember = new Member("asd@naver.com", "testPassword", "John Doe", Role.USER);
+		Member mockMember = new Member("힐링","asd@naver.com", "testPassword", "John Doe", null);
 		TravelCategory mockCategory = new TravelCategory("힐링");
 		Travel mockTravel = request.toEntity(mockMember, mockCategory);
 
@@ -135,7 +134,7 @@ class TravelServiceTest {
 			.content("파리 야경을 중심으로 여행하고 싶어요.")
 			.build();
 
-		Member mockMember = new Member("asd@naver.com", "testPassword", "John Doe", Role.USER);
+		Member mockMember = new Member("힐링","asd@naver.com", "testPassword", "John Doe", null);
 
 		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(travelCategoryService.getTravelCategory(invalidCategoryId))
@@ -294,7 +293,7 @@ class TravelServiceTest {
 		Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
 		List<Travel> mockTravelList = Arrays.asList(
 			Travel.builder()
-				.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+				.user(new Member("힐링","asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("힐링"))
 				.city("Paris")
 				.places("Eiffel Tower, Louvre Museum")
@@ -304,7 +303,7 @@ class TravelServiceTest {
 				.content("파리 야경 여행")
 				.build(),
 			Travel.builder()
-				.user(new Member("test2@example.com", "password", "Jane Doe", Role.USER))
+				.user(new Member("힐링","asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("자연"))
 				.places("Gyeongbokgung, Namsan Tower")
 				.participants(2)
@@ -335,7 +334,7 @@ class TravelServiceTest {
 		Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
 		List<Travel> mockTravelList = Collections.singletonList(
 			Travel.builder()
-				.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+				.user(new Member("힐링","asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("힐링"))
 				.city("Paris")
 				.places("Eiffel Tower, Louvre Museum")
@@ -385,7 +384,7 @@ class TravelServiceTest {
 		LocalDateTime now = LocalDateTime.now();
 
 		Travel mockTravel = Travel.builder()
-			.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+			.user(new Member("힐링","asd@naver.com", "testPassword", "John Doe", null))
 			.category(new TravelCategory("힐링"))
 			.city("Paris")
 			.places("Eiffel Tower, Louvre Museum")

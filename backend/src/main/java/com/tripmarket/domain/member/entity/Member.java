@@ -44,6 +44,9 @@ public class Member extends BaseEntity {
 
 	private String imageUrl;
 
+
+	private String matchingList;
+
 	@OneToOne
 	@JoinColumn(name = "guide_id")
 	private Guide guide;
@@ -67,7 +70,28 @@ public class Member extends BaseEntity {
 		this.imageUrl = imageUrl;
 	}
 
+	/**
+	 * 	멤버에 가이드 프로필 추가하는 함수
+	 * */
+	public void addGuideProfile(Guide guide) {
+		this.guide = guide;
+		this.hasGuideProfile = true;
+	}
+
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
+       
+	public Member(String name, String email, String password, Role role, boolean hasGuideProfile) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = role;
+		this.hasGuideProfile = hasGuideProfile;
+	}
+
+	public boolean isAdmin() {
+		return this.role == Role.ROLE_ADMIN;
+	}
+
 }

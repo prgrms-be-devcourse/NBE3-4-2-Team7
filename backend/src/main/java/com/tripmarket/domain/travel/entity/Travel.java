@@ -60,13 +60,14 @@ public class Travel extends BaseEntity {
 	private Status status;
 
 	@Column(nullable = false)
+	@Builder.Default
 	private boolean isDeleted = false;
 
 	public enum Status {
 		WAITING_FOR_MATCHING,
 		IN_PROGRESS,
 		MATCHED,
-		;
+		COMPLETED;
 	}
 
 	@Builder
@@ -103,4 +104,9 @@ public class Travel extends BaseEntity {
 
 		this.status = status;
 	}
+
+	public boolean isCompleted() {
+		return this.status == Status.COMPLETED;
+	}
+
 }

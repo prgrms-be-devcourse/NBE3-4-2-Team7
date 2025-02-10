@@ -5,11 +5,15 @@ import java.util.Objects;
 
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.review.entity.Review;
-import com.tripmarket.global.jpa.entity.BaseEntity;
 
+import com.tripmarket.global.jpa.entity.BaseTimeEntity;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Max;
@@ -26,7 +30,12 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Guide extends BaseEntity {
+public class Guide extends BaseTimeEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 	@OneToOne(mappedBy = "guide")
 	private Member member; // 가이드와 연결된 회원 정보
@@ -56,10 +65,6 @@ public class Guide extends BaseEntity {
 	@Builder.Default
 	private boolean isDeleted = false;
 
-	// 가이드의 리뷰 리스트
-	@OneToMany(mappedBy = "guide")
-	List<Review> reviews;
-
 	// 리뷰 통계 테이블
 	// @OneToOne
 	// GuideReviewStats guideReviewStats;
@@ -85,7 +90,7 @@ public class Guide extends BaseEntity {
 		}
 		Guide guide = (Guide)o;
 		return isDeleted == guide.isDeleted
-			&& Objects.equals(super.getId(), guide.getId())
+			&& Objects.equals(id, guide.getId())
 			&& Objects.equals(name, guide.name)
 			&& Objects.equals(activityRegion, guide.activityRegion)
 			&& Objects.equals(introduction, guide.introduction)

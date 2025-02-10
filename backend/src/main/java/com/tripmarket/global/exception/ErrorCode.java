@@ -38,7 +38,23 @@ public enum ErrorCode {
 	SELF_RESPONSE_NOT_ALLOWED(BAD_REQUEST, "본인이 작성한 여행 요청 글에는 매칭 요청할 수 없습니다."),
 	DUPLICATE_TRAVEL_OFFER(BAD_REQUEST, "해당 가이더는 해당 사용자에게 이미 요청을 보냈습니다. 중복해서 요청할 수 없습니다"),
 	TRAVEL_OFFER_NOT_FOUND(NOT_FOUND, "여행 제안 내역이 존재하지 않습니다."),
-	MEMBER_ACCESS_DENIED(FORBIDDEN, "현재 사용자는 매칭 요청을 당한 사용자가 아닙니다.");
+	MEMBER_ACCESS_DENIED(FORBIDDEN, "현재 사용자는 매칭 요청을 당한 사용자가 아닙니다."),
+
+	//REVIEW
+	REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰가 존재하지 않습니다."),
+	REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "리뷰 작성자만 수정 또는 삭제할 수 있습니다."),
+	REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "해당 여행에 이미 리뷰를 작성했습니다."),
+	INVALID_REVIEW_SCORE(HttpStatus.BAD_REQUEST, "리뷰 점수는 1.0에서 5.0 사이여야 합니다."),
+	REVIEW_DELETION_FORBIDDEN(HttpStatus.FORBIDDEN, "리뷰를 삭제할 권한이 없습니다."),
+	REVIEW_UPDATE_FORBIDDEN(HttpStatus.FORBIDDEN, "리뷰를 수정할 권한이 없습니다."),
+	REVIEW_CREATION_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "여행이 완료되지 않아 리뷰를 작성할 수 없습니다."),
+	REVIEW_DELETE_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "리뷰 삭제 권한이 없습니다."),
+	REVIEW_UPDATE_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "리뷰 수정 권한이 없습니다."),
+	REVIEW_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 리뷰 요청입니다."),
+	REVIEW_ALREADY_DELETED(HttpStatus.GONE, "삭제된 리뷰입니다."),
+	REVIEW_GUIDE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가이드에 대한 리뷰가 존재하지 않습니다."),
+	REVIEW_TRAVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 여행에 대한 리뷰가 존재하지 않습니다.");
+
 
 	private final HttpStatus httpStatus;
 	private final String message;

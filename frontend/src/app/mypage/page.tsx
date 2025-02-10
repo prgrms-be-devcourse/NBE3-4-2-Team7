@@ -17,6 +17,8 @@ import {
     TravelOfferDto,
     updateTravelOfferStatus,
 } from "../travelOffers/services/travelOfferService";
+import {getGuideDetailByUser, GuideDto} from "@/app/guides/services/guideService";
+import {convertFromGuideDto} from "@/app/utils/converters";
 
 const MyPage: React.FC = () => {
     const [userInfo, setUserInfo] = useState<MemberResponseDTO | null>(null);
@@ -27,6 +29,7 @@ const MyPage: React.FC = () => {
     const [travelOffers, setTravelOffers] = useState<TravelOfferDto[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
+    const [guideProfile, setGuideProfile] = useState<GuideDto>({});
     const router = useRouter();
 
     useEffect(() => {
@@ -40,6 +43,7 @@ const MyPage: React.FC = () => {
                     getTravelOffersForUser(), // 사용자에게 온 여행 제안 요청 API 추가
                     userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
                     userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getGuideDetailByUser() : Promise.resolve({data: []}),
                 ]);
             })
             .then(([
@@ -48,18 +52,31 @@ const MyPage: React.FC = () => {
                        travelOffersForUserResponse,
                        guideRequestsByGuideResponse,
                        travelOffersResponse,
+                       guideProfileResponse
                    ]) => {
                 setGuideRequests(guideRequestsResponse.data);
                 setMyTravels(myTravelsResponse.data);
                 setTravelOffersForUser(travelOffersForUserResponse.data);
                 setGuideRequestsByGuide(guideRequestsByGuideResponse.data);
                 setTravelOffers(travelOffersResponse.data);
+
+                if (guideProfileResponse?.data) {
+                    setGuideProfile(convertFromGuideDto(guideProfileResponse.data));
+                }
             })
             .catch(() => {
                 setError("데이터를 불러오는 데 실패했습니다.");
             })
             .finally(() => setLoading(false));
     }, []);
+
+    // 가이드 생성 페이지로 이동
+    const handleGuideCreate = () => {
+        if(userInfo.hasGuideProfile){
+            return;
+        }
+        router.push("/guides/register");
+    }
 
     const handleViewProfile = (guideId: number) => {
         router.push(`/guides/${guideId}`);
@@ -126,6 +143,58 @@ const MyPage: React.FC = () => {
                 )}
             </div>
 
+            <div style={styles.mainContent}>
+                {/* 가이드 프로필 섹션 */}
+
+                <div style={styles.sectionBox}>
+                    <h2 style={styles.sectionTitle}>👤 내 가이드 정보</h2>
+                    {userInfo.hasGuideProfile ? (
+                        <div className="mt-6 space-y-4 animate-fade-in">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
+                                    <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
+                                    <p className="text-gray-800">{guideProfile.languages}</p>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
+                                    <p className="text-gray-800">{guideProfile.experienceYears}년</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
+                                <p className="text-gray-800">{guideProfile.introduction}</p>
+                            </div>
+
+                            {/* 프로필 수정 버튼 추가 */}
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={() => router.push('/mypage/guide/edit')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                                         hover:bg-blue-700 transition-colors duration-200
+                                         flex items-center space-x-2 text-sm font-medium"
+                                >
+                                    <span>프로필 수정</span>
+                                </button>
+                            </div>
+                        </div>
+                        ) :
+                        (
+                            <div style={styles.guideSectionBox}>
+                                <button
+                                    style={styles.viewProfileButton}
+                                    onClick={() => handleGuideCreate()}
+                                >
+                                    👤 가이드 프로필 생성
+                                </button>
+                            </div>
+                        )
+                    }
+                </div>
+            </div>
 
             <div style={styles.mainContent}>
                 {/* 사용자 섹션 */}
@@ -356,6 +425,16 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: "12px",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
     },
+    guideSectionBox: {
+        marginBottom: "2rem",
+        backgroundColor: "#FFFFFF",
+        padding: "1.5rem",
+        borderRadius: "12px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
     sectionTitle: {
         fontSize: "1.8rem",
         fontWeight: "bold",
@@ -426,17 +505,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: "none",
         cursor: "pointer",
     },
-
-    // mainContent: {display: "flex", gap: "2rem"},
-    // userSection: {flex: 1, backgroundColor: "#FFF", padding: "1.5rem"},
-    // guideSection: {flex: 1, backgroundColor: "#FFF", padding: "1.5rem"},
-    // sectionTitle: {fontSize: "1.5rem", fontWeight: "bold"},
-    // card: {backgroundColor: "#FFF", padding: "1rem", marginBottom: "1rem"},
-    // cardTitle: {fontSize: "1.2rem", fontWeight: "bold"},
-    // cardContent: {marginBottom: "0.5rem"},
-    // acceptButton: {backgroundColor: "#4CAF50", color: "white", padding: "0.5rem"},
-    // rejectButton: {backgroundColor: "#F44336", color: "white", padding: "0.5rem"},
-    // noRequests: {color: "#757575"},
 };
 
 export default MyPage;

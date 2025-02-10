@@ -3,7 +3,8 @@
 import React, {useState} from "react";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
+import {createGuide} from "@/app/guides/services/guideService";
+import { convertToGuideDto } from "@/app/utils/converters";
 
 const GuideRegisterPage: React.FC = () => {
     const router = useRouter();
@@ -23,12 +24,7 @@ const GuideRegisterPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            // 가이더 생성 API 호출
-            await axios.post("/guides", formData, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`, // JWT 토큰 포함
-                },
-            });
+            await createGuide(convertToGuideDto(formData));
             alert("가이더 등록이 완료되었습니다!");
             router.push("/travels"); // 리다이렉트 경로 변경
         } catch (error: any) {
