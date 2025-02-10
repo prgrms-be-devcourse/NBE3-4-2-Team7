@@ -1,5 +1,7 @@
 package com.tripmarket.global.handler;
 
+import java.util.Objects;
+
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -30,10 +32,9 @@ public class StompHandler implements ChannelInterceptor {
 
 		StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
-		if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-			handleConnect(accessor);
-		} else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
-			handleDisconnect(accessor);
+		switch (Objects.requireNonNull(accessor.getCommand())) {
+			case CONNECT -> handleConnect(accessor);
+			case DISCONNECT -> handleDisconnect(accessor);
 		}
 
 		return message;
