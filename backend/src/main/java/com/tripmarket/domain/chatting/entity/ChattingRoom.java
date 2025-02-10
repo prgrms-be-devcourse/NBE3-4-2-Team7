@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.hibernate.annotations.UuidGenerator;
 
-import com.tripmarket.global.jpa.entity.BaseTimeEntity;
+import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChattingRoom extends BaseTimeEntity {
+public class ChattingRoom extends BaseEntity {
 
 	@Id
 	@UuidGenerator

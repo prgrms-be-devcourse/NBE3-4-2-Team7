@@ -86,9 +86,9 @@ public class GuideService {
 
 	public void delete(Long id) {
 		// 가이드 가져와서 상태 업데이트
-		GuideDto guideDto = getGuideDto(id);
-		guideDto.setDeleted(true);
-		guideRepository.save(GuideDto.toEntity(guideDto));
+		Guide guide = getGuide(id);
+		guide.setDeleted(true);
+		guideRepository.save(guide);
 	}
 
 	public List<Review> getAllReviews(Long id) {
