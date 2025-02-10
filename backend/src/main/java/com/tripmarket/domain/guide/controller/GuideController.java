@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -46,9 +47,8 @@ public class GuideController {
 	public GuideProfileDto getGuideProfile(@PathVariable(name = "id") Long id) {
 		return guideService.getGuideProfile(id);
 	}
-       
-       // TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함. 
 
+	// TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함.
 
 	// public GuideDto getGuideById(@PathVariable(name="id") Long id) {
 	// 	return guideService.getGuideDto(id);
@@ -63,8 +63,7 @@ public class GuideController {
 	public GuideProfileDto getMyGuideProfile(@AuthenticationPrincipal CustomOAuth2User user) {
 		return guideService.getMyGuideProfile(user.getId());
 	}
-       // TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함. 
-
+	// TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함.
 
 	// public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
 	// 	return guideService.getGuideByMember(user.getId());
