@@ -1,6 +1,7 @@
 package com.tripmarket.domain.guide.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,35 +48,32 @@ public class GuideService {
 			throw new CustomException(ErrorCode.ALREADY_HAS_GUIDE_PROFILE);
 		}
 
-		// Member member = memberRepository.findById(createRequest.getUserId())
-		// 	.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 		Guide guide = GuideCreateRequest.toEntity(createRequest);
-
-		// TODO : 멤버 이름과 Guide 생성할때 이름이 다른 경우엔? (우선은 그냥 하기)
 
 		// 가이드 수정
 		guide.setMember(member);
-		guideRepository.save(guide);
 
 		// 멤버 수정
-		member.setGuide(guide);
-		member.setHasGuideProfile(true);
+		member.addGuideProfile(guide);
+
+		guideRepository.save(guide);
 		memberRepository.save(member);
 	}
 
-	public Guide getGuideByMember(Long userId) {
-		return guideRepository.findByMemberId(userId)
+	/**
+	 * 유저가 마이페이지에서 자신의 가이드 프로필 조회
+	 * */
+	public GuideDto getGuideByMember(Long userId) {
+		Guide guide = guideRepository.findByMemberId(userId)
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_PROFILE_NOT_FOUND));
+		return GuideDto.fromEntity(guide);
 	}
 
 	@Transactional
-	public void update(GuideDto guideDto) {
-		Member member = memberRepository.findById(guideDto.getUserId())
-			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-		Guide guide = guideRepository.findById(member.getGuide().getId())
-			.orElseThrow(() -> new IllegalArgumentException("가이드를 찾을 수 없습니다."));
-
+	public void update(Long memberId, GuideDto guideDto) {
+		Guide guide = memberRepository.findById(memberId)
+				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
+			.getGuide();
 		guide.updateGuide(guideDto);
 		guideRepository.save(guide);
 	}
@@ -97,5 +95,11 @@ public class GuideService {
 		Guide guide = GuideDto.toEntity(getGuideDto(id));
 		// TODO : review repository 에서 리뷰 전체 가져오기 ( 패치 사이즈 몇?)
 		return List.of();
+	}
+
+	public boolean validateMyGuide(Long memberId, Long guideId) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+		return Objects.equals(member.getGuide().getId(), guideId);
 	}
 }

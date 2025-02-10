@@ -3,6 +3,7 @@ package com.tripmarket.domain.match.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.guide.service.GuideService;
 import com.tripmarket.domain.match.entity.TravelOffer;
@@ -28,7 +29,7 @@ public class TravelOfferService {
 	@Transactional
 	public void createTravelOffer(String email, Long travelId) {
 		Member member = memberService.getMemberByEmail(email);
-		Guide guide = guideService.getGuideByMember(member.getId());
+		Guide guide = GuideDto.toEntity(guideService.getGuideByMember(member.getId()));
 		Travel travel = travelService.getTravel(travelId);
 		validateSelfResponse(guide, travel);
 		validateDuplicateTravelOffer(guide, travelId);

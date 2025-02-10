@@ -36,18 +36,34 @@ public class GuideController {
 		this.guideService = guideService;
 	}
 
+	/**
+	 * 가이드 리스트에서 조회하는 경우
+	 * */
 	@Operation(summary = "가이드 상세 조회")
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public GuideDto getGuideById(@PathVariable(name = "id") Long id) {
+	public GuideDto getGuideById(@PathVariable(name="id") Long id) {
 		return guideService.getGuideDto(id);
 	}
+
+	/**
+	 * 마이페이지에서 조회하는 경우
+	 * */
+	@Operation(summary = "유저가 자신의 가이드 정보 조회할 때")
+	@GetMapping("/me")
+	@ResponseStatus(HttpStatus.OK)
+	public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
+		return guideService.getGuideByMember(user.getId());
+	}
+
 
 	@Operation(summary = "가이드 생성")
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public void createGuide(@Valid @RequestBody GuideCreateRequest guideDto,
-		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
+	public void createGuide(
+		@Valid @RequestBody GuideCreateRequest guideDto,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+	) {
 		guideService.create(guideDto, customOAuth2User.getEmail());
 	}
 
@@ -61,8 +77,11 @@ public class GuideController {
 	@Operation(summary = "가이드 수정")
 	@PatchMapping
 	@ResponseStatus(HttpStatus.OK)
-	public void updateGuide(@Valid @RequestBody GuideDto guideDto) {
-		guideService.update(guideDto);
+	public void updateGuide(
+		@Valid @RequestBody GuideDto guideDto,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+	) {
+		guideService.update(customOAuth2User.getId(), guideDto);
 	}
 
 	@Operation(summary = "가이드 탈퇴")
@@ -80,4 +99,16 @@ public class GuideController {
 		guideService.getAllReviews(id);
 	}
 
+	/**
+	 * 가이드 리스트에서 상세조회할때, 내 가이드 프로필인지 검사
+	 * */
+	@Operation(summary = "내 가이드 프로필인지 검사")
+	@GetMapping("/{id}/verify")
+	@ResponseStatus(HttpStatus.OK)
+	public boolean isMyGuideProfile(
+		@PathVariable(name="id") Long id,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+	){
+		return guideService.validateMyGuide(customOAuth2User.getId(), id);
+	}
 }

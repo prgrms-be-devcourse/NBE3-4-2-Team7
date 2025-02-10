@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tripmarket.domain.guide.repository.GuideRepository;
 import com.tripmarket.domain.match.dto.GuideRequestDto;
 import com.tripmarket.domain.match.dto.TravelOfferDto;
 import com.tripmarket.domain.match.repository.GuideRequestRepository;
@@ -30,6 +31,7 @@ public class MemberService {
 	private final GuideRequestRepository guideRequestRepository;
 	private final TravelRepository travelRepository;
 	private final TravelOfferRepository travelOfferRepository;
+	private final GuideRepository guideRepository;
 
 	@Transactional(readOnly = true)
 	public Member getMemberById(Long userId) {
@@ -102,5 +104,14 @@ public class MemberService {
 		return travelOfferRepository.findByGuideId(member.getGuide().getId()).stream()
 			.map(TravelOfferDto::of)
 			.toList();
+	}
+
+	/**
+	 * 유저가 자신의 가이드 프로필이 존재하는지 검사
+	 *
+	 * @param id 유저의 ID
+	 * */
+	public boolean hasGuideProfile(Long id) {
+		return guideRepository.findByMemberId(id).isPresent();
 	}
 }
