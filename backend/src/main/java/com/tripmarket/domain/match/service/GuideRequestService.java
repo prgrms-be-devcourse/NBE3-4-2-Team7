@@ -53,6 +53,11 @@ public class GuideRequestService {
 	}
 
 	public void validateDuplicateRequest(Long userId, Long guideId, Long travelId) {
+		// 가이드 프로필이 없는 유저가 요청할 경우
+		if(userId == null){
+			return;
+		}
+
 		boolean alreadyRequested = guideRequestRepository.existsByMemberIdAndGuideIdAndTravelId(userId, guideId,
 			travelId);
 		if (alreadyRequested) {
@@ -61,7 +66,7 @@ public class GuideRequestService {
 	}
 
 	public void validateSelfRequest(Member member, Guide guide) {
-		if (member.getId().equals(guide.getMember().getId())) {
+		if (guide.getMember() != null && member.getId().equals(guide.getMember().getId())) {
 			throw new CustomException(ErrorCode.SELF_REQUEST_NOT_ALLOWED);
 		}
 	}
