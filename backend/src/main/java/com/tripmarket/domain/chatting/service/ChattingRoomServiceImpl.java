@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomsResponseDto;
+import com.tripmarket.domain.chatting.dto.CreateChattingRoomResponseDto;
 import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.chatting.entity.ChattingRoomParticipant;
 import com.tripmarket.domain.chatting.entity.Message;
@@ -36,10 +37,12 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	private final ChattingRoomRepository chattingRoomRepository;
 	private final MemberRepository memberRepository;
 	private final MessageRepository messageRepository;
+	private final RedisChattingService redisChattingService;
 
+	// 채팅방을 생성하며 각 상황에 맞게 status분리
 	@Override
 	@Transactional
-	public void create(String userEmail, String receiverEmail) {
+	public CreateChattingRoomResponseDto create(String userEmail, String receiverEmail) {
 		Member user = findMember(userEmail);
 		Member receiver = findMember(receiverEmail);
 		Optional<ChattingRoom> optionalChattingRoom = chattingRoomRepository.findRoomByParticipants(userEmail,
@@ -48,33 +51,44 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 			ChattingRoom chattingRoom = optionalChattingRoom.get();
 			boolean isLeftRoom = updateActivate(chattingRoom);
 			if (isLeftRoom) {
-				log.debug("기존 채팅방에 연결되었습니다. 채팅방 ID: {}", chattingRoom.getId());
-				return;
+				return CreateChattingRoomResponseDto.of(
+					chattingRoom.getId(), "RECONNECT_CHATTING_ROOM");
+			} else {
+				return CreateChattingRoomResponseDto.of(
+					chattingRoom.getId(), "EXIST_CHATTING_ROOM");
 			}
-			throw new CustomException(ErrorCode.DUPLICATE_CHAT_ROOM);
 		} else {
 			ChattingRoom chattingRoom = addParticipants(user, receiver);
 			ChattingRoom save = chattingRoomRepository.save(chattingRoom);
 			log.debug("채팅방이 생성되었습니다. 채팅방 참여자: {}", String.join(", ", save.getParticipantEmails()));
+			return CreateChattingRoomResponseDto.of(
+				save.getId(), "NEW_CHATTING_ROOM");
 		}
 	}
 
+	//본인의 채팅방들을 찾는 메서드
 	@Override
 	public Page<ChattingRoomsResponseDto> findChattingRooms(String userEmail, String search, Pageable pageable) {
 
 		Page<ChattingRoom> chattingRoomsPage = findChattingRoomsPage(userEmail, search, pageable);
 
 		List<String> roomIds = findRoomIds(chattingRoomsPage);
+		log.info("Room IDs: {}", roomIds);
 
 		List<Message> latestMessages = messageRepository.findLatestMessages(roomIds);
+		log.info("최신 메시지: {}", latestMessages);
 
 		Map<String, Message> messageMap = getMessageMap(latestMessages);
+		log.info("Message Map: {}", messageMap);
+
 		List<ChattingRoomsResponseDto> chattingRoomsResponse = getChattingRoomsResponse(userEmail, chattingRoomsPage,
 			messageMap);
+		log.info("최종 채팅방 응답 생성 완료: {}", chattingRoomsResponse);
 
 		return new PageImpl<>(chattingRoomsResponse, pageable, chattingRoomsPage.getTotalElements());
 	}
 
+	//채팅내역 받기
 	@Override
 	public Page<ChattingResponseDto> getChattingMessages(String roomId, Pageable pageable) {
 		Page<Message> messages = messageRepository.findMessagesByRoom(roomId, pageable);
@@ -82,6 +96,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		return getMessages(messages);
 	}
 
+	//채팅방 나가기
 	@Override
 	@Transactional
 	public void leaveChattingRoom(String userEmail, String roomId) {
@@ -93,6 +108,19 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 			chattingRoom.deleteRoom();
 			chattingRoom.getParticipants().clear();
 		}
+	}
+
+	//채팅방 들어갔을때 기존에 안읽음 처리되었던 메시지들 읽음처리
+	@Transactional
+	public void markMessagesAsRead(String roomId, String userEmail) {
+		List<Message> unreadMessages = messageRepository.findUnreadMessages(roomId, userEmail);
+
+		for (Message message : unreadMessages) {
+			message.updateRead(true);
+		}
+
+		messageRepository.saveAll(unreadMessages);
+		redisChattingService.resetUnreadCount(roomId, userEmail);
 	}
 
 	// 채팅방 한명만 나갔을경우 다시 기존방에 들어가는 메서드
@@ -128,7 +156,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		});
 	}
 
-	private static List<ChattingRoomsResponseDto> getChattingRoomsResponse(String userEmail,
+	private List<ChattingRoomsResponseDto> getChattingRoomsResponse(String userEmail,
 		Page<ChattingRoom> chattingRoomsPage,
 		Map<String, Message> messageMap) {
 		return chattingRoomsPage.getContent().stream()
@@ -136,8 +164,9 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 				String roomId = chattingRoom.getId();
 				Message lastMessage = messageMap.get(roomId);
 				Member receiver = getReceiver(userEmail, chattingRoom);
+				int unreadCount = redisChattingService.getUnreadCount(roomId, userEmail);
 
-				return ChattingRoomsResponseDto.of(roomId, receiver, lastMessage);
+				return ChattingRoomsResponseDto.of(roomId, receiver, lastMessage, unreadCount);
 			})
 			//최근에 도착한 메세지 순서대로 정렬
 			.sorted(Comparator.comparing(ChattingRoomsResponseDto::lastMessageTime,
@@ -145,7 +174,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 			.toList();
 	}
 
-	private static Member getReceiver(String userEmail, ChattingRoom chattingRoom) {
+	private Member getReceiver(String userEmail, ChattingRoom chattingRoom) {
 		return chattingRoom.getParticipants().stream()
 			// 채팅방 참여자중 상대 참여자를 가져오는 필터
 			.filter(participant -> !participant.getMember().getEmail().equals(userEmail))
@@ -157,11 +186,11 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	}
 
 	//roomId를 키값으로하고 message를 value로하는 map
-	private static Map<String, Message> getMessageMap(List<Message> latestMessages) {
+	private Map<String, Message> getMessageMap(List<Message> latestMessages) {
 		return latestMessages.stream().collect(Collectors.toMap(Message::getRoomId, message -> message));
 	}
 
-	private static List<String> findRoomIds(Page<ChattingRoom> chattingRoomsPage) {
+	private List<String> findRoomIds(Page<ChattingRoom> chattingRoomsPage) {
 		return chattingRoomsPage.getContent().stream()
 			.map(ChattingRoom::getId)
 			.toList();
