@@ -73,14 +73,30 @@ public class JwtTokenProvider {
 	 * @return 쿠키에서 추출한 토큰, 없으면 null
 	 */
 	public String resolveToken(HttpServletRequest request) {
+		log.info("=== resolveToken 시작 ===");
 		Cookie[] cookies = request.getCookies();
+
 		if (cookies != null) {
+			log.info("쿠키 개수: {}", cookies.length);
 			for (Cookie cookie : cookies) {
+				log.info("쿠키 검사 - name: {}, value: {}, domain: {}, path: {}",
+					cookie.getName(),
+					cookie.getValue(),
+					cookie.getDomain(),
+					cookie.getPath()
+				);
+
 				if ("accessToken".equals(cookie.getName())) {
-					return cookie.getValue();
+					String token = cookie.getValue();
+					log.info("accessToken 쿠키 찾음: {}", token);
+					return token;
 				}
 			}
+			log.warn("accessToken 쿠키를 찾지 못함");
+		} else {
+			log.warn("요청에 쿠키가 없음");
 		}
+		log.info("=== resolveToken 종료 ===");
 		return null;
 	}
 
@@ -91,13 +107,39 @@ public class JwtTokenProvider {
 	 * @return 설정된 쿠키 객체
 	 */
 	public ResponseCookie createAccessTokenCookie(String token) {
-		return ResponseCookie.from("accessToken", token)
+		ResponseCookie cookie = ResponseCookie.from("accessToken", token)
 			.httpOnly(true)    // JavaScript에서 접근 불가
-			.secure(true)      // HTTPS에서만 전송
+			.secure(false)      // HTTPS에서만 전송, localhost에서는 false로 설정해야 함
 			.sameSite("Lax")   // CSRF 방지
 			.path("/")         // 모든 경로에서 접근 가능
-			.maxAge(accessTokenValidityInMilliseconds)
+			.maxAge(refreshTokenValidityInMilliseconds)
 			.build();
+
+		log.info("Created cookie: {}", cookie);
+		return cookie;
+	}
+
+	/**
+	 * 토큰 갱신 메서드
+	 * 만료된 토큰으로부터 새로운 토큰 생성
+	 *
+	 * @param expiredToken 만료된 JWT 토큰
+	 * @return 새로 생성된 access token
+	 */
+	public String refreshAccessToken(String expiredToken) {
+		Claims claims = parseClaims(expiredToken); // 기존 parseClaims 활용
+
+		Date now = new Date();
+		Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds * 1000);
+
+		return Jwts.builder()
+			.subject(claims.getSubject())
+			.claim("auth", claims.get("auth"))
+			.claim("email", claims.get("email"))
+			.issuedAt(now)
+			.expiration(validity)
+			.signWith(key)
+			.compact();
 	}
 
 	/**
@@ -108,7 +150,7 @@ public class JwtTokenProvider {
 	public ResponseCookie createEmptyCookie() {
 		return ResponseCookie.from("accessToken", "")
 			.httpOnly(true)
-			.secure(true)
+			.secure(false)
 			.sameSite("Lax")
 			.path("/")
 			.maxAge(0)  // 즉시 만료
@@ -195,11 +237,14 @@ public class JwtTokenProvider {
 
 	/**
 	 * JWT 토큰에서 인증 정보 추출
+	 * 만료된 토큰도 처리 가능
+	 *
 	 * @param token JWT 토큰
 	 * @return Spring Security 인증 객체
+	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public Authentication getAuthentication(String token) {
-		Claims claims = parseClaims(token);
+		Claims claims = parseClaims(token);  // 수정된 parseClaims 사용
 		Long userId = Long.valueOf(claims.getSubject());
 		String email = claims.get("email", String.class);
 
@@ -208,15 +253,15 @@ public class JwtTokenProvider {
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		//
 		CustomOAuth2User principal = new CustomOAuth2User(
 			authorities, // 권한 정보
 			Map.of(
 				"id", userId,
-				"email", email), // OAuth2 속성
+				"email", email
+			), // OAuth2 속성
 			"id", // nameAttributeKey
 			userId, // id
-			email
+			email // email
 		);
 		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 	}
@@ -252,9 +297,11 @@ public class JwtTokenProvider {
 
 	/**
 	 * 토큰에서 Claims 추출
+	 * 만료된 토큰도 처리 가능
+	 *
 	 * @param token JWT 토큰
 	 * @return Claims 객체
-	 * @throws JwtAuthenticationException 토큰이 만료되었을 경우
+	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	private Claims parseClaims(String token) {
 		try {
@@ -264,7 +311,8 @@ public class JwtTokenProvider {
 				.parseSignedClaims(token)
 				.getPayload();
 		} catch (ExpiredJwtException e) {
-			throw new JwtAuthenticationException("만료된 JWT 토큰입니다.");
+			// 만료된 토큰이어도 Claims 반환
+			return e.getClaims();
 		} catch (Exception e) {
 			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
 		}
