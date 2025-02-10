@@ -72,6 +72,8 @@ public class SecurityConfig {
 
 					// Swagger UI 관련 경로 (swagger-ui.html 추가)
 					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+					//채팅 관련 경로
+					.requestMatchers("/chat-test.html", "/chat/**").permitAll()
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 					.requestMatchers("/", "login/auth/**", "login/oauth2/**").permitAll()
 

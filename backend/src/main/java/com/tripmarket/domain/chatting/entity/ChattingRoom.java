@@ -1,21 +1,57 @@
 package com.tripmarket.domain.chatting.entity;
 
-import com.tripmarket.global.jpa.entity.BaseEntity;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.hibernate.annotations.UuidGenerator;
+
+import com.tripmarket.global.jpa.entity.BaseTimeEntity;
+
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @Entity
-@NoArgsConstructor
-public class ChattingRoom extends BaseEntity {
+@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChattingRoom extends BaseTimeEntity {
 
-    @Enumerated(EnumType.STRING)
-    private ChatStatus chatStatus; // 채팅방 상태 (ON/OFF)
+	@Id
+	@UuidGenerator
+	@Column(length = 36, nullable = false, updatable = false)
+	private String id;
 
-    public enum ChatStatus {
-        ON, OFF
-    }
+	private boolean isDelete;
+	private LocalDateTime deleteDate;
 
+	@OneToMany(mappedBy = "chattingRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ChattingRoomParticipant> participants = new HashSet<>();
 
+	public void deleteRoom() {
+		this.isDelete = true;
+		this.deleteDate = LocalDateTime.now().plusDays(7);
+	}
+
+	public static ChattingRoom create(){
+		return ChattingRoom.builder()
+			.participants(new HashSet<>())
+			.isDelete(false)
+			.deleteDate(null)
+			.build();
+	}
+
+	// 참여자 이메일
+	public Set<String> getParticipantEmails() {
+		Set<String> emails = new HashSet<>();
+		for (ChattingRoomParticipant participant : participants) {
+			emails.add(participant.getMember().getEmail());
+		}
+		return emails;
+	}
 }

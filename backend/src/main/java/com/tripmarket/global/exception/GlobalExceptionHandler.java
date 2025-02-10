@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -53,7 +54,7 @@ public class GlobalExceptionHandler {
 			.status(e.getStatus())
 			.body(errorResponse);
 	}
-       
+
 	@ExceptionHandler({CustomException.class})
 	public ResponseEntity<CustomErrorResponse> handleCustomException(CustomException ex) {
 		CustomErrorResponse errorResponse = new CustomErrorResponse(
