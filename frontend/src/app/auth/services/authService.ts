@@ -12,6 +12,12 @@ export const authService = {
         window.location.href = `${BACKEND_URL}/oauth2/authorization/kakao`;
     },
 
+    // 구글 로그인 추가
+    loginWithGoogle: () => {
+        const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        window.location.href = `${BACKEND_URL}/oauth2/authorization/google`;
+    },
+
     // 로그인 상태 확인
     checkLoginStatus: async () => {
         try {
