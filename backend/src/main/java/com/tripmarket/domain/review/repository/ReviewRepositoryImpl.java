@@ -1,9 +1,6 @@
 package com.tripmarket.domain.review.repository;
 
 import java.util.List;
-
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tripmarket.domain.review.entity.QReview;
 import com.tripmarket.domain.review.entity.Review;

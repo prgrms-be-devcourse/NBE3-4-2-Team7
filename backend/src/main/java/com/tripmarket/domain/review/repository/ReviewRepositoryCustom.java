@@ -10,7 +10,7 @@ public interface ReviewRepositoryCustom {
 	List<Review> findReviewsByTravel(Travel travel);
 	// 특정 여행 리스트에 속한 리뷰 조회
 	List<Review> findReviewsByTravelList(List<Long> travelIds);
-	// 특정 사용자가 특정 여행에 대해 리뷰를 작성했는지 확인
+	//특정 사용자가 특정 여행에 대해 리뷰를 작성했는지 확인
 	boolean existsReviewByMemberAndTravel(Long memberId, Long travelId);
 
 }

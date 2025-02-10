@@ -47,7 +47,7 @@ public class ReviewService {
 		Member member = memberRepository.findByEmail(email)
 			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-		// 여행 존재 여부 확인
+		//여행 존재 여부 확인
 		Travel travel = travelRepository.findById(requestDto.travelId())
 			.orElseThrow(() -> new CustomException(ErrorCode.TRAVEL_NOT_FOUND));
 
