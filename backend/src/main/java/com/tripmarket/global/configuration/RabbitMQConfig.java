@@ -62,29 +62,22 @@ public class RabbitMQConfig {
 	// "chat.queue"라는 이름의 Queue 생성
 	@Bean
 	public Queue chatQueue() {
-		log.info("Queue 생성: {}", chatQueueName);
 		return new Queue(chatQueueName, true);
 	}
 
 	// 4가지 Binding 전략이 있으며 4가지 전략마다 사용하는 대상이 다른데 채팅 메시지같은 경우 TopicExchange를 사용
 	@Bean
 	public TopicExchange chatExchange() {
-		log.info("Exchange 생성: {}", chatExchangeName);
 		return new TopicExchange(chatExchangeName, true, false);
 	}
 
 	// Exchange와 Queue를 연결. "chat.queue"에 "chat.exchange" 규칙을 Binding
 	@Bean
 	public Binding chatBinding(Queue chatQueue, TopicExchange chatExchange) {
-		log.info("Queue: {}, Exchange: {}, Routing Key: {} ", chatQueue.getName(), chatExchange.getName(),
-			chatRoutingKey);
 		Binding binding = BindingBuilder
 			.bind(chatQueue)
 			.to(chatExchange)
 			.with(chatRoutingKey);
-
-		log.info("Binding 성공: {} -> {} [Routing Key: {}]", chatQueue.getName(), chatExchange.getName(), chatRoutingKey);
-
 		return binding;
 	}
 
