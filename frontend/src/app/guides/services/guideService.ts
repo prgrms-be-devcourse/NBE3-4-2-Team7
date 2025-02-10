@@ -14,6 +14,7 @@ export interface GuideDto {
     isDeleted: boolean;
 }
 
+
 // 가이드 전체 조회 (목록 불러오기)
 export const getGuides = () => {
     return axios.get<GuideDto[]>('/guides');
@@ -24,8 +25,14 @@ export const getGuideDetail = (guideId: number) => {
     return axios.get<GuideDto>(`/guides/${guideId}`);
 };
 
+// 자신의 가이드 프로필 상세 조회
+export const getGuideDetailByUser = () => {
+    return axios.get<GuideDto>(`/guides/me`);
+};
+
+
 // 가이드 추가
-export const createGuide = (data: GuideDto) => {
+export const createGuide = (data: Partial<GuideDto>) => {
     return axios.post('/guides', data);
 };
 
@@ -48,3 +55,8 @@ export const updateGuideRequestStatus = (requestId: number, guideId: number, sta
         },
     });
 };
+
+// 내 가이드 프로필인지 검증
+export const verifyMyGuide = (guideId: number) => {
+    return axios.get(`/guides/${guideId}/verify`);
+}

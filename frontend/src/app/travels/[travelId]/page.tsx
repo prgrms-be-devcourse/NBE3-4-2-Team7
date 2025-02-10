@@ -3,7 +3,8 @@
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import Link from "next/link";
-import {createTravelOffer, getTravelDetail, TravelDto} from "../../travel/services/travelService";
+import {createTravelOffer, getTravelDetail, TravelDto, validateSelfOffer} from "../../travel/services/travelService";
+import {hasGuideProfile} from "@/app/members/services/memberService";
 
 const TravelDetailPage: React.FC = () => {
     const params = useParams();
@@ -12,6 +13,8 @@ const TravelDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [offerStatus, setOfferStatus] = useState<string | null>(null);
+    const [isSelfRequest, setIsSelfRequest] = useState<boolean | null>(null);
+    const [isGuideProfileAvailable, setIsGuideProfileAvailable] = useState(false);
 
     useEffect(() => {
         if (travelId) {
@@ -25,6 +28,23 @@ const TravelDetailPage: React.FC = () => {
                     console.error(err);
                 })
                 .finally(() => setLoading(false));
+            validateSelfOffer(Number(travelId))
+                .then((response) => {
+                setIsSelfRequest(response.data);
+            })
+                .catch((err) => {
+                    setError("셀프 요청 검증에 실패했습니다.")
+                })
+
+            const fetchHasGuideProfile = async () => {
+                try {
+                    const response = await hasGuideProfile();
+                    setIsGuideProfileAvailable(response.data);
+                } catch(error){
+                    console.error('가이드 프로필 유무 조회 실패', error);
+                }
+            }
+            fetchHasGuideProfile();
         }
     }, [travelId]);
 
@@ -57,13 +77,19 @@ const TravelDetailPage: React.FC = () => {
                 <p style={styles.date}><strong>수정일:</strong> {new Date(travel.updatedAt).toLocaleString()}</p>
 
                 <div style={styles.buttonContainer}>
-                    <button style={styles.guideRequestButton} onClick={handleTravelOfferRequest}>
-                        여행 제안 요청하기
-                    </button>
+                    {!isSelfRequest && isGuideProfileAvailable && (
+                        <button
+                            style={styles.guideRequestButton}
+                            onClick={handleTravelOfferRequest}
+                        >
+                            여행 제안 요청하기
+                        </button>
+                    )}
                     <Link href="/travels">
                         <button style={styles.backButton}>← 목록으로 돌아가기</button>
                     </Link>
                 </div>
+
 
                 {offerStatus && <p style={styles.statusMessage}>{offerStatus}</p>}
             </div>
