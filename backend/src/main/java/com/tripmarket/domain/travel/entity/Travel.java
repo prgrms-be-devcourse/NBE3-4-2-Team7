@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.travel.enums.TravelStatus;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.jpa.entity.BaseEntity;
@@ -66,18 +67,11 @@ public class Travel extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private Status status;
+	private TravelStatus status;
 
 	@Column(nullable = false)
 	@Builder.Default
 	private boolean isDeleted = false;
-
-	public enum Status {
-		WAITING_FOR_MATCHING,
-		IN_PROGRESS,
-		MATCHED,
-		COMPLETED;
-	}
 
 	@Builder
 	public Travel(Member user, TravelCategory category, String city, String places, int participants,
@@ -106,8 +100,8 @@ public class Travel extends BaseEntity {
 		this.isDeleted = true;
 	}
 
-	public void updateTravelStatus(Status status) {
-		if (this.status == Status.MATCHED) {
+	public void updateTravelStatus(TravelStatus status) {
+		if (this.status == TravelStatus.MATCHED) {
 			throw new CustomException(ErrorCode.TRAVEL_ALREADY_MATCHED);
 		}
 
@@ -115,7 +109,7 @@ public class Travel extends BaseEntity {
 	}
 
 	public boolean isCompleted() {
-		return this.status == Status.COMPLETED;
+		return this.status == TravelStatus.COMPLETED;
 	}
 
 }

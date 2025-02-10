@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA를 위한 기본 생성자
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class TravelCategory extends BaseEntity {
 
