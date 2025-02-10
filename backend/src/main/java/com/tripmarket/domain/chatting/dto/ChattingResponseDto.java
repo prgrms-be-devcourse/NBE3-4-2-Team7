@@ -11,14 +11,16 @@ public record ChattingResponseDto(
 	String content,
 	String senderName,
 	String senderProfile,
-	String formattedTime
+	String time,
+	boolean readStatus
 ) {
 	public static ChattingResponseDto of(Message message, Member sender) {
 		return ChattingResponseDto.builder()
 			.content(message.getContent())
 			.senderName(sender.getName())
 			.senderProfile(sender.getImageUrl())
-			.formattedTime(DateUtil.convertTime(message.getCreatedAt()))
+			.time(DateUtil.convertTime(message.getCreatedAt()))
+			.readStatus(message.isReadStatus())
 			.build();
 	}
 }
