@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tripmarket.domain.match.entity.TravelOffer;
+import com.tripmarket.domain.match.enums.MatchRequestStatus;
 import com.tripmarket.domain.match.service.TravelOfferService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -32,7 +32,7 @@ public class TravelOfferController {
 	@Operation(summary = "가이더가 사용자의 여행 요청 글에 매칭 요청을 보냄")
 	@PostMapping("/{travelId}")
 	public ResponseEntity<String> createTravelOffer(
-		@PathVariable(name = "travelId") Long travelId,
+		@PathVariable Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
 	) {
 		travelOfferService.createTravelOffer(customOAuth2User.getEmail(), travelId);
@@ -42,9 +42,9 @@ public class TravelOfferController {
 	@Operation(summary = "사용자가 가이더의 매칭 요청을 수락/거절")
 	@PatchMapping("/{requestId}/match")
 	public ResponseEntity<String> matchTravelOffer(
-		@PathVariable(name = "requestId") Long requestId,
+		@PathVariable Long requestId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
-		@RequestParam(name = "status") TravelOffer.RequestStatus status
+		@RequestParam MatchRequestStatus status
 	) {
 		travelOfferService.matchTravelOffer(requestId, customOAuth2User.getEmail(), status);
 		return ResponseEntity.ok("가이더 요청 상태가 업데이트되었습니다.");
@@ -53,7 +53,7 @@ public class TravelOfferController {
 	@Operation(summary = "가이더가 자기 자신의 요청 글에 매칭을 보내는지 검사")
 	@GetMapping("/{travelId}")
 	public ResponseEntity<Boolean> validateSelfOffer(
-		@PathVariable(name = "travelId") Long travelId,
+		@PathVariable Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
 	) {
 		boolean isSelfOffer = Objects.equals(customOAuth2User.getId(), travelId);

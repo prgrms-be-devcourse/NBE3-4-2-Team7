@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripmarket.domain.match.dto.request.GuideRequestCreate;
-import com.tripmarket.domain.match.entity.GuideRequest;
+import com.tripmarket.domain.match.enums.MatchRequestStatus;
 import com.tripmarket.domain.match.service.GuideRequestService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -33,7 +33,7 @@ public class GuideRequestController {
 	@Operation(summary = "사용자가 가이더에게 여행 요청을 보냄")
 	@PostMapping("/{guideId}")
 	public ResponseEntity<String> createGuideRequest(
-		@PathVariable(name = "guideId") Long guideId,
+		@PathVariable Long guideId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
 		@RequestBody @Valid GuideRequestCreate requestDto
 	) {
@@ -45,9 +45,9 @@ public class GuideRequestController {
 		description = "사용자의 매칭 요청을 보고 가이더가 이를 수락하거나 거절하는 API입니다.")
 	@PatchMapping("{requestId}/match")
 	public ResponseEntity<String> matchGuideRequest(
-		@PathVariable(name = "requestId") Long requestId,
-		@RequestParam(name = "guideId") Long guideId,
-		@RequestParam(name = "status") GuideRequest.RequestStatus status
+		@PathVariable Long requestId,
+		@RequestParam Long guideId,
+		@RequestParam MatchRequestStatus status
 	) {
 		guideRequestService.matchGuideRequest(requestId, guideId, status);
 		return ResponseEntity.ok("요청 상태가 업데이트되었습니다.");

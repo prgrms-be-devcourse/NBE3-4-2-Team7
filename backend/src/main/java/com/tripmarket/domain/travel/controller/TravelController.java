@@ -47,9 +47,9 @@ public class TravelController {
 	}
 
 	@Operation(summary = "여행 요청 수정")
-	@PutMapping("/{userId}/{travelId}")
+	@PutMapping("/{travelId}")
 	public ResponseEntity<TravelDto> updateTravel(
-		@PathVariable(name = "travelId") Long travelId,  // 이름 명시
+		@PathVariable Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User,
 		@RequestBody @Valid TravelUpdateRequest requestDto) {
 		TravelDto updatedTravel = travelService.updateTravel(travelId, customOAuth2User.getEmail(), requestDto);
@@ -59,7 +59,7 @@ public class TravelController {
 	@Operation(summary = "여행 요청 전체 조회")
 	@GetMapping
 	public ResponseEntity<Page<TravelDto>> getTravels(
-		@RequestParam(name = "categoryId", required = false) Long categoryId,
+		@RequestParam(required = false) Long categoryId,
 		@PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		Page<TravelDto> travelList = travelService.getTravels(categoryId, pageable);
 		return ResponseEntity.ok(travelList);
@@ -68,7 +68,7 @@ public class TravelController {
 	@Operation(summary = "여행 요청 상세 조회")
 	@GetMapping("/{travelId}")
 	public ResponseEntity<TravelDto> getTravelDetail(
-		@PathVariable(name = "travelId") Long travelId) {  // 이름 명시
+		@PathVariable Long travelId) {
 		TravelDto travelDto = travelService.getTravelDetail(travelId);
 		return ResponseEntity.ok(travelDto);
 	}
@@ -76,7 +76,7 @@ public class TravelController {
 	@Operation(summary = "여행 요청 삭제 (Soft Delete)")
 	@PatchMapping("/{travelId}")
 	public ResponseEntity<String> deleteTravel(
-		@PathVariable(name = "travelId") Long travelId,  // 이름 명시
+		@PathVariable Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
 		travelService.deleteTravel(travelId, customOAuth2User.getEmail());
 		return ResponseEntity.ok("여행 요청 글이 삭제되었습니다.");
