@@ -2,7 +2,9 @@ package com.tripmarket.domain.auth.controller;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +46,7 @@ public class AuthController {
 	 */
 	@PostMapping("/refresh")
 	@Operation(summary = "토큰 재발급")
-	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
 		String accessToken = jwtTokenProvider.resolveToken(request);
 
 		try {
@@ -74,9 +76,10 @@ public class AuthController {
 			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
 			log.info("Token refreshed for user: {}", userId);
 
+			return ResponseEntity.ok("Access Token이 성공적으로 재발급되었습니다.");
 		} catch (Exception e) {
 			log.error("Token refresh failed", e);
-			throw new JwtAuthenticationException("토큰 갱신 실패");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("토큰 갱신 실패");
 		}
 	}
 
@@ -92,13 +95,13 @@ public class AuthController {
 	 */
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
-	public void logout(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
 		String accessToken = jwtTokenProvider.resolveToken(request);
 
 		try {
 			// 1. 블랙리스트 체크
 			if (jwtTokenProvider.isBlacklisted(accessToken)) {
-				throw new JwtAuthenticationException("이미 로그아웃된 토큰입니다.");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 로그아웃된 토큰입니다.");
 			}
 
 			// 2. 토큰에서 사용자 정보 추출
@@ -115,9 +118,11 @@ public class AuthController {
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyCookie.toString());
 
 			log.info("Logout successful for user: {}", userId);
+			return ResponseEntity.ok("로그아웃이 성공적으로 완료되었습니다.");
 		} catch (Exception e) {
 			log.error("Logout failed", e);
-			throw new JwtAuthenticationException("로그아웃 실패");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그아웃 실패");
 		}
 	}
 }
+
