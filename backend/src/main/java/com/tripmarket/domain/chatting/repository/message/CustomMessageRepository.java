@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 
 import com.tripmarket.domain.chatting.entity.Message;
 
-
 public interface CustomMessageRepository {
 	List<Message> findLatestMessages(List<String> roomIds);
 	Page<Message> findMessagesByRoom(String roomId, Pageable pageable);
 	void deleteByRoomId(String roomId);
+	List<Message> findUnreadMessages(String roomId, String userEmail);
 }
