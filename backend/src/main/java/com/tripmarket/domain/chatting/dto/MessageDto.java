@@ -22,6 +22,7 @@ public record MessageDto(
 			.sender(sender)
 			.receiver(receiver)
 			.content(content)
+			.readStatus(false)
 			.build();
 	}
 }

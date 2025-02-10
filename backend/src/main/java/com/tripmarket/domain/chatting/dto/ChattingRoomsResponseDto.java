@@ -12,15 +12,17 @@ public record ChattingRoomsResponseDto(
 	String name,
 	String profileImage,
 	String lastMessage,
-	String lastMessageTime
+	String lastMessageTime,
+	int unreadMessageCnt
 ) {
-	public static ChattingRoomsResponseDto of(String roomId, Member target, Message message) {
+	public static ChattingRoomsResponseDto of(String roomId, Member target, Message message,int unreadMessageCnt) {
 		return ChattingRoomsResponseDto.builder()
 			.roomId(roomId)
 			.name(target.getName())
 			.profileImage(target.getImageUrl())
 			.lastMessage(message.getContent())
 			.lastMessageTime(DateUtil.convertTime(message.getCreatedAt()))
+			.unreadMessageCnt(unreadMessageCnt)
 			.build();
 	}
 }
