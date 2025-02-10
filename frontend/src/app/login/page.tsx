@@ -16,6 +16,7 @@ const LoginPage: React.FC = () => {
         authService.loginWithGoogle();
     };
 
+
     const handleGuestAccess = () => {
         router.push('/travels');
     };
