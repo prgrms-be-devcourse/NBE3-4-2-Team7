@@ -33,7 +33,7 @@ public class Member extends BaseEntity {
 	@Column(nullable = false, length = 50)
 	private String name; // 회원 이름
 
-	@Column(nullable = false, length = 100)
+	@Column(nullable = false, unique = true, length = 100)
 	private String email; // 회원 이메일 (고유값)
 
 	private String password; // 회원 비밀번호, 소셜 로그인은 password가 필요 없으므로 nullable
