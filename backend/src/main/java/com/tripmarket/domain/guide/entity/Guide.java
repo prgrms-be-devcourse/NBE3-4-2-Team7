@@ -1,16 +1,17 @@
 package com.tripmarket.domain.guide.entity;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -27,6 +28,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Guide extends BaseEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 	@OneToOne(mappedBy = "guide")
 	private Member member; // 가이드와 연결된 회원 정보
@@ -85,7 +91,7 @@ public class Guide extends BaseEntity {
 		}
 		Guide guide = (Guide)o;
 		return isDeleted == guide.isDeleted
-			&& Objects.equals(super.getId(), guide.getId())
+			&& Objects.equals(id, guide.getId())
 			&& Objects.equals(name, guide.name)
 			&& Objects.equals(activityRegion, guide.activityRegion)
 			&& Objects.equals(introduction, guide.introduction)

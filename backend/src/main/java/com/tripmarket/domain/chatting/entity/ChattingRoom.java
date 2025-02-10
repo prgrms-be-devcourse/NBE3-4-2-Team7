@@ -1,7 +1,14 @@
 package com.tripmarket.domain.chatting.entity;
 
 import com.tripmarket.global.jpa.entity.BaseEntity;
-import jakarta.persistence.*;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,12 +17,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChattingRoom extends BaseEntity {
 
-    @Enumerated(EnumType.STRING)
-    private ChatStatus chatStatus; // 채팅방 상태 (ON/OFF)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
-    public enum ChatStatus {
-        ON, OFF
-    }
+	@Enumerated(EnumType.STRING)
+	private ChatStatus chatStatus; // 채팅방 상태 (ON/OFF)
 
+	public enum ChatStatus {
+		ON, OFF
+	}
 
 }

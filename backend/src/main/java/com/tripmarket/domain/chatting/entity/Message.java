@@ -1,16 +1,25 @@
 package com.tripmarket.domain.chatting.entity;
 
-import jakarta.persistence.*;
+import com.tripmarket.global.jpa.entity.BaseEntity;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import com.tripmarket.global.jpa.entity.BaseEntity;
 
 @Getter
 @NoArgsConstructor
 @Entity
 public class Message extends BaseEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 	private String roomId;
 	private String senderId;
