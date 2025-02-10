@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
+import com.tripmarket.domain.guide.dto.GuideProfileDto;
 import com.tripmarket.domain.guide.service.GuideService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -42,9 +43,12 @@ public class GuideController {
 	@Operation(summary = "가이드 상세 조회")
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public GuideDto getGuideById(@PathVariable(name="id") Long id) {
-		return guideService.getGuideDto(id);
+	public GuideProfileDto getGuideProfile(@PathVariable(name = "id") Long id) {
+		return guideService.getGuideProfile(id);
 	}
+	// public GuideDto getGuideById(@PathVariable(name="id") Long id) {
+	// 	return guideService.getGuideDto(id);
+	// }
 
 	/**
 	 * 마이페이지에서 조회하는 경우
@@ -52,9 +56,12 @@ public class GuideController {
 	@Operation(summary = "유저가 자신의 가이드 정보 조회할 때")
 	@GetMapping("/me")
 	@ResponseStatus(HttpStatus.OK)
-	public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
-		return guideService.getGuideByMember(user.getId());
+	public GuideProfileDto getMyGuideProfile(@AuthenticationPrincipal CustomOAuth2User user) {
+		return guideService.getMyGuideProfile(user.getId());
 	}
+	// public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
+	// 	return guideService.getGuideByMember(user.getId());
+	// }
 
 
 	@Operation(summary = "가이드 생성")

@@ -19,7 +19,7 @@ public record GuideProfileDto(
 	double averageRating,
 	List<ReviewResponseDto>reviews
 ) {
-	public static GuideProfileDto fromEntity(Guide guide, ReviewStats reviewStats, List<Review> reviews)  {
+	public static GuideProfileDto fromEntity(Guide guide, ReviewStats reviewStats, List<ReviewResponseDto> reviews) {
 		return new GuideProfileDto(
 			guide.getId(),
 			guide.getName(),
@@ -29,7 +29,7 @@ public record GuideProfileDto(
 			guide.getIntroduction(),
 			reviewStats != null ? reviewStats.getReviewCount() : 0L,
 			reviewStats != null ? reviewStats.getAverageRating() : 0.0,
-			reviews.stream().map(ReviewResponseDto::fromEntity).toList()
+			reviews
 		);
 	}
 }
