@@ -42,7 +42,7 @@ public class ChattingRoomController {
 	@PostMapping
 	@Operation(summary = "채팅방 생성", description = "채팅방을 생성하는 API")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "201", description = "채팅방 생성"),
+		@ApiResponse(responseCode = "200", description = "채팅방 생성"),
 		@ApiResponse(responseCode = "404", description = "존재하지 않는 유저입니다."),
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
 	public ResponseEntity<CreateChattingRoomResponseDto> createChatRoom(
@@ -93,7 +93,7 @@ public class ChattingRoomController {
 	@PatchMapping("/{roomId}/leave")
 	@Operation(summary = "채팅방 나가기", description = "사용자가 채팅방을 나가는 API")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "채팅 내역 확인"),
+		@ApiResponse(responseCode = "204", description = "채팅방 나가기"),
 		@ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음"),
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
 	public ResponseEntity<Void> leaveChatRoom(
