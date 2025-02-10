@@ -49,7 +49,7 @@ public class StompHandler implements ChannelInterceptor {
 			throw new CustomException(ErrorCode.STOMP_INVALID_HEADER);
 		}
 
-		redisChattingService.addUserToChatRoom(roomId, userEmail);
+		redisChattingService.addUserChattingRoom(roomId, userEmail);
 		redisChattingService.resetUnreadCount(roomId, userEmail);
 	}
 
@@ -61,6 +61,6 @@ public class StompHandler implements ChannelInterceptor {
 			throw new CustomException(ErrorCode.STOMP_DISCONNECT_ERROR);
 		}
 
-		redisChattingService.removeUserFromChatRoom(roomId, userEmail);
+		redisChattingService.deleteUserChattingRoom(roomId, userEmail);
 	}
 }

@@ -39,7 +39,7 @@ public class MessageServiceImpl implements MessageService {
 		}
 
 		Message message = messageDto.toMessageEntity();
-		Set<Object> connectedUsers = redisChattingService.getUsersInChatRoom(roomId);
+		Set<Object> connectedUsers = redisChattingService.getUsersByChattingRoom(roomId);
 		boolean isReceiverConnected = connectedUsers.contains(messageDto.receiver());
 
 		//메시지 생성 - 읽음 상태 바로 확인
@@ -47,7 +47,7 @@ public class MessageServiceImpl implements MessageService {
 			message.updateRead(true);
 		} else {
 			message.updateRead(false);
-			redisChattingService.incrementUnreadCount(roomId, messageDto.receiver());
+			redisChattingService.addUnreadCount(roomId, messageDto.receiver());
 		}
 
 		messageRepository.save(message);
