@@ -15,6 +15,7 @@ import com.tripmarket.global.jwt.JwtTokenProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -45,41 +46,67 @@ public class AuthController {
 	 * @throws JwtAuthenticationException 토큰 재발급 실패 시
 	 */
 	@PostMapping("/refresh")
-	@Operation(summary = "토큰 재발급")
-	public ResponseEntity<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
+		log.info("토큰 갱신 요청 시작");
+
+		// 들어오는 모든 쿠키 로깅
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				log.info("Cookie found - name: {}, value: {}, domain: {}, path: {}",
+					cookie.getName(),
+					cookie.getValue(),
+					cookie.getDomain(),
+					cookie.getPath()
+				);
+			}
+		} else {
+			log.warn("No cookies found in request");
+		}
 		String accessToken = jwtTokenProvider.resolveToken(request);
+		log.info("Resolved token for refresh: {}", accessToken);
+
+		if (accessToken == null) {
+			log.error("No token found in request");
+			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
+		}
 
 		try {
 			// 1. Access Token 블랙리스트 체크
 			if (jwtTokenProvider.isBlacklisted(accessToken)) {
+				log.error("Token is blacklisted.");
 				throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
 			}
 
 			// 2. 토큰에서 사용자 정보 추출
 			Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
-			Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+			log.debug("Extracted userId: {}", userId);
 
 			// 3. Redis에서 Refresh Token 조회 및 검증
 			String refreshToken = redisTemplate.opsForValue().get("RT:" + userId);
-			if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
-				throw new JwtAuthenticationException("Refresh Token이 유효하지 않습니다.");
+			if (refreshToken == null) {
+				log.error("No refresh token found for userId: {}", userId);
+				throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
 			}
 
-			// 4. 기존 Access Token을 블랙리스트에 추가
-			jwtTokenProvider.addToBlacklist(accessToken);
+			// 4. 새로운 Access Token 발급
+			String newAccessToken = jwtTokenProvider.refreshAccessToken(accessToken);
+			log.debug("New access token created for userId: {}", userId);
 
-			// 5. 새로운 Access Token 발급
-			String newAccessToken = jwtTokenProvider.createAccessToken(authentication);
+			// 5. 기존 Access Token을 블랙리스트에 추가
+			jwtTokenProvider.addToBlacklist(accessToken);
 
 			// 6. 새로운 Access Token을 쿠키에 저장
 			ResponseCookie accessTokenCookie = jwtTokenProvider.createAccessTokenCookie(newAccessToken);
 			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
-			log.info("Token refreshed for user: {}", userId);
+			log.info("Token refreshed successfully for user: {}", userId);
 
-			return ResponseEntity.ok("Access Token이 성공적으로 재발급되었습니다.");
+		} catch (JwtAuthenticationException e) {
+			log.error("Token refresh failed: {}", e.getMessage());
+			throw e;
 		} catch (Exception e) {
-			log.error("Token refresh failed", e);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("토큰 갱신 실패");
+			log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
+			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
 		}
 	}
 
@@ -125,4 +152,3 @@ public class AuthController {
 		}
 	}
 }
-

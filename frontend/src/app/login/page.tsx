@@ -12,6 +12,10 @@ const LoginPage: React.FC = () => {
         authService.loginWithKakao();
     };
 
+    const handleGoogleLogin = () => {
+        authService.loginWithGoogle();
+    };
+
     const handleGuestAccess = () => {
         router.push('/travels');
     };
@@ -30,6 +34,18 @@ const LoginPage: React.FC = () => {
                         <Image 
                             src="/images/kakao-login-logo.png"
                             alt="카카오 로그인" 
+                            width={300}
+                            height={45}
+                            priority
+                        />
+                    </button>
+                    <button
+                        onClick={handleGoogleLogin}
+                        style={styles.loginButton}
+                    >
+                        <Image 
+                            src="/images/google-login-logo.png"
+                            alt="구글 로그인" 
                             width={300}
                             height={45}
                             priority

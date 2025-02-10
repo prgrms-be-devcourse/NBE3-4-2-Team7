@@ -72,6 +72,8 @@ public class SecurityConfig {
 
 					// Swagger UI 관련 경로 (swagger-ui.html 추가)
 					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+					//채팅 관련 경로
+					.requestMatchers("/chat-test.html", "/chat/**").permitAll()
 					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
 					.requestMatchers("/", "login/auth/**", "login/oauth2/**").permitAll()
 
@@ -104,7 +106,7 @@ public class SecurityConfig {
 		CorsConfiguration config = new CorsConfiguration();
 
 		// 허용할 프론트엔드 origin 설정
-		config.setAllowedOrigins(List.of("http://localhost:3000"));
+		config.setAllowedOriginPatterns(List.of("http://localhost:3000"));
 
 		// 허용할 HTTP 메서드 설정
 		config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

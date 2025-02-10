@@ -6,6 +6,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.tripmarket.global.exception.JwtAuthenticationException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			// 쿠키에서 JWT 토큰 추출
 			String token = jwtTokenProvider.resolveToken(request);
 			log.debug("Resolved token: {}", token);
+
 			if (token != null) {
 				// Access Token 블랙리스트 확인
 				if (jwtTokenProvider.isBlacklisted(token)) {
@@ -46,17 +49,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					return;
 				}
 
-				// 토큰 유효성 검증 및 인증 정보 설정
-				if (jwtTokenProvider.validateToken(token)) {
-					Authentication authentication = jwtTokenProvider.getAuthentication(token);
-					SecurityContextHolder.getContext().setAuthentication(authentication);
-					log.debug("Set Authentication to security context for user: {}", authentication.getName());
+				try {
+					// /auth/refresh 요청이 아닌 경우에만 토큰 유효성 검증
+					if (!request.getRequestURI().equals("/auth/refresh")) {
+						if (jwtTokenProvider.validateToken(token)) {
+							Authentication authentication = jwtTokenProvider.getAuthentication(token);
+							SecurityContextHolder.getContext().setAuthentication(authentication);
+							log.debug("Set Authentication to security context for user: {}", authentication.getName());
+						}
+					}
+				} catch (JwtAuthenticationException e) {
+					// /auth/refresh 요청이 아닌 경우에만 예외 처리
+					if (!request.getRequestURI().equals("/auth/refresh")) {
+						throw e;
+					}
 				}
 			}
+
+			filterChain.doFilter(request, response);
+
 		} catch (Exception e) {
 			log.error("Cannot set user authentication: {}", e.getMessage());
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		}
-		filterChain.doFilter(request, response);
 	}
 }

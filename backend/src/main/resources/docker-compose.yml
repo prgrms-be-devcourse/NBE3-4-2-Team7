@@ -1,0 +1,51 @@
+services:
+  # rabbitmq
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq_container
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: "/"
+    command: >
+      bash -c "
+        rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_web_stomp rabbitmq_consistent_hash_exchange &&
+        rabbitmq-server &
+        sleep 10 &&
+        rabbitmqadmin declare queue name=chat.queue durable=true &&
+        rabbitmqadmin declare exchange name=chat.exchange type=topic durable=true &&
+        rabbitmqadmin declare binding source='chat.exchange' destination_type='queue' destination='chat.queue' routing_key='room.*' &&
+        tail -f /dev/null
+      "
+    networks:
+      - my_network
+
+  # redis
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - my_network
+
+  # mongodb
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root  # 초기 사용자
+      MONGO_INITDB_ROOT_PASSWORD: 1234  # 초기 비밀번호
+      MONGO_INITDB_DATABASE: chatdb
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge

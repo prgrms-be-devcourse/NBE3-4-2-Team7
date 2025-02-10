@@ -1,5 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { useRouter } from 'next/navigation';
+
+interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
+    _retry?: boolean;
+}
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
@@ -46,10 +49,6 @@ axiosInstance.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config;
 
-        // 로그인이 필요하지 않은 public 경로들
-        const publicPaths = ['/travels', '/login', '/main'];
-        const currentPath = window.location.pathname;
-
         // 401 에러이고 토큰 갱신 시도를 하지 않은 경우
         if (error.response?.status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
             if (!isRefreshing) {
@@ -67,18 +66,27 @@ axiosInstance.interceptors.response.use(
                     processQueue();
                     
                     // 원래 요청 재시도
-                    return axios(originalRequest);
+                    const retryResponse = await axios({
+                        ...originalRequest,
+                        withCredentials: true
+                    });
+                    
+                    isRefreshing = false;
+                    return retryResponse;
+
                 } catch (refreshError) {
                     // 토큰 갱신 실패 시
                     processQueue(refreshError);
-                    
-                    // public 경로가 아닌 경우에만 리다이렉트
-                    if (!publicPaths.includes(currentPath)) {
-                        window.location.replace('/travels');
+                    isRefreshing = false;
+
+                    // 실제 인증 오류인 경우에만 리다이렉트
+                    if (axios.isAxiosError(refreshError) && refreshError.response?.status === 401) {
+                        const protectedRoutes = ['/travels/create', '/mypage'];
+                        if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
+                            window.location.replace('/login');
+                        }
                     }
                     return Promise.reject(refreshError);
-                } finally {
-                    isRefreshing = false;
                 }
             }
 
@@ -86,9 +94,10 @@ axiosInstance.interceptors.response.use(
             return new Promise((resolve, reject) => {
                 failedQueue.push({ resolve, reject });
             }).then(() => {
-                return axios(originalRequest);
-            }).catch((err) => {
-                return Promise.reject(err);
+                return axios({
+                    ...originalRequest,
+                    withCredentials: true
+                });
             });
         }
 
