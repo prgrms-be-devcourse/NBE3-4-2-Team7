@@ -42,7 +42,10 @@ public enum ErrorCode {
 	//Chatting
 	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다."),
 	FAIL_MESSAGE_SEND(SERVICE_UNAVAILABLE,"메시지 전송에 실패했습니다."),
-	NOT_FOUND_CHAT_ROOM(NOT_FOUND,"채팅방을 찾을 수 없습니다.");
+	NOT_FOUND_CHAT_ROOM(NOT_FOUND,"채팅방을 찾을 수 없습니다."),
+	STOMP_INVALID_HEADER(BAD_REQUEST, "Stomp 헤더값이 누락되었습니다."),
+	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다.");
+
 
 	private final HttpStatus httpStatus;
 	private final String message;
