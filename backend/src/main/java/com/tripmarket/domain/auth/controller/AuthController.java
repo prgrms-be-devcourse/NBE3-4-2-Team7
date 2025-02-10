@@ -1,7 +1,9 @@
 package com.tripmarket.domain.auth.controller;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,7 +79,7 @@ public class AuthController {
 	 */
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
-	public void logout(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
 		String accessToken = cookieUtil.extractTokenFromCookie(request);
 
 		if (accessToken == null) {
@@ -92,9 +94,10 @@ public class AuthController {
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyCookie.toString());
 
 			log.debug("로그아웃 성공");
+			return ResponseEntity.ok("로그아웃이 성공적으로 완료되었습니다.");
 		} catch (Exception e) {
 			log.error("로그아웃 실패: {}", e.getMessage());
-			throw new JwtAuthenticationException("로그아웃 실패");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그아웃 실패");
 		}
 	}
 }
