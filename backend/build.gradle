@@ -48,6 +48,7 @@ dependencies {
     // websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.webjars:sockjs-client:1.1.2'
+    implementation 'org.springframework:spring-websocket:6.1.2'
 
     // stomp
     implementation 'org.webjars:stomp-websocket:2.3.3-1'
@@ -58,6 +59,15 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    //rabbitmq
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework:spring-messaging:6.1.2'
+    implementation 'org.springframework.boot:spring-boot-starter-reactor-netty:3.0.0'
+//    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-x86_64'
+
+    //mongodb
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 }
 
 tasks.named('test') {

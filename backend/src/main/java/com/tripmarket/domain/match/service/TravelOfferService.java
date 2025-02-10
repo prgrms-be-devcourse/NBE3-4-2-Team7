@@ -29,7 +29,8 @@ public class TravelOfferService {
 	@Transactional
 	public void createTravelOffer(String email, Long travelId) {
 		Member member = memberService.getMemberByEmail(email);
-		Guide guide = GuideDto.toEntity(guideService.getGuideByMember(member.getId()));
+		// 내 로그인 정보에 기반한 가이드 프로필
+		Guide guide = member.getGuide();
 		Travel travel = travelService.getTravel(travelId);
 		validateSelfResponse(guide, travel);
 		validateDuplicateTravelOffer(guide, travelId);

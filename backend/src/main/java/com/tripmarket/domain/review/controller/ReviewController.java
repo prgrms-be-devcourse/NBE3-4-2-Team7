@@ -1,10 +1,9 @@
 package com.tripmarket.domain.review.controller;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -12,14 +11,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.tripmarket.domain.review.dto.ReviewCreateRequestDto;
 import com.tripmarket.domain.review.dto.ReviewResponseDto;
 import com.tripmarket.domain.review.dto.ReviewUpdateRequestDto;
 import com.tripmarket.domain.review.service.ReviewService;
-
+import com.tripmarket.global.oauth2.CustomOAuth2User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,6 +35,7 @@ public class ReviewController {
 
 	private final ReviewService reviewService;
 
+
 	@PostMapping
 	@Operation(summary = "리뷰 생성", description = "완료된 여행에 대해 리뷰를 작성합니다.")
 	@ApiResponses({
@@ -46,28 +44,16 @@ public class ReviewController {
 		@ApiResponse(responseCode = "404", description = "해당 여행 또는 사용자를 찾을 수 없음")
 	})
 	public ResponseEntity<Void> createReview(
-		// @RequestBody @Valid ReviewCreateRequestDto requestDto,
-		// @AuthenticationPrincipal UserDetails userDetails) {
-		//
+		@RequestBody @Valid @Parameter(description = "리뷰 생성 요청 DTO", required = true) ReviewCreateRequestDto requestDto,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) {
+
 		// JWT에서 이메일(String) 가져오기
-		// String email = userDetails.getUsername();
-		//
-		// 이메일을 기반으로 회원 정보 조회 (Long ID 가져오기)
-		// Member member = memberRepository.findByEmailId(email)
-		// 	.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-		//
+		String email = customOAuth2User.getEmail();
+
 		// 조회된 Member의 Long ID를 사용하여 리뷰 생성
-		// reviewService.createReview(requestDto, member.getId());
-		//
-		// return ResponseEntity.status(HttpStatus.CREATED).build();
-		@RequestBody @Valid
-		@Parameter(description = "리뷰 생성 요청 DTO", required = true) ReviewCreateRequestDto requestDto) {
+		reviewService.createReview(requestDto, email);
 
-		Long memberId = 1L;
-
-		reviewService.createReview(requestDto, memberId); // 여기서 직접 memberId 사용
 		return ResponseEntity.status(HttpStatus.CREATED).build();
-
 	}
 
 	@GetMapping("/travel/{travelId}")
@@ -82,11 +68,7 @@ public class ReviewController {
 	public ResponseEntity<List<ReviewResponseDto>> getReviewsByTravel(
 		@PathVariable @Parameter(description = "조회할 여행의 ID", example = "1") Long travelId) {
 
-		List<ReviewResponseDto> reviews = reviewService.getReviewsByTravel(travelId)
-			.stream()
-			.map(ReviewResponseDto::fromEntity)
-			.collect(Collectors.toList());
-
+		List<ReviewResponseDto> reviews = reviewService.getReviewsByTravel(travelId);
 		return ResponseEntity.ok(reviews);
 	}
 
@@ -116,9 +98,9 @@ public class ReviewController {
 	})
 	public ResponseEntity<Void> softDeleteReview(
 		@PathVariable @Parameter(description = "삭제할 리뷰의 ID", example = "1") Long reviewId,
-		@RequestParam @Parameter(description = "요청한 사용자 ID", example = "4") Long memberId) {
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) { // 로그인된 사용자 정보 직접 가져옴
 
-		reviewService.deleteReview(reviewId, memberId);
+		reviewService.deleteReview(reviewId, customOAuth2User.getEmail()); // 이메일 기반으로 삭제 요청
 		return ResponseEntity.noContent().build(); // 204 No Content 응답
 	}
 
@@ -132,10 +114,10 @@ public class ReviewController {
 	})
 	public ResponseEntity<Void> updateReview(
 		@PathVariable @Parameter(description = "수정할 리뷰의 ID", example = "1") Long reviewId,
-		@RequestBody @Valid ReviewUpdateRequestDto requestDto) {
+		@RequestBody @Valid ReviewUpdateRequestDto requestDto,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User) { // 로그인된 사용자 정보 직접 가져옴
 
-		Long memberId = 1L; // JWT에서 사용자 ID 가져오는 로직 추가 필요
-		reviewService.updateReview(reviewId, memberId, requestDto);
+		reviewService.updateReview(reviewId, customOAuth2User.getEmail(), requestDto); // 이메일 기반으로 수정 요청
 		return ResponseEntity.ok().build();
 	}
 }
