@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomRequestDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomsResponseDto;
+import com.tripmarket.domain.chatting.dto.CreateChattingRoomResponseDto;
 import com.tripmarket.domain.chatting.service.ChattingRoomService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -43,14 +44,15 @@ public class ChattingRoomController {
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "201", description = "채팅방 생성"),
 		@ApiResponse(responseCode = "404", description = "존재하지 않는 유저입니다."),
-		@ApiResponse(responseCode = "409", description = "채팅방이 이미 존재"),
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
-	public ResponseEntity<String> createChatRoom(@RequestBody @Valid ChattingRoomRequestDto request,
+	public ResponseEntity<CreateChattingRoomResponseDto> createChatRoom(
+		@RequestBody @Valid ChattingRoomRequestDto request,
 		@AuthenticationPrincipal CustomOAuth2User user) {
 
-		chattingRoomService.create(user.getEmail(), request.receiver());
+		CreateChattingRoomResponseDto response = chattingRoomService.create(user.getEmail(),
+			request.receiver());
 
-		return ResponseEntity.status(HttpStatus.CREATED).body("채팅방이 생성되었습니다.");
+		return ResponseEntity.ok().body(response);
 	}
 
 	@GetMapping("/my-list")
@@ -78,9 +80,11 @@ public class ChattingRoomController {
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
 	public ResponseEntity<Page<ChattingResponseDto>> getMessages(
 		@PathVariable String roomId,
+		@AuthenticationPrincipal CustomOAuth2User user,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size) {
-
+		String userEmail = user.getEmail();
+		chattingRoomService.markMessagesAsRead(roomId, userEmail);
 		Page<ChattingResponseDto> messages = chattingRoomService.getChattingMessages(roomId,
 			PageRequest.of(page, size));
 		return ResponseEntity.ok(messages);
