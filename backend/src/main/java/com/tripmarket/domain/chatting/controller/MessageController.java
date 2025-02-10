@@ -19,7 +19,6 @@ public class MessageController {
 
 	@MessageMapping("chat.message.{roomId}")
 	public void message(@DestinationVariable String roomId, MessageDto messageDto) {
-		log.info("메세지 전달 완료 {}: {}", roomId, messageDto);
 		messageService.sendMessage(messageDto,roomId);
 	}
 }
