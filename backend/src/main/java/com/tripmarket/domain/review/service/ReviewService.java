@@ -19,6 +19,7 @@ import com.tripmarket.domain.review.dto.ReviewResponseDto;
 import com.tripmarket.domain.review.dto.ReviewUpdateRequestDto;
 import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.domain.review.repository.ReviewRepository;
+import com.tripmarket.domain.reviewstats.service.ReviewStatsService;
 import com.tripmarket.domain.travel.entity.Travel;
 import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.global.exception.CustomException;
@@ -38,6 +39,7 @@ public class ReviewService {
 	private final TravelRepository travelRepository;
 	private final GuideRequestRepository guideRequestRepository;
 	private final TravelOfferRepository travelOfferRepository;
+	private final ReviewStatsService reviewStatsService;
 
 	@Transactional
 	public void createReview(ReviewCreateRequestDto requestDto, String email) {
@@ -88,6 +90,8 @@ public class ReviewService {
 
 		reviewRepository.save(review);
 		log.debug("리뷰 저장 완료 - reviewId: {}", review.getId());
+
+		reviewStatsService.updateReviewStatsOnCreate(guideId, requestDto.reviewScore());
 	}
 
 
@@ -151,10 +155,16 @@ public class ReviewService {
 			throw new CustomException(ErrorCode.REVIEW_DELETION_FORBIDDEN);
 		}
 
+		// 삭제 전 리뷰 점수 저장
+		double reviewScore = review.getReviewScore();
+		Long guideId = review.getGuideId();
+
 		// 소프트 삭제 처리
 		review.softDelete();
 		reviewRepository.save(review);
 
+		// 리뷰 통계 업데이트
+		reviewStatsService.updateReviewStats(guideId, reviewScore, null);
 		log.debug("리뷰 삭제 완료 - reviewId: {}", review.getId());
 	}
 
@@ -178,9 +188,14 @@ public class ReviewService {
 			throw new CustomException(ErrorCode.REVIEW_UPDATE_FORBIDDEN);
 		}
 
+		// 수정 전 리뷰 점수 저장
+		double oldScore = review.getReviewScore();
+
 		// 리뷰 내용 & 평점 수정
 		review.update(requestDto.comment(), requestDto.reviewScore());
 
+		// 리뷰 통계 업데이트 (수정된 리뷰 반영)
+		reviewStatsService.updateReviewStats(review.getGuideId(), oldScore, requestDto.reviewScore());
 		log.debug("리뷰 수정 완료 - reviewId: {}, member_email: {}", reviewId, email);
 	}
 }
