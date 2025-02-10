@@ -1,277 +1,510 @@
 "use client";
 
-import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
-import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { IoChevronBack, IoChevronDown, IoChevronUp } from "react-icons/io5";
-import { getGuideDetailByUser} from "@/app/guides/services/guideService";
+import React, {useEffect, useState} from "react";
+import {useRouter} from "next/navigation";
+import {
+    getGuideRequestsByRequester,
+    getMyTravels,
+    GuideRequestDto,
+    TravelDto,
+    updateGuideRequestStatus,
+} from "../travel/services/travelService";
+import {getMyInfo, MemberResponseDTO} from "../members/services/memberService";
+import {
+    getGuideRequestsByGuide,
+    getTravelOffersByGuide,
+    getTravelOffersForUser,
+    TravelOfferDto,
+    updateTravelOfferStatus,
+} from "../travelOffers/services/travelOfferService";
+import {getGuideDetailByUser, GuideDto} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
-import {hasGuideProfile} from "@/app/members/services/memberService";
 
-const MyPage = () => {
-    const { user } = useAuth();
+const MyPage: React.FC = () => {
+    const [userInfo, setUserInfo] = useState<MemberResponseDTO | null>(null);
+    const [guideRequests, setGuideRequests] = useState<GuideRequestDto[]>([]);
+    const [myTravels, setMyTravels] = useState<TravelDto[]>([]);
+    const [travelOffersForUser, setTravelOffersForUser] = useState<TravelOfferDto[]>([]);
+    const [guideRequestsByGuide, setGuideRequestsByGuide] = useState<GuideRequestDto[]>([]);
+    const [travelOffers, setTravelOffers] = useState<TravelOfferDto[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string>("");
+    const [guideProfile, setGuideProfile] = useState<GuideDto>({});
     const router = useRouter();
-    const [isGuideProfileOpen, setIsGuideProfileOpen] = useState(false);
-    const [isGuideProfileAvailable, setIsGuideProfileAvailable] = useState(false);
-    const [guideData, setGuideData] = useState({});
-
 
     useEffect(() => {
-        const fetchGuideDetail = async () => {
-            try {
-                const guideDetail = await getGuideDetailByUser();
-                setGuideData(convertFromGuideDto(guideDetail.data));
-            } catch (error) {
-                console.error('가이드 상세 정보 조회 실패:', error);
-            }
-        };
+        setLoading(true);
+        getMyInfo()
+            .then((userInfoResponse) => {
+                setUserInfo(userInfoResponse);
+                return Promise.all([
+                    getGuideRequestsByRequester(),
+                    getMyTravels(),
+                    getTravelOffersForUser(), // 사용자에게 온 여행 제안 요청 API 추가
+                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getGuideDetailByUser() : Promise.resolve({data: []}),
+                ]);
+            })
+            .then(([
+                       guideRequestsResponse,
+                       myTravelsResponse,
+                       travelOffersForUserResponse,
+                       guideRequestsByGuideResponse,
+                       travelOffersResponse,
+                       guideProfileResponse
+                   ]) => {
+                setGuideRequests(guideRequestsResponse.data);
+                setMyTravels(myTravelsResponse.data);
+                setTravelOffersForUser(travelOffersForUserResponse.data);
+                setGuideRequestsByGuide(guideRequestsByGuideResponse.data);
+                setTravelOffers(travelOffersResponse.data);
 
-        const fetchHasGuideProfile = async () => {
-            try {
-                const response = await hasGuideProfile();
-                setIsGuideProfileAvailable(response.data);
-            } catch(error){
-                console.error('가이드 프로필 유무 조회 실패', error);
-            }
-        }
-        fetchGuideDetail();
-        fetchHasGuideProfile()
+                if (guideProfileResponse?.data) {
+                    setGuideProfile(convertFromGuideDto(guideProfileResponse.data));
+                }
+            })
+            .catch(() => {
+                setError("데이터를 불러오는 데 실패했습니다.");
+            })
+            .finally(() => setLoading(false));
     }, []);
-
-    // 임시 더미 데이터
-    const dummyTravels = [
-        {
-            id: 1,
-            title: "서울 여행",
-            status: "WAITING_FOR_MATCHING"
-        },
-        {
-            id: 2,
-            title: "부산 여행",
-            status: "IN_PROGRESS"
-        },
-        {
-            id: 3,
-            title: "제주도 여행",
-            status: "MATCHED"
-        }
-    ];
-
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'WAITING_FOR_MATCHING':
-                return '매칭 대기중';
-            case 'IN_PROGRESS':
-                return '진행중';
-            case 'MATCHED':
-                return '매칭 완료';
-            default:
-                return '알 수 없음';
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'WAITING_FOR_MATCHING':
-                return 'text-yellow-500';
-            case 'IN_PROGRESS':
-                return 'text-blue-500';
-            case 'MATCHED':
-                return 'text-green-500';
-            default:
-                return 'text-gray-500';
-        }
-    };
-
-    const handleEdit = (id: number) => {
-        // 수정 로직 구현
-        console.log('Edit travel:', id);
-    };
-
-    const handleDelete = (id: number) => {
-        // 삭제 로직 구현
-        console.log('Delete travel:', id);
-    };
 
     // 가이드 생성 페이지로 이동
     const handleGuideCreate = () => {
+        if(userInfo.hasGuideProfile){
+            return;
+        }
         router.push("/guides/register");
     }
 
+    const handleViewProfile = (guideId: number) => {
+        router.push(`/guides/${guideId}`);
+    };
+
+    const handleViewTravelRequest = (travelId: number) => {
+        router.push(`/travels/${travelId}`);
+    };
+
+    const handleTravelOfferStatusUpdate = (offerId: number, status: "ACCEPTED" | "REJECTED") => {
+        updateTravelOfferStatus(offerId, status)
+            .then(() => {
+                alert(`요청이 ${status === "ACCEPTED" ? "수락" : "거절"}되었습니다.`);
+                setTravelOffersForUser((prevOffers) =>
+                    prevOffers.map((offer) => (offer.id === offerId ? {...offer, status} : offer))
+                );
+            })
+            .catch(() => alert("요청 상태를 업데이트하는 데 실패했습니다."));
+    };
+
+    const handleUpdateStatus = (requestId: number, guideId: number, status: "ACCEPTED" | "REJECTED") => {
+        updateGuideRequestStatus(requestId, guideId, status)
+            .then(() => {
+                alert(`요청이 ${status === "ACCEPTED" ? "수락" : "거절"}되었습니다.`);
+
+                // 상태를 즉시 업데이트하여 UI 반영
+                setGuideRequestsByGuide((prevRequests) =>
+                    prevRequests.map((req) =>
+                        req.id === requestId ? {...req, status: status} : req
+                    )
+                );
+            })
+            .catch(() => alert("요청 상태를 업데이트하는데 실패했습니다."));
+    };
+    if (loading) return <div style={styles.loading}>로딩 중...</div>;
+    if (error) return <div style={styles.error}>{error}</div>;
+
+    const getStatusStyle = (status: string): React.CSSProperties => {
+        switch (status) {
+            case "ACCEPTED":
+                return {backgroundColor: "#16A34A", color: "#FFF", padding: "0.2rem 0.5rem", borderRadius: "4px"};
+            case "PENDING":
+                return {backgroundColor: "#F59E0B", color: "#FFF", padding: "0.2rem 0.5rem", borderRadius: "4px"};
+            case "REJECTED":
+                return {backgroundColor: "#DC2626", color: "#FFF", padding: "0.2rem 0.5rem", borderRadius: "4px"};
+            default:
+                return {backgroundColor: "#6B7280", color: "#FFF", padding: "0.2rem 0.5rem", borderRadius: "4px"};
+        }
+    };
+
+
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 pb-8">
-            <div className="max-w-4xl mx-auto px-4">
-                {/* 뒤로가기 버튼 */}
-                <button 
-                    onClick={() => router.back()}
-                    className="flex items-center text-gray-600 hover:text-blue-600 mb-8 group 
-                             transition-all duration-300 ease-in-out px-4 py-2 rounded-lg
-                             hover:bg-blue-50 border border-transparent hover:border-blue-100"
-                >
-                    <IoChevronBack className="w-6 h-6 transform group-hover:-translate-x-1 
-                                           transition-transform duration-300 ease-in-out" />
-                    <span className="ml-2 text-lg font-medium">이전 페이지로</span>
-                </button>
-
-                {/* 프로필 섹션 */}
-                <div className="bg-white rounded-lg shadow-md p-8 mb-6">
-                    <div className="flex items-center space-x-8">
-                        <div className="relative w-32 h-32">
-                            <Image
-                                src={user?.imageUrl || '/default-profile.png'}
-                                alt="프로필 이미지"
-                                fill
-                                className="rounded-full object-cover pointer-events-none"
-                            />
-                        </div>
-                        <div className="pointer-events-none">
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                                {user?.name || '사용자'}
-                            </h1>
-                            <p className="text-lg text-gray-600">
-                                {user?.email || 'email@example.com'}
-                            </p>
-                        </div>
+        <div style={styles.container}>
+            {/* 사용자 정보 섹션 */}
+            <div style={styles.userInfoContainer}>
+                {userInfo && (
+                    <div style={styles.userInfo}>
+                        <h1 style={styles.userName}>{userInfo.name}</h1>
+                        <p style={styles.userEmail}>{userInfo.email}</p>
+                        {userInfo.hasGuideProfile && (
+                            <p style={styles.guideStatus}>🌟 가이드 프로필 등록 완료</p>
+                        )}
                     </div>
-                </div>
+                )}
+            </div>
 
+            <div style={styles.mainContent}>
                 {/* 가이드 프로필 섹션 */}
-                {isGuideProfileAvailable ? (
-                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                            <button
-                                onClick={() => setIsGuideProfileOpen(!isGuideProfileOpen)}
-                                className="w-full flex items-center justify-between text-left"
-                            >
-                                <h2 className="text-2xl font-bold text-gray-800">가이드 프로필</h2>
-                                {isGuideProfileOpen ?
-                                    <IoChevronUp className="w-6 h-6 text-gray-600"/> :
-                                    <IoChevronDown className="w-6 h-6 text-gray-600"/>
-                                }
-                            </button>
-                            {isGuideProfileOpen && (
-                                <div className="mt-6 space-y-4 animate-fade-in">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
-                                            <p className="text-gray-800">{guideData.activityRegion}</p>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
-                                            <p className="text-gray-800">{guideData.languages}</p>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
-                                            <p className="text-gray-800">{guideData.experienceYears}년</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
-                                        <p className="text-gray-800">{guideData.introduction}</p>
-                                    </div>
 
-                                    {/* 프로필 수정 버튼 추가 */}
-                                    <div className="flex justify-end mt-4">
+                <div style={styles.sectionBox}>
+                    <h2 style={styles.sectionTitle}>👤 내 가이드 정보</h2>
+                    {userInfo.hasGuideProfile ? (
+                        <div className="mt-6 space-y-4 animate-fade-in">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
+                                    <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
+                                    <p className="text-gray-800">{guideProfile.languages}</p>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
+                                    <p className="text-gray-800">{guideProfile.experienceYears}년</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
+                                <p className="text-gray-800">{guideProfile.introduction}</p>
+                            </div>
+
+                            {/* 프로필 수정 버튼 추가 */}
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={() => router.push('/mypage/guide/edit')}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                                         hover:bg-blue-700 transition-colors duration-200
+                                         flex items-center space-x-2 text-sm font-medium"
+                                >
+                                    <span>프로필 수정</span>
+                                </button>
+                            </div>
+                        </div>
+                        ) :
+                        (
+                            <div style={styles.guideSectionBox}>
+                                <button
+                                    style={styles.viewProfileButton}
+                                    onClick={() => handleGuideCreate()}
+                                >
+                                    👤 가이드 프로필 생성
+                                </button>
+                            </div>
+                        )
+                    }
+                </div>
+            </div>
+
+            <div style={styles.mainContent}>
+                {/* 사용자 섹션 */}
+                <div style={styles.sectionBox}>
+                    <h2 style={styles.sectionTitle}>👤 사용자 내역</h2>
+
+                    {/* 내가 요청한 가이드 요청 내역 */}
+                    <div style={styles.card}>
+                        <h3 style={styles.cardTitle}>📑 사용자(나) {"->"} 가이더 요청 내역 조회</h3>
+                        <div style={styles.innerCard}>
+                            {guideRequests.length === 0 ? (
+                                <p style={styles.noRequests}>요청한 가이드 내역이 없습니다.</p>
+                            ) : (
+                                guideRequests.map((request) => (
+                                    <div key={request.id} style={styles.requestBox}>
+                                        <div style={styles.requestDetails}>
+                                            <p><b>여행 도시:</b> {request.travelCity}</p>
+                                            <p><b>가이드 이름:</b> {request.guideName}</p>
+                                            <p><b>상태:</b> <span
+                                                style={getStatusStyle(request.status)}>{request.status}</span></p>
+                                        </div>
                                         <button
-                                            onClick={() => router.push('/mypage/guide/edit')}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg
-                                             hover:bg-blue-700 transition-colors duration-200
-                                             flex items-center space-x-2 text-sm font-medium"
+                                            style={styles.viewProfileButton}
+                                            onClick={() => handleViewProfile(request.guideId)}
                                         >
-                                            <span>프로필 수정</span>
+                                            🔵 가이드 프로필 보기
                                         </button>
                                     </div>
-                                </div>
+                                ))
                             )}
                         </div>
-                    ) :
-                    (
-                        <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-center">
-                                <button
-                                    style={{
-                                        backgroundColor: "#1E88E5",
-                                        color: "#FFFFFF",
-                                        padding: "0.75rem 1rem",
-                                        border: "none",
-                                        borderRadius: "4px",
-                                        cursor: "pointer",
-                                        fontWeight: "bold"
-                                    }}
-                                    onClick={handleGuideCreate}
-                                >
-                                    가이드 프로필 생성
-                                </button>
+                    </div>
+
+                    {/* 내가 작성한 여행 요청 내역 */}
+                    <div style={styles.card}>
+                        <h3 style={styles.cardTitle}>📍 나의 여행 요청 글 목록</h3>
+                        <div style={styles.innerCard}>
+                            {myTravels.length === 0 ? (
+                                <p style={styles.noRequests}>여행 요청 내역이 없습니다.</p>
+                            ) : (
+                                myTravels.map((travel) => (
+                                    <div key={travel.id} style={styles.requestBox}>
+                                        <div style={styles.requestDetails}>
+                                            <p><b>여행 도시:</b> {travel.city}</p>
+                                            <p><b>여행 기간:</b> {travel.startDate} ~ {travel.endDate}</p>
+                                        </div>
+                                        <button
+                                            style={styles.viewProfileButton}
+                                            onClick={() => handleViewTravelRequest(travel.id)}
+                                        >
+                                            🔵 여행 상세 보기
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
-                    )
-                }
+                    </div>
 
-
-                {/* 여행 매칭 목록 섹션 */}
-                <div className="bg-white rounded-lg shadow-md p-8">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                        나의 여행 매칭 목록
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                            <tr className="border-b-2 border-gray-200">
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">No.</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청
-                                    명
-                                </th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">요청상태</th>
-                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-600">관리</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                                {dummyTravels.map((travel, index) => (
-                                    <tr key={travel.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                        <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-800">{travel.title}</td>
-                                        <td className={`px-6 py-4 text-sm font-medium ${getStatusColor(travel.status)}`}>
-                                            {getStatusText(travel.status)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-center">
-                                            <div className="flex justify-center gap-2">
+                    {/* 사용자가 받은 여행 제안 요청 (가이더가 제안한 매칭 요청) */}
+                    <div style={styles.card}>
+                        <h3 style={styles.cardTitle}>📑 사용자(나) {"<-"} 요청 들어온 가이더 매칭 요청</h3>
+                        <div style={styles.innerCard}>
+                            {travelOffersForUser.length === 0 ? (
+                                <p style={styles.noRequests}>받은 여행 제안 요청이 없습니다.</p>
+                            ) : (
+                                travelOffersForUser.map((offer) => (
+                                    <div key={offer.id} style={styles.requestBox}>
+                                        <div style={styles.requestDetails}>
+                                            <p><b>여행 도시:</b> {offer.travelCity}</p>
+                                            <p><b>가이드 이름:</b> {offer.guideName}</p>
+                                            <p><b>상태:</b> <span
+                                                style={getStatusStyle(offer.status)}>{offer.status}</span></p>
+                                        </div>
+                                        {offer.status === "PENDING" && (
+                                            <div style={styles.buttonGroup}>
                                                 <button
-                                                    className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md
-                                                     hover:bg-blue-100 transition-colors duration-200
-                                                     flex items-center gap-1 text-sm font-medium"
-                                                    onClick={() => handleEdit(travel.id)}
+                                                    style={styles.acceptButton}
+                                                    onClick={() => handleTravelOfferStatusUpdate(offer.id, "ACCEPTED")}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
-                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round"
-                                                              strokeWidth={2}
-                                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                                    </svg>
-                                                    수정
+                                                    ✅ 수락
                                                 </button>
                                                 <button
-                                                    className="px-3 py-1.5 bg-red-50 text-red-600 rounded-md
-                                                     hover:bg-red-100 transition-colors duration-200
-                                                     flex items-center gap-1 text-sm font-medium"
-                                                    onClick={() => handleDelete(travel.id)}
+                                                    style={styles.rejectButton}
+                                                    onClick={() => handleTravelOfferStatusUpdate(offer.id, "REJECTED")}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
-                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round"
-                                                              strokeWidth={2}
-                                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                    </svg>
-                                                    삭제
+                                                    ❌ 거절
                                                 </button>
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
+
+
+                {/* 가이드 섹션 (hasGuideProfile이 true일 경우만 표시) */}
+                {userInfo?.hasGuideProfile && (
+                    <div style={styles.sectionBox}>
+                        <h2 style={styles.sectionTitle}>🧑‍🏫 가이드 내역</h2>
+
+                        {/* 사용자가 나에게 요청한 가이드 요청 내역 */}
+                        <div style={styles.card}>
+                            <h3 style={styles.cardTitle}>📑 가이더(나) {"<-"} 사용자 매칭 요청</h3>
+                            <div style={styles.innerCard}>
+                                {guideRequestsByGuide.length === 0 ? (
+                                    <p style={styles.noRequests}>받은 요청이 없습니다.</p>
+                                ) : (
+                                    guideRequestsByGuide.map((request) => (
+                                        <div key={request.id} style={styles.requestBox}>
+                                            <div style={styles.requestDetails}>
+                                                <p><b>여행 도시:</b> {request.travelCity}</p>
+                                                <p><b>사용자 이름:</b> {request.memberName}</p>
+                                                <p><b>상태:</b> <span
+                                                    style={getStatusStyle(request.status)}>{request.status}</span></p>
+                                            </div>
+                                            <div>
+                                                <button
+                                                    style={styles.viewProfileButton}
+                                                    onClick={() => handleViewTravelRequest(request.guideId)}
+                                                    disabled={request.isGuideDeleted}
+                                                >
+                                                    🔵 여행 요청 글 보기
+                                                </button>
+                                                {request.status === "PENDING" && (
+                                                    <div style={styles.buttonGroup}>
+                                                        <button
+                                                            style={styles.acceptButton}
+                                                            onClick={() =>
+                                                                handleUpdateStatus(request.id, request.guideId, "ACCEPTED")
+                                                            }
+                                                        >
+                                                            ✅ 수락
+                                                        </button>
+                                                        <button
+                                                            style={styles.rejectButton}
+                                                            onClick={() =>
+                                                                handleUpdateStatus(request.id, request.guideId, "REJECTED")
+                                                            }
+                                                        >
+                                                            ❌ 거절
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 내가 사용자에게 보낸 여행 제안 요청 내역 */}
+                        <div style={styles.card}>
+                            <h3 style={styles.cardTitle}>📍 가이더(나) {"->"} 사용자 매칭 요청 조회 </h3>
+                            <div style={styles.innerCard}>
+                                {travelOffers.length === 0 ? (
+                                    <p style={styles.noRequests}>보낸 여행 제안 요청이 없습니다.</p>
+                                ) : (
+                                    travelOffers.map((offer) => (
+                                        <div key={offer.id} style={styles.requestBox}>
+                                            <div style={styles.requestDetails}>
+                                                <p><b>여행 도시:</b> {offer.travelCity}</p>
+                                                <p><b>사용자 이름:</b> {offer.guideName}</p>
+                                                <p><b>상태:</b> <span
+                                                    style={getStatusStyle(offer.status)}>{offer.status}</span></p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+    // container: {padding: "2rem", backgroundColor: "#E3F2FD"},
+    // userInfo: {textAlign: "center", marginBottom: "2rem"},
+
+    userInfoContainer: {
+        backgroundColor: "#E3F2FD",
+        borderRadius: "12px",
+        padding: "2rem",
+        marginBottom: "2rem",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "flex-start",
+    },
+    userInfo: {
+        textAlign: "left",
+    },
+    userName: {
+        fontSize: "2rem",
+        fontWeight: "bold",
+        color: "#1E88E5",
+        marginBottom: "0.5rem",
+    },
+    userEmail: {
+        fontSize: "1.2rem",
+        color: "#424242",
+        marginBottom: "1rem",
+    },
+    guideStatus: {
+        fontSize: "1rem",
+        color: "#4CAF50",
+        backgroundColor: "#E8F5E9",
+        padding: "0.5rem 1rem",
+        borderRadius: "8px",
+        display: "inline-block",
+    },
+
+
+    mainContent: {
+        padding: "1.5rem",
+        backgroundColor: "#F9FAFB",
+        borderRadius: "12px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    },
+    sectionBox: {
+        marginBottom: "2rem",
+        backgroundColor: "#FFFFFF",
+        padding: "1.5rem",
+        borderRadius: "12px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    },
+    guideSectionBox: {
+        marginBottom: "2rem",
+        backgroundColor: "#FFFFFF",
+        padding: "1.5rem",
+        borderRadius: "12px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    sectionTitle: {
+        fontSize: "1.8rem",
+        fontWeight: "bold",
+        color: "#1E88E5",
+        marginBottom: "1rem",
+    },
+    card: {
+        marginBottom: "1.5rem",
+        backgroundColor: "#FFFFFF",
+        borderRadius: "8px",
+        padding: "1.5rem",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    },
+    cardTitle: {
+        fontSize: "1.5rem",
+        fontWeight: "bold",
+        marginBottom: "1rem",
+        color: "#374151",
+    },
+    innerCard: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+    },
+    requestBox: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "#F3F4F6",
+        padding: "1rem",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+    },
+    requestDetails: {
+        flex: 1,
+    },
+    noRequests: {
+        color: "#9CA3AF",
+    },
+    viewProfileButton: {
+        backgroundColor: "#2563EB",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    buttonGroup: {
+        display: "flex",
+        gap: "0.5rem",
+    },
+    acceptButton: {
+        backgroundColor: "#16A34A",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    rejectButton: {
+        backgroundColor: "#DC2626",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
 };
 
 export default MyPage;
