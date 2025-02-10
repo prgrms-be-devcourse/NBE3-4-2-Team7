@@ -53,4 +53,16 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 		Query query = new Query(Criteria.where("roomId").is(roomId));
 		mongoTemplate.remove(query, Message.class);
 	}
+
+	@Override
+	public List<Message> findUnreadMessages(String roomId, String userEmail) {
+		Query query = new Query();
+		query.addCriteria(
+			Criteria.where("roomId").is(roomId)
+				.and("receiver").is(userEmail)
+				.and("readStatus").is(false)
+		);
+
+		return mongoTemplate.find(query, Message.class);
+	}
 }

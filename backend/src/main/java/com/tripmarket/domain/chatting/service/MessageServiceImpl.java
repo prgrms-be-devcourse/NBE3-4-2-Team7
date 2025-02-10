@@ -1,5 +1,7 @@
 package com.tripmarket.domain.chatting.service;
 
+import java.util.Set;
+
 import com.tripmarket.domain.chatting.dto.MessageDto;
 import com.tripmarket.domain.chatting.entity.Message;
 import com.tripmarket.domain.chatting.repository.message.MessageRepository;
@@ -21,6 +23,7 @@ public class MessageServiceImpl implements MessageService {
 
 	private final MessageRepository messageRepository;
 	private final RabbitTemplate rabbitTemplate;
+	private final RedisChattingService redisChattingService;
 
 	@Value("${spring.rabbitmq.chat.exchange.name}")
 	private String chatExchangeName;
@@ -28,6 +31,7 @@ public class MessageServiceImpl implements MessageService {
 	@Transactional
 	@Override
 	public void sendMessage(MessageDto messageDto, String roomId) {
+
 		try {
 			rabbitTemplate.convertAndSend(chatExchangeName, "chat.room." + roomId, messageDto);
 		} catch (Exception e) {
@@ -35,6 +39,22 @@ public class MessageServiceImpl implements MessageService {
 		}
 
 		Message message = messageDto.toMessageEntity();
+		Set<Object> connectedUsers = redisChattingService.getUsersInChatRoom(roomId);
+		boolean isReceiverConnected = connectedUsers.contains(messageDto.receiver());
+
+		//메시지 생성 - 읽음 상태 바로 확인
+		if (isReceiverConnected) {
+			message.updateRead(true);
+		} else {
+			message.updateRead(false);
+			redisChattingService.incrementUnreadCount(roomId, messageDto.receiver());
+		}
+
 		messageRepository.save(message);
+
+		// 읽음 상태 실시간으로 반영할때
+		if (isReceiverConnected) {
+			redisChattingService.sendReadReceipt(messageDto.receiver(), roomId, message.getId());
+		}
 	}
 }
