@@ -47,10 +47,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config as CustomInternalAxiosRequestConfig;
 
         // 401 에러이고 토큰 갱신 시도를 하지 않은 경우
-        if (error.response?.status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+            originalRequest._retry = true;
+
             if (!isRefreshing) {
                 isRefreshing = true;
 
@@ -66,27 +68,23 @@ axiosInstance.interceptors.response.use(
                     processQueue();
                     
                     // 원래 요청 재시도
-                    const retryResponse = await axios({
-                        ...originalRequest,
-                        withCredentials: true
-                    });
-                    
-                    isRefreshing = false;
-                    return retryResponse;
+                    return axiosInstance(originalRequest);
 
                 } catch (refreshError) {
                     // 토큰 갱신 실패 시
                     processQueue(refreshError);
-                    isRefreshing = false;
-
+                    
                     // 실제 인증 오류인 경우에만 리다이렉트
                     if (axios.isAxiosError(refreshError) && refreshError.response?.status === 401) {
+                        // 보호된 경로에서만 리다이렉트
                         const protectedRoutes = ['/travels/create', '/mypage'];
                         if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
                             window.location.replace('/login');
                         }
                     }
                     return Promise.reject(refreshError);
+                } finally {
+                    isRefreshing = false;
                 }
             }
 
@@ -94,10 +92,7 @@ axiosInstance.interceptors.response.use(
             return new Promise((resolve, reject) => {
                 failedQueue.push({ resolve, reject });
             }).then(() => {
-                return axios({
-                    ...originalRequest,
-                    withCredentials: true
-                });
+                return axiosInstance(originalRequest);
             });
         }
 

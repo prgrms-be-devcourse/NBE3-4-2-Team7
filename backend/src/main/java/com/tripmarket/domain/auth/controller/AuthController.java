@@ -1,21 +1,19 @@
 package com.tripmarket.domain.auth.controller;
 
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
+import com.tripmarket.global.util.CookieUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
 
 	private final JwtTokenProvider jwtTokenProvider;
-	private final RedisTemplate<String, String> redisTemplate;
+	private final AuthService authService;
+	private final CookieUtil cookieUtil;
 
 	/**
 	 * Access Token 재발급
@@ -47,65 +46,23 @@ public class AuthController {
 	 */
 	@PostMapping("/refresh")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
-		log.info("토큰 갱신 요청 시작");
-
-		// 들어오는 모든 쿠키 로깅
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				log.info("Cookie found - name: {}, value: {}, domain: {}, path: {}",
-					cookie.getName(),
-					cookie.getValue(),
-					cookie.getDomain(),
-					cookie.getPath()
-				);
-			}
-		} else {
-			log.warn("No cookies found in request");
-		}
-		String accessToken = jwtTokenProvider.resolveToken(request);
-		log.info("Resolved token for refresh: {}", accessToken);
+		String accessToken = cookieUtil.extractTokenFromCookie(request);
 
 		if (accessToken == null) {
-			log.error("No token found in request");
+			log.error("토큰이 요청에 없습니다(auth/refresh)");
 			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
 		}
 
 		try {
-			// 1. Access Token 블랙리스트 체크
-			if (jwtTokenProvider.isBlacklisted(accessToken)) {
-				log.error("Token is blacklisted.");
-				throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
-			}
+			String newAccessToken = authService.refreshAccessToken(accessToken);
 
-			// 2. 토큰에서 사용자 정보 추출
-			Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
-			log.debug("Extracted userId: {}", userId);
+			// 새로운 Access Token을 쿠키에 저장
+			ResponseCookie cookie = cookieUtil.createAccessTokenCookie(newAccessToken);
+			response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-			// 3. Redis에서 Refresh Token 조회 및 검증
-			String refreshToken = redisTemplate.opsForValue().get("RT:" + userId);
-			if (refreshToken == null) {
-				log.error("No refresh token found for userId: {}", userId);
-				throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
-			}
-
-			// 4. 새로운 Access Token 발급
-			String newAccessToken = jwtTokenProvider.refreshAccessToken(accessToken);
-			log.debug("New access token created for userId: {}", userId);
-
-			// 5. 기존 Access Token을 블랙리스트에 추가
-			jwtTokenProvider.addToBlacklist(accessToken);
-
-			// 6. 새로운 Access Token을 쿠키에 저장
-			ResponseCookie accessTokenCookie = jwtTokenProvider.createAccessTokenCookie(newAccessToken);
-			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
-			log.info("Token refreshed successfully for user: {}", userId);
-
-		} catch (JwtAuthenticationException e) {
-			log.error("Token refresh failed: {}", e.getMessage());
-			throw e;
+			log.debug("토큰 갱신 성공");
 		} catch (Exception e) {
-			log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
+			log.warn("AccessToken refresh failed: {}", e.getMessage());
 			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
 		}
 	}
@@ -123,31 +80,23 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
 	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-		String accessToken = jwtTokenProvider.resolveToken(request);
+		String accessToken = cookieUtil.extractTokenFromCookie(request);
+
+		if (accessToken == null) {
+			log.error("토큰이 요청에 없습니다(auth/logout)");
+			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
+		}
 
 		try {
-			// 1. 블랙리스트 체크
-			if (jwtTokenProvider.isBlacklisted(accessToken)) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 로그아웃된 토큰입니다.");
-			}
-
-			// 2. 토큰에서 사용자 정보 추출
-			Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
-
-			// 3. Access Token 블랙리스트 추가
-			jwtTokenProvider.addToBlacklist(accessToken);
-
-			// 4. Refresh Token 삭제
-			redisTemplate.delete("RT:" + userId);
-
-			// 5. 쿠키 삭제
-			ResponseCookie emptyCookie = jwtTokenProvider.createEmptyCookie();
+			authService.logout(accessToken);
+			// 쿠키 삭제
+			ResponseCookie emptyCookie = cookieUtil.createLogoutCookie();
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyCookie.toString());
 
-			log.info("Logout successful for user: {}", userId);
+			log.debug("로그아웃 성공");
 			return ResponseEntity.ok("로그아웃이 성공적으로 완료되었습니다.");
 		} catch (Exception e) {
-			log.error("Logout failed", e);
+			log.error("로그아웃 실패: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그아웃 실패");
 		}
 	}
