@@ -14,7 +14,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
 @Entity
 @Builder
 @Getter
@@ -23,9 +22,11 @@ import lombok.NoArgsConstructor;
 @Document(collection = "message")
 @CompoundIndexes({
 	@CompoundIndex(name = "room_createdAt_idx", def = "{'roomId': 1, 'createdAt': -1}"),
-	@CompoundIndex(name = "room_idx", def = "{'roomId': 1}")
+	@CompoundIndex(name = "room_idx", def = "{'roomId': 1}"),
+	@CompoundIndex(name = "room_receiver_readStatus_idx",
+		def = "{'roomId': 1, 'receiver': 1, 'readStatus': 1}")
 })
-public class Message  {
+public class Message {
 
 	@Id
 	private String id;
@@ -34,8 +35,13 @@ public class Message  {
 	private String sender;
 	private String receiver;
 	private String content;
+	private boolean readStatus;
 
 	@CreatedDate
 	@Column(name = "createdAt", updatable = false)
 	private LocalDateTime createdAt;
+
+	public void updateRead(boolean readStatus) {
+		this.readStatus = readStatus;
+	}
 }
