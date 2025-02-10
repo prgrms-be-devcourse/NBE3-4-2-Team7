@@ -111,6 +111,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	}
 
 	//채팅방 들어갔을때 기존에 안읽음 처리되었던 메시지들 읽음처리
+	@Override
 	@Transactional
 	public void markMessagesAsRead(String roomId, String userEmail) {
 		List<Message> unreadMessages = messageRepository.findUnreadMessages(roomId, userEmail);
