@@ -16,6 +16,7 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.oauth2.userinfo.GoogleOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.KakaoOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
 
@@ -47,18 +48,29 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
 		// 현재 진행중인 서비스를 구분하기 위해 문자열로 받음
 		String registrationId = userRequest.getClientRegistration().getRegistrationId();
+		log.info("Provider: {}", registrationId);
+		log.info("OAuth2User attributes: {}", oAuth2User.getAttributes());
 
 		// OAuth2 로그인 시 키가 되는 필드값 (PK)
 		String usernameAttributeName = userRequest.getClientRegistration()
 			.getProviderDetails()
 			.getUserInfoEndpoint()
 			.getUserNameAttributeName();
+		log.info("Username attribute name: {}", usernameAttributeName);
 
 		// OAuth2UserInfo 객체 생성
-		OAuth2UserInfo userInfo = new KakaoOAuth2UserInfo(oAuth2User.getAttributes());
+		OAuth2UserInfo userInfo = switch (registrationId.toLowerCase()) {
+			case "kakao" -> new KakaoOAuth2UserInfo(oAuth2User.getAttributes());
+			case "google" -> new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
+			default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
+		};
+
+		log.info("Extracted user info - id:{}, email: {}, name: {}",
+			userInfo.getId(), userInfo.getEmail(), userInfo.getName());
 
 		// 유저 정보 저장 또는 업데이트
 		Member member = saveOrUpdate(userInfo, registrationId);
+		log.info("Saved/Updated member - id: {}, email: {}", member.getId(), member.getEmail());
 
 		return new CustomOAuth2User(
 			Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())),
