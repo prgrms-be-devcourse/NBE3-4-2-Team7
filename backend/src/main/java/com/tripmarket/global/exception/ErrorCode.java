@@ -54,7 +54,7 @@ public enum ErrorCode {
 	REVIEW_ALREADY_DELETED(HttpStatus.GONE, "삭제된 리뷰입니다."),
 	REVIEW_GUIDE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가이드에 대한 리뷰가 존재하지 않습니다."),
 	REVIEW_TRAVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 여행에 대한 리뷰가 존재하지 않습니다."),
-	REVIEW_STATS_NOT_FOUND(NOT_FOUND, "리뷰를 할 수 있는 상태가 아닙니다."),
+	REVIEW_STATS_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰 통계가 존재하지 않습니다."),
 
 	//Chatting
 	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다."),

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
+import com.tripmarket.domain.guide.dto.GuideProfileDto;
 import com.tripmarket.domain.guide.service.GuideService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -41,20 +42,33 @@ public class GuideController {
 	 */
 	@Operation(summary = "가이드 상세 조회")
 	@GetMapping("/{id}")
-	public ResponseEntity<GuideDto> getGuideById(@PathVariable(name = "id") Long id) {
-		GuideDto guideDto = guideService.getGuideDto(id);
-		return ResponseEntity.ok(guideDto);
+	@ResponseStatus(HttpStatus.OK)
+	public GuideProfileDto getGuideProfile(@PathVariable(name = "id") Long id) {
+		return guideService.getGuideProfile(id);
 	}
+       
+       // TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함. 
+
+
+	// public GuideDto getGuideById(@PathVariable(name="id") Long id) {
+	// 	return guideService.getGuideDto(id);
+	// }
 
 	/**
 	 * 마이페이지에서 조회하는 경우
 	 */
 	@Operation(summary = "유저가 자신의 가이드 정보 조회할 때")
 	@GetMapping("/me")
-	public ResponseEntity<GuideDto> getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
-		GuideDto guideDto = guideService.getGuideByMember(user.getId());
-		return ResponseEntity.ok(guideDto);
+	@ResponseStatus(HttpStatus.OK)
+	public GuideProfileDto getMyGuideProfile(@AuthenticationPrincipal CustomOAuth2User user) {
+		return guideService.getMyGuideProfile(user.getId());
 	}
+       // TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함. 
+
+
+	// public GuideDto getGuide(@AuthenticationPrincipal CustomOAuth2User user) {
+	// 	return guideService.getGuideByMember(user.getId());
+	// }
 
 	@Operation(summary = "가이드 생성")
 	@PostMapping
