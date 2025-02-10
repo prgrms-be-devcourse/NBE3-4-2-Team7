@@ -54,7 +54,7 @@ public enum ErrorCode {
 	REVIEW_ALREADY_DELETED(HttpStatus.GONE, "삭제된 리뷰입니다."),
 	REVIEW_GUIDE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 가이드에 대한 리뷰가 존재하지 않습니다."),
 	REVIEW_TRAVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 여행에 대한 리뷰가 존재하지 않습니다."),
-
+	REVIEW_STATS_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰 통계가 존재하지 않습니다."),
 
 	//Chatting
 	DUPLICATE_CHAT_ROOM(CONFLICT, "이미 채팅방이 존재합니다."),
@@ -62,6 +62,7 @@ public enum ErrorCode {
 	NOT_FOUND_CHAT_ROOM(NOT_FOUND,"채팅방을 찾을 수 없습니다."),
 	STOMP_INVALID_HEADER(BAD_REQUEST, "Stomp 헤더값이 누락되었습니다."),
 	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다.");
+
 
 
 	private final HttpStatus httpStatus;
