@@ -74,10 +74,10 @@ public class Guide extends BaseTimeEntity {
 	}
 
 	public void updateGuide(GuideDto guideDto) {
-		this.activityRegion = guideDto.getActivityRegion();
-		this.introduction = guideDto.getIntroduction();
-		this.languages = guideDto.getLanguages();
-		this.experienceYears = guideDto.getExperienceYears();
+		this.activityRegion = guideDto.activityRegion();
+		this.introduction = guideDto.introduction();
+		this.languages = guideDto.languages();
+		this.experienceYears = guideDto.experienceYears();
 	}
 
 	@Override
@@ -98,4 +98,7 @@ public class Guide extends BaseTimeEntity {
 			&& Objects.equals(experienceYears, guide.experienceYears);
 	}
 
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
 }
