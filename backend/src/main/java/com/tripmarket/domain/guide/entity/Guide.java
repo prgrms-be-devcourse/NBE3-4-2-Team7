@@ -1,10 +1,10 @@
 package com.tripmarket.domain.guide.entity;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import com.tripmarket.global.jpa.entity.BaseTimeEntity;
 
@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Guide extends BaseTimeEntity {
+public class Guide extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,10 +74,10 @@ public class Guide extends BaseTimeEntity {
 	}
 
 	public void updateGuide(GuideDto guideDto) {
-		this.activityRegion = guideDto.getActivityRegion();
-		this.introduction = guideDto.getIntroduction();
-		this.languages = guideDto.getLanguages();
-		this.experienceYears = guideDto.getExperienceYears();
+		this.activityRegion = guideDto.activityRegion();
+		this.introduction = guideDto.introduction();
+		this.languages = guideDto.languages();
+		this.experienceYears = guideDto.experienceYears();
 	}
 
 	@Override
@@ -98,4 +98,7 @@ public class Guide extends BaseTimeEntity {
 			&& Objects.equals(experienceYears, guide.experienceYears);
 	}
 
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
 }

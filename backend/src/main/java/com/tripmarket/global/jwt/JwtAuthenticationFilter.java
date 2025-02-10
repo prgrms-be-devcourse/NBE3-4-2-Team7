@@ -6,6 +6,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.tripmarket.global.exception.JwtAuthenticationException;
+import com.tripmarket.global.util.CookieUtil;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
+	private final CookieUtil cookieUtil;
 
 	/**
 	 * 실제 필터링 로직
@@ -36,27 +40,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		try {
 			// 쿠키에서 JWT 토큰 추출
-			String token = jwtTokenProvider.resolveToken(request);
-			log.debug("Resolved token: {}", token);
-			if (token != null) {
+			String accessToken = cookieUtil.extractTokenFromCookie(request);
+			log.debug("JwtAuthenticationFilter - 쿠키에서 accessToken 추출: {}", accessToken);
+
+			if (accessToken != null) {
 				// Access Token 블랙리스트 확인
-				if (jwtTokenProvider.isBlacklisted(token)) {
-					log.debug("Token is blacklisted");
+				if (jwtTokenProvider.isBlacklisted(accessToken)) {
+					log.warn("JwtAuthenticationFilter - 블랙리스트에 등록된 accessToken");
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					return;
 				}
 
-				// 토큰 유효성 검증 및 인증 정보 설정
-				if (jwtTokenProvider.validateToken(token)) {
-					Authentication authentication = jwtTokenProvider.getAuthentication(token);
-					SecurityContextHolder.getContext().setAuthentication(authentication);
-					log.debug("Set Authentication to security context for user: {}", authentication.getName());
+				try {
+					// /auth/refresh 요청이 아닌 경우에만 토큰 유효성 검증
+					if (!request.getRequestURI().equals("/auth/refresh")) {
+						if (jwtTokenProvider.validateToken(accessToken)) {
+							Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+							SecurityContextHolder.getContext().setAuthentication(authentication);
+							log.debug("사용자 '{}'의 인증 정보를 security context에 설정함", authentication.getName());
+						}
+					}
+				} catch (JwtAuthenticationException e) {
+					// /auth/refresh 요청이 아닌 경우에만 예외 처리
+					if (!request.getRequestURI().equals("/auth/refresh")) {
+						throw e;
+					}
 				}
 			}
+
+			filterChain.doFilter(request, response);
+
 		} catch (Exception e) {
-			log.error("Cannot set user authentication: {}", e.getMessage());
+			log.debug("사용자 인증 정보를 설정할 수 없음: {}", e.getMessage());
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		}
-		filterChain.doFilter(request, response);
 	}
 }

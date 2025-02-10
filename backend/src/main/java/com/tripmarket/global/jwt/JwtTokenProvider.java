@@ -11,7 +11,6 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,8 +28,6 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,11 +46,11 @@ public class JwtTokenProvider {
 	@Value("${jwt.secret}")
 	private String secretKey;
 
-	@Value("${jwt.access-token-expire-time}")
-	private long accessTokenValidityInMilliseconds;
+	@Value("${jwt.access-token-expire-time-seconds}")
+	private long accessTokenValidityInSeconds;
 
 	@Value("${jwt.refresh-token-expire-time-seconds}")
-	private long refreshTokenValidityInMilliseconds;
+	private long refreshTokenValidityInSeconds;
 
 	private SecretKey key;
 
@@ -67,52 +64,26 @@ public class JwtTokenProvider {
 	}
 
 	/**
-	 * HTTP 요청의 쿠키에서 JWT 토큰 추출
+	 * 토큰 갱신 메서드
+	 * 만료된 토큰으로부터 새로운 토큰 생성
 	 *
-	 * @param request HTTP 요청
-	 * @return 쿠키에서 추출한 토큰, 없으면 null
+	 * @param expiredToken 만료된 JWT 토큰
+	 * @return 새로 생성된 access token
 	 */
-	public String resolveToken(HttpServletRequest request) {
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if ("accessToken".equals(cookie.getName())) {
-					return cookie.getValue();
-				}
-			}
-		}
-		return null;
-	}
+	public String refreshAccessToken(String expiredToken) {
+		Claims claims = parseClaims(expiredToken);
 
-	/**
-	 * Access Token을 담은 쿠키 생성
-	 *
-	 * @param token JWT 토큰
-	 * @return 설정된 쿠키 객체
-	 */
-	public ResponseCookie createAccessTokenCookie(String token) {
-		return ResponseCookie.from("accessToken", token)
-			.httpOnly(true)    // JavaScript에서 접근 불가
-			.secure(true)      // HTTPS에서만 전송
-			.sameSite("Lax")   // CSRF 방지
-			.path("/")         // 모든 경로에서 접근 가능
-			.maxAge(accessTokenValidityInMilliseconds)
-			.build();
-	}
+		Date now = new Date();
+		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
-	/**
-	 * 쿠키 삭제를 위한 빈 쿠키 생성
-	 *
-	 * @return 만료된 쿠키 객체
-	 */
-	public ResponseCookie createEmptyCookie() {
-		return ResponseCookie.from("accessToken", "")
-			.httpOnly(true)
-			.secure(true)
-			.sameSite("Lax")
-			.path("/")
-			.maxAge(0)  // 즉시 만료
-			.build();
+		return Jwts.builder()
+			.subject(claims.getSubject())
+			.claim("auth", claims.get("auth"))
+			.claim("email", claims.get("email"))
+			.issuedAt(now)
+			.expiration(validity)
+			.signWith(key)
+			.compact();
 	}
 
 	/**
@@ -133,13 +104,11 @@ public class JwtTokenProvider {
 				redisTemplate.opsForValue()
 					.set("BL:" + token, "blacklisted", remainingTime, TimeUnit.SECONDS);
 				log.debug("Token added to blacklist, expires in {} seconds", remainingTime);
+			} else {
+				log.debug("Token is already expired, skipping blacklist");
 			}
 		} catch (ExpiredJwtException e) {
-			// 만료된 토큰도 블랙리스트에 추가 (보안상 필요할 수 있음)
-			Claims claims = e.getClaims();
-			redisTemplate.opsForValue()
-				.set("BL:" + token, "blacklisted", 300, TimeUnit.SECONDS); // 5분간 유지
-			log.debug("Expired token added to blacklist");
+			log.debug("Token is expired, skipping blacklist");
 		} catch (Exception e) {
 			log.error("Failed to add token to blacklist", e);
 			throw new JwtAuthenticationException("토큰 블랙리스트 등록 실패");
@@ -163,7 +132,7 @@ public class JwtTokenProvider {
 	 */
 	public String createAccessToken(Authentication authentication) {
 		Date now = new Date();
-		Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds * 1000);
+		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
 		CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
 
@@ -184,7 +153,7 @@ public class JwtTokenProvider {
 	 */
 	public String createRefreshToken() {
 		Date now = new Date();
-		Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds * 1000);
+		Date validity = new Date(now.getTime() + refreshTokenValidityInSeconds * 1000);
 
 		return Jwts.builder()
 			.issuedAt(now)
@@ -195,8 +164,11 @@ public class JwtTokenProvider {
 
 	/**
 	 * JWT 토큰에서 인증 정보 추출
+	 * 만료된 토큰도 처리 가능
+	 *
 	 * @param token JWT 토큰
 	 * @return Spring Security 인증 객체
+	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public Authentication getAuthentication(String token) {
 		Claims claims = parseClaims(token);
@@ -208,15 +180,15 @@ public class JwtTokenProvider {
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		//
 		CustomOAuth2User principal = new CustomOAuth2User(
 			authorities, // 권한 정보
 			Map.of(
 				"id", userId,
-				"email", email), // OAuth2 속성
+				"email", email
+			), // OAuth2 속성
 			"id", // nameAttributeKey
 			userId, // id
-			email
+			email // email
 		);
 		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 	}
@@ -252,9 +224,11 @@ public class JwtTokenProvider {
 
 	/**
 	 * 토큰에서 Claims 추출
+	 * 만료된 토큰도 처리 가능
+	 *
 	 * @param token JWT 토큰
 	 * @return Claims 객체
-	 * @throws JwtAuthenticationException 토큰이 만료되었을 경우
+	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	private Claims parseClaims(String token) {
 		try {
@@ -264,7 +238,8 @@ public class JwtTokenProvider {
 				.parseSignedClaims(token)
 				.getPayload();
 		} catch (ExpiredJwtException e) {
-			throw new JwtAuthenticationException("만료된 JWT 토큰입니다.");
+			// 만료된 토큰이어도 Claims 반환
+			return e.getClaims();
 		} catch (Exception e) {
 			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
 		}
@@ -299,5 +274,4 @@ public class JwtTokenProvider {
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.joining(","));
 	}
-
 }

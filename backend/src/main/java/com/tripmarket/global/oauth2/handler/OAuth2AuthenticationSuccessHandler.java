@@ -14,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.util.CookieUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +32,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RedisTemplate<String, String> redisTemplate;
+	private final CookieUtil cookieUtil;
 
 	@Value("${jwt.refresh-token-expire-time-seconds}")
 	private long refreshTokenValidityInSeconds;
@@ -53,9 +55,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		CustomOAuth2User oAuth2User = (CustomOAuth2User)authentication.getPrincipal();
 		Long userId = oAuth2User.getId();
 
+		log.debug("OAuth2 사용자 정보 - userId: {}, email: {}", userId, oAuth2User.getEmail());
+
 		// Access Token 생성 및 쿠키에 설정 (30분)
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);
-		ResponseCookie accessTokenCookie = jwtTokenProvider.createAccessTokenCookie(accessToken);
+		ResponseCookie cookie = cookieUtil.createAccessTokenCookie(accessToken);
 
 		// Refresh Token 생성 및 Redis 저장 (7일)
 		String refreshToken = jwtTokenProvider.createRefreshToken();
@@ -63,7 +67,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 			.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
 
 		// 쿠키 추가
-		response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
 		log.info("OAuth2 Login Success: userId-{}", userId);
 
