@@ -19,4 +19,11 @@ public class MatchRequestStatusUpdater {
 			case PENDING -> throw new CustomException(ErrorCode.INVALID_REQUEST_STATUS);
 		}
 	}
+
+	public static MatchRequestStatus completeStatus(MatchRequestStatus currentStatus) {
+		if (currentStatus != MatchRequestStatus.ACCEPTED) {
+			throw new CustomException(ErrorCode.INVALID_REQUEST_STATUS);
+		}
+		return MatchRequestStatus.COMPLETED;
+	}
 }

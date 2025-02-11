@@ -108,6 +108,13 @@ public class Travel extends BaseEntity {
 		this.status = status;
 	}
 
+	public void completeTravelStatus() {
+		if (this.status != TravelStatus.MATCHED) {
+			throw new CustomException(ErrorCode.INVALID_TRAVEL_STATUS);
+		}
+		this.status = TravelStatus.COMPLETED;
+	}
+
 	public boolean isCompleted() {
 		return this.status == TravelStatus.COMPLETED;
 	}

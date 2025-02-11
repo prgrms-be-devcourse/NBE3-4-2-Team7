@@ -20,6 +20,7 @@ public enum ErrorCode {
 	TRAVEL_ACCESS_DENIED(FORBIDDEN, "현재 사용자가 본인이 작성한 여행 글이 아닙니다."),
 	TRAVEL_ALREADY_MATCHED(BAD_REQUEST, "이미 매칭된 여행 글입니다."),
 	TRAVEL_ALREADY_IN_PROGRESS(BAD_REQUEST, "이미 매칭 진행 중인 여행 요청 글입니다."),
+	INVALID_TRAVEL_STATUS(BAD_REQUEST, "매칭이 완료된 상태가 아닙니다"),
 
 	//Guide
 	GUIDE_NOT_FOUND(NOT_FOUND, "가이드가 존재하지 않습니다."),

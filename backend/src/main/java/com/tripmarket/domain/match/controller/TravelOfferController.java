@@ -1,7 +1,5 @@
 package com.tripmarket.domain.match.controller;
 
-import java.util.Objects;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,14 +48,28 @@ public class TravelOfferController {
 		return ResponseEntity.ok("가이더 요청 상태가 업데이트되었습니다.");
 	}
 
+	/**
+	 *	현재 로그인된 가이드의 ID와 여행 요청을 만든 유저 ID 값이 같은지 검사
+	 * */
 	@Operation(summary = "가이더가 자기 자신의 요청 글에 매칭을 보내는지 검사")
 	@GetMapping("/{travelId}")
 	public ResponseEntity<Boolean> validateSelfOffer(
 		@PathVariable Long travelId,
 		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
 	) {
-		boolean isSelfOffer = Objects.equals(customOAuth2User.getId(), travelId);
+		boolean isSelfOffer = travelOfferService.validateSelfOffer(customOAuth2User.getId(), travelId);
 		return ResponseEntity.ok(isSelfOffer);
+	}
+
+	@Operation(summary = "사용자가 여행을 완료 상태로 변경",
+		description = "사용자가 매칭된 여행 요청을 완료 상태로 변경할 수 있습니다.")
+	@PatchMapping("{requestId}/complete")
+	public ResponseEntity<String> completeTravelOffer(
+		@PathVariable Long requestId,
+		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+	) {
+		travelOfferService.completeTravelOffer(requestId, customOAuth2User.getEmail());
+		return ResponseEntity.ok("여행이 완료 상태로 변경되었습니다.");
 	}
 
 }
