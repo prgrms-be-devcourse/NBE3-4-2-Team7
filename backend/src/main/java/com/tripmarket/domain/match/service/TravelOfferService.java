@@ -83,4 +83,25 @@ public class TravelOfferService {
 		return travelOfferRepository.findById(requestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.TRAVEL_OFFER_NOT_FOUND));
 	}
+
+	/**
+	 *	현재 로그인된 가이드의 ID와 여행 요청을 만든 유저 ID 값이 같은지 검사
+	 * */
+	public boolean validateSelfOffer(Long guideId, Long travelId) {
+		Travel travel = travelService.getTravel(travelId);
+		Long travelUserId = travel.getUser().getId();
+		return Objects.equals(guideId, travelUserId);
+	}
+
+	@Transactional
+	public void completeTravelOffer(Long requestId, String email) {
+		TravelOffer travelOffer = getTravelOffer(requestId);
+		Member member = memberService.getMemberByEmail(email);
+
+		validateTravelOfferOwnership(travelOffer, member);
+
+		travelOffer.completeStatus();
+		travelOffer.getTravel().completeTravelStatus();
+	}
+
 }

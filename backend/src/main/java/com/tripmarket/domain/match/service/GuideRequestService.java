@@ -69,6 +69,15 @@ public class GuideRequestService {
 		}
 	}
 
+	@Transactional
+	public void completeTravel(Long requestId, Long guideId) {
+		GuideRequest guideRequest = getGuideRequest(requestId);
+		validateGuideOwnership(guideId, guideRequest);
+
+		guideRequest.completeStatus();
+		guideRequest.getTravel().completeTravelStatus();
+	}
+
 	public void validateSelfRequest(Member member, Guide guide) {
 		Long guideOwnerId = guide.getMember().getId();
 		Long requesterId = member.getId();

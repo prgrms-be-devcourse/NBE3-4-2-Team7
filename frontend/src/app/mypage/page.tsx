@@ -19,6 +19,7 @@ import {
 } from "../travelOffers/services/travelOfferService";
 import {getGuideDetailByUser, GuideDto} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
+import axios from "axios";
 
 const MyPage: React.FC = () => {
     const [userInfo, setUserInfo] = useState<MemberResponseDTO | null>(null);
@@ -70,9 +71,39 @@ const MyPage: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    const handleCompleteTravelOffer = (requestId: number) => {
+        axios.patch(`/travel-offers/${requestId}/complete`)
+            .then(() => {
+                alert("여행이 완료되었습니다!");
+                // UI 업데이트
+                setTravelOffersForUser((prevOffers) =>
+                    prevOffers.map((offer) =>
+                        offer.id === requestId ? {...offer, status: "COMPLETED"} : offer
+                    )
+                );
+            })
+            .catch(() => alert("여행 완료 상태 업데이트에 실패했습니다."));
+    };
+
+
+    const handleCompleteTravel = (requestId: number, guideId: number) => {
+        axios.patch(`/guide-requests/${requestId}/complete?guideId=${guideId}`)
+            .then(() => {
+                alert("여행이 완료되었습니다!");
+                // UI 업데이트
+                setGuideRequestsByGuide((prevRequests) =>
+                    prevRequests.map((req) =>
+                        req.id === requestId ? {...req, status: "COMPLETED"} : req
+                    )
+                );
+            })
+            .catch(() => alert("여행 완료 상태 업데이트에 실패했습니다."));
+    };
+
+
     // 가이드 생성 페이지로 이동
     const handleGuideCreate = () => {
-        if(userInfo.hasGuideProfile){
+        if (userInfo.hasGuideProfile) {
             return;
         }
         router.push("/guides/register");
@@ -149,38 +180,38 @@ const MyPage: React.FC = () => {
                 <div style={styles.sectionBox}>
                     <h2 style={styles.sectionTitle}>👤 내 가이드 정보</h2>
                     {userInfo.hasGuideProfile ? (
-                        <div className="mt-6 space-y-4 animate-fade-in">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
-                                    <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                            <div className="mt-6 space-y-4 animate-fade-in">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
+                                        <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
+                                        <p className="text-gray-800">{guideProfile.languages}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
+                                        <p className="text-gray-800">{guideProfile.experienceYears}년</p>
+                                    </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
-                                    <p className="text-gray-800">{guideProfile.languages}</p>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
+                                    <p className="text-gray-800">{guideProfile.introduction}</p>
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
-                                    <p className="text-gray-800">{guideProfile.experienceYears}년</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
-                                <p className="text-gray-800">{guideProfile.introduction}</p>
-                            </div>
 
-                            {/* 프로필 수정 버튼 추가 */}
-                            <div className="flex justify-end mt-4">
-                                <button
-                                    onClick={() => router.push('/mypage/guide/edit')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                                {/* 프로필 수정 버튼 추가 */}
+                                <div className="flex justify-end mt-4">
+                                    <button
+                                        onClick={() => router.push('/mypage/guide/edit')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg
                                          hover:bg-blue-700 transition-colors duration-200
                                          flex items-center space-x-2 text-sm font-medium"
-                                >
-                                    <span>프로필 수정</span>
-                                </button>
+                                    >
+                                        <span>프로필 수정</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
                         ) :
                         (
                             <div style={styles.guideSectionBox}>
@@ -284,6 +315,16 @@ const MyPage: React.FC = () => {
                                                 </button>
                                             </div>
                                         )}
+
+                                        {/* 추가된 부분: 여행 완료 버튼 */}
+                                        {offer.status === "ACCEPTED" && (
+                                            <button
+                                                style={styles.completeButton}
+                                                onClick={() => handleCompleteTravelOffer(offer.id)}
+                                            >
+                                                🎉 여행 완료
+                                            </button>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -315,8 +356,8 @@ const MyPage: React.FC = () => {
                                             <div>
                                                 <button
                                                     style={styles.viewProfileButton}
-                                                    onClick={() => handleViewTravelRequest(request.guideId)}
-                                                    disabled={request.isGuideDeleted}
+                                                    onClick={() => handleViewTravelRequest(request.travelId)}
+                                                    disabled={request.isTravelDeleted}
                                                 >
                                                     🔵 여행 요청 글 보기
                                                 </button>
@@ -324,22 +365,27 @@ const MyPage: React.FC = () => {
                                                     <div style={styles.buttonGroup}>
                                                         <button
                                                             style={styles.acceptButton}
-                                                            onClick={() =>
-                                                                handleUpdateStatus(request.id, request.guideId, "ACCEPTED")
-                                                            }
+                                                            onClick={() => handleUpdateStatus(request.id, request.guideId, "ACCEPTED")}
                                                         >
                                                             ✅ 수락
                                                         </button>
                                                         <button
                                                             style={styles.rejectButton}
-                                                            onClick={() =>
-                                                                handleUpdateStatus(request.id, request.guideId, "REJECTED")
-                                                            }
+                                                            onClick={() => handleUpdateStatus(request.id, request.guideId, "REJECTED")}
                                                         >
                                                             ❌ 거절
                                                         </button>
                                                     </div>
                                                 )}
+                                                {request.status === "ACCEPTED" && (
+                                                    <button
+                                                        style={styles.completeButton}
+                                                        onClick={() => handleCompleteTravel(request.id, request.guideId)}
+                                                    >
+                                                        🎉 여행 완료
+                                                    </button>
+                                                )}
+
                                             </div>
                                         </div>
                                     ))
@@ -505,6 +551,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: "none",
         cursor: "pointer",
     },
+
+    completeButton: {
+        backgroundColor: "#4CAF50",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "1rem",
+        fontWeight: "bold",
+        transition: "background 0.3s",
+    }
 };
 
 export default MyPage;
