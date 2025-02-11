@@ -13,6 +13,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
+    login: (email: string, password: string) => Promise<void>;
     loading: boolean;
     isInitialized: boolean;
     logout: () => Promise<void>;
@@ -20,6 +21,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
+    login: async () => {},
     loading: true,
     isInitialized: false,
     logout: async () => {}
@@ -77,13 +79,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(null);
     };
 
+    const login = async (email: string, password: string) => {
+        try {
+            await authService.login(email, password);
+            window.location.reload();  // 로그인 성공 후 자동 새로고침
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    };
+
     return (
         <AuthContext.Provider 
             value={{ 
                 user, 
                 loading, 
                 isInitialized,
-                logout: authService.logout
+                logout: authService.logout,
+                login
             }}
         >
             {children}
