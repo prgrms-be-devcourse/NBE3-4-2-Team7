@@ -15,6 +15,8 @@ import com.tripmarket.domain.auth.dto.LoginRequestDTO;
 import com.tripmarket.domain.auth.dto.SignupRequestDTO;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.security.CustomUserDetails;
@@ -74,7 +76,7 @@ public class AuthService {
 	public void signup(SignupRequestDTO signupRequestDTO) {
 		// 이메일 중복 체크
 		if (checkEmailDuplication(signupRequestDTO.email())) {
-			throw new RuntimeException("이미 가입된 이메일입니다.");
+			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 		Member member = new Member(
 			signupRequestDTO.name(),
@@ -88,9 +90,9 @@ public class AuthService {
 	@Transactional
 	public String login(LoginRequestDTO loginRequestDTO) {
 		Member member = memberRepository.findByEmail(loginRequestDTO.email())
-			.orElseThrow(() -> new RuntimeException("가입되지 않은 이메일입니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 		if (!passwordEncoder.matches(loginRequestDTO.password(), member.getPassword())) {
-			throw new RuntimeException("잘못된 비밀번호입니다.");
+			throw new CustomException(ErrorCode.INVALID_PASSWORD);
 		}
 		// Authentication 객체 생성
 		UserDetails userDetails = new CustomUserDetails(member);
