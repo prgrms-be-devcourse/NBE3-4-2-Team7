@@ -1,61 +1,39 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { authService } from '../auth/services/authService';
+import React from "react";
+import { useRouter } from "next/navigation";
+import LoginForm from "./LoginForm";
 
 interface LoginModalProps {
     onClose: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
-    const handleKakaoLogin = () => {
-        authService.loginWithKakao();
+    const router = useRouter();
+
+    const handleLoginSuccess = () => {
+        // 로그인 성공 후 이동할 페이지
+        router.push('/travels');
+        onClose();
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* 배경 오버레이 */}
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center" 
+            onClick={onClose}
+        >
             <div 
-                className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" 
                 onClick={onClose}
             />
-            
-            {/* 모달 컨텐츠 */}
-            <div className="relative bg-white rounded-lg p-8 w-full max-w-md">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                >
-                    ✕
-                </button>
-
-                <h2 className="text-2xl font-bold text-center mb-2 text-blue-600">
-                    로그인
-                </h2>
-                
-                {/* 안내 메시지 추가 */}
-                <p className="text-center text-gray-600 mb-6">
-                    로그인 후 이용 가능합니다.
-                </p>
-
-                <div className="space-y-4">
-                    <button
-                        onClick={handleKakaoLogin}
-                        className="w-full"
-                    >
-                        <Image 
-                            src="/images/kakao-login-logo.png"
-                            alt="카카오 로그인" 
-                            width={300}
-                            height={45}
-                            className="mx-auto"
-                        />
-                    </button>
-                </div>
+            <div 
+                className="relative bg-white rounded-lg p-8 w-full max-w-md mx-4" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                <LoginForm onClose={onClose} onLoginSuccess={handleLoginSuccess} />
             </div>
         </div>
     );
 };
 
-export default LoginModal; 
+export default LoginModal;

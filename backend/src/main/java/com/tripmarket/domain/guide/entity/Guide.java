@@ -6,8 +6,6 @@ import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
-import com.tripmarket.global.jpa.entity.BaseTimeEntity;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

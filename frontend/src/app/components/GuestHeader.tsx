@@ -2,14 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Playfair_Display } from 'next/font/google';
+
+interface GuestHeaderProps {
+    onLoginClick: () => void;
+}
 
 const playfair = Playfair_Display({ subsets: ['latin'] });
 
-const GuestHeader: React.FC = () => {
-    const router = useRouter();
-
+const GuestHeader: React.FC<GuestHeaderProps> = ({ onLoginClick }) => {
     return (
         <header className="w-full bg-white shadow-sm">
             <div className="w-full h-16 flex items-center justify-between px-0">
@@ -29,7 +30,7 @@ const GuestHeader: React.FC = () => {
                 
                 <div className="flex items-center pr-4">
                     <button
-                        onClick={() => router.push('/login')}
+                        onClick={onLoginClick} 
                         className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                     >
                         로그인
@@ -40,4 +41,4 @@ const GuestHeader: React.FC = () => {
     );
 };
 
-export default GuestHeader; 
+export default GuestHeader;
