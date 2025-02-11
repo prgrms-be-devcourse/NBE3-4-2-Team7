@@ -19,10 +19,10 @@ export const authService = {
                 email,
                 password
             });
-            
-            // 로그인 성공 시 응답 반환
+            console.log('Login response:', response);
             return response.data;
         } catch (error) {
+            console.error('Login service error:', error);
             if (error instanceof AxiosError) {
                 if (error.response?.status === 401) {
                     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
@@ -79,5 +79,10 @@ export const authService = {
             // 에러가 발생해도 travels 페이지로 리다이렉트
             window.location.replace('/travels');
         }
-    }
+    },
+
+    signup: async (userData: { email: string; password: string; name: string }) => {
+        const response = await axiosInstance.post('/auth/signup', userData);
+        return response;
+    },
 }; 
