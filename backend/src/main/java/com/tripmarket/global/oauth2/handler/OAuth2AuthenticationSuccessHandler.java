@@ -48,13 +48,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	 */
 	@Override
 	public void onAuthenticationSuccess(
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Authentication authentication) throws IOException {
+		HttpServletRequest request,
+		HttpServletResponse response,
+		Authentication authentication) throws IOException {
 
-		log.info("OAuth2 Login Success Handler 시작");
-
-		CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
+		CustomOAuth2User oAuth2User = (CustomOAuth2User)authentication.getPrincipal();
 		Long userId = oAuth2User.getId();
 
 		log.debug("OAuth2 사용자 정보 - userId: {}, email: {}", userId, oAuth2User.getEmail());
@@ -66,7 +64,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		// Refresh Token 생성 및 Redis 저장 (7일)
 		String refreshToken = jwtTokenProvider.createRefreshToken();
 		redisTemplate.opsForValue()
-				.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
+			.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
 
 		// 쿠키 추가
 		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -75,8 +73,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 		// 성공 상태와 함께 리다이렉트
 		String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-				.queryParam("status", "success")
-				.build().toUriString();
+			.queryParam("status", "success")
+			.build().toUriString();
 
 		getRedirectStrategy().sendRedirect(request, response, targetUrl);
 	}
