@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -17,6 +19,7 @@ import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationFailureHandler;
 import com.tripmarket.global.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import com.tripmarket.global.oauth2.service.CustomOAuth2UserService;
+import com.tripmarket.global.securityuser.service.CustomUserDetailsService;
 import com.tripmarket.global.util.CookieUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,10 +37,16 @@ public class SecurityConfig {
 	private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CookieUtil cookieUtil;
+	private final CustomUserDetailsService customUserDetailsService;
 
 	@Bean
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
 		return new JwtAuthenticationFilter(jwtTokenProvider, cookieUtil);
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 
 	@Bean
@@ -87,6 +96,15 @@ public class SecurityConfig {
 					.requestMatchers("/guide-requests/**").permitAll()
 
 					.anyRequest().authenticated()
+			)
+
+			// 일반 로그인 설정
+			.userDetailsService(customUserDetailsService)
+			.formLogin(form -> form
+				.loginProcessingUrl("/auth/login")
+				.usernameParameter("email")
+				.passwordParameter("password")
+				.disable()
 			)
 
 			// OAuth2 로그인 설정

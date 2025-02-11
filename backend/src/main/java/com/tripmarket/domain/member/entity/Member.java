@@ -41,14 +41,13 @@ public class Member extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private Role role; // 회원 역할 (예: 관리자, 사용자)
 
-	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE 등)
 
 	@Column(nullable = false)
 	private Boolean hasGuideProfile = false; // 가이드 프로필 여부
 
-	@Column(nullable = false, unique = true)
+	@Column(unique = true)
 	private String providerId; // OAuth2 회원 고유 ID
 
 	private String imageUrl;
@@ -67,6 +66,17 @@ public class Member extends BaseEntity {
 		this.providerId = providerId;
 		this.imageUrl = imageUrl;
 		this.role = Role.ROLE_USER;
+	}
+
+	// 일반 회원가입 전용 (추후 수정 예정), image는 아무 기본 프로필로 일단 설정
+	public Member(String name, String email, String password, String imageUrl) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = Role.ROLE_USER;
+		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
+			? imageUrl
+			: "https://i.imgur.com/yCUGLR3.jpeg";
 	}
 
 	/**
