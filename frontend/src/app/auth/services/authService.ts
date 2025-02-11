@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 // 백엔드 API 기본 URL 설정
 axiosInstance.defaults.baseURL = 'http://localhost:8080';
 axiosInstance.defaults.withCredentials = true;
+axiosInstance.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 export const authService = {
     // 카카오 로그인 URL로 리다이렉트
@@ -12,10 +13,14 @@ export const authService = {
         window.location.href = `${BACKEND_URL}/oauth2/authorization/kakao`;
     },
 
-    // 구글 로그인 추가
     loginWithGoogle: () => {
         const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-        window.location.href = `${BACKEND_URL}/oauth2/authorization/google`;
+        window.location.href = `${BACKEND_URL}/oauth2/authorization/google`; // 구글 로그인 URL
+    },
+
+    loginWithGithub: () => {
+        const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        window.location.href = `${BACKEND_URL}/oauth2/authorization/github`;
     },
 
     // 구글 로그인 추가

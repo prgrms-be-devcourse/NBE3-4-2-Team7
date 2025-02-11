@@ -52,4 +52,16 @@ public class GuideRequestController {
 		guideRequestService.matchGuideRequest(requestId, guideId, status);
 		return ResponseEntity.ok("요청 상태가 업데이트되었습니다.");
 	}
+
+	@Operation(summary = "가이더가 여행을 완료 상태로 변경",
+		description = "가이드가 매칭된 여행 요청을 완료 상태로 변경할 수 있습니다.")
+	@PatchMapping("{requestId}/complete")
+	public ResponseEntity<String> completeTravel(
+		@PathVariable Long requestId,
+		@RequestParam Long guideId
+	) {
+		guideRequestService.completeTravel(requestId, guideId);
+		return ResponseEntity.ok("여행이 완료 상태로 변경되었습니다.");
+	}
+
 }
