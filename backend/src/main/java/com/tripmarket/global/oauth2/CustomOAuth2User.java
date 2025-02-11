@@ -22,18 +22,17 @@ public class CustomOAuth2User extends DefaultOAuth2User {
 	/**
 	 * JWT 토큰 검증 후 인증 객체 생성을 위한 생성자
 	 *
-	 * @param authorities 사용자의 권한 정보 컬렉션 (예: ROLE_USER)
-	 * @param attributes OAuth2 제공자로부터 받은 사용자 정보를 담은 Map (최소한 id는 포함)
+	 * @param authorities      사용자의 권한 정보 컬렉션 (예: ROLE_USER)
+	 * @param attributes       OAuth2 제공자로부터 받은 사용자 정보를 담은 Map (최소한 id는 포함)
 	 * @param nameAttributeKey OAuth2 제공자가 사용하는 사용자 식별자의 키값 (예: "id")
-	 * @param id 사용자 식별용 id
+	 * @param id               사용자 식별용 id
 	 */
 	public CustomOAuth2User(
-		Collection<? extends GrantedAuthority> authorities,
-		Map<String, Object> attributes,
-		String nameAttributeKey,
-		Long id,
-		String email
-	) {
+			Collection<? extends GrantedAuthority> authorities,
+			Map<String, Object> attributes,
+			String nameAttributeKey,
+			Long id,
+			String email) {
 		super(authorities, attributes, nameAttributeKey);
 		this.id = id;
 		this.email = email;
