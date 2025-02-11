@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tripmarket.domain.auth.service.AuthService;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.util.CookieUtil;
@@ -45,6 +46,7 @@ public class AuthController {
 	 * @throws JwtAuthenticationException 토큰 재발급 실패 시
 	 */
 	@PostMapping("/refresh")
+	@Operation(summary = "AccessToken 재발급")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
 		String accessToken = cookieUtil.extractTokenFromCookie(request);
 

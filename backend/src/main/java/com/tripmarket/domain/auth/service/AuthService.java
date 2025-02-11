@@ -1,4 +1,4 @@
-package com.tripmarket.domain.auth.controller;
+package com.tripmarket.domain.auth.service;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
