@@ -4,7 +4,7 @@ import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import Link from "next/link";
 import {createTravelOffer, getTravelDetail, TravelDto, validateSelfOffer} from "../../travel/services/travelService";
-import {hasGuideProfile} from "@/app/members/services/memberService";
+import {hasGuideProfile} from "../../members/services/memberService";
 
 const TravelDetailPage: React.FC = () => {
     const params = useParams();
@@ -23,27 +23,21 @@ const TravelDetailPage: React.FC = () => {
                 .then((response) => {
                     setTravel(response.data);
                 })
-                .catch((err) => {
-                    setError("여행 요청 상세 정보를 불러오는데 실패했습니다.");
-                    console.error(err);
-                })
+                .catch(() => setError("여행 요청 상세 정보를 불러오는데 실패했습니다."))
                 .finally(() => setLoading(false));
+
             validateSelfOffer(Number(travelId))
-                .then((response) => {
-                setIsSelfRequest(response.data);
-            })
-                .catch((err) => {
-                    setError("셀프 요청 검증에 실패했습니다.")
-                })
+                .then((response) => setIsSelfRequest(response.data))
+                .catch(() => setError("셀프 요청 검증에 실패했습니다."));
 
             const fetchHasGuideProfile = async () => {
                 try {
                     const response = await hasGuideProfile();
                     setIsGuideProfileAvailable(response.data);
-                } catch(error){
-                    console.error('가이드 프로필 유무 조회 실패', error);
+                } catch (error) {
+                    console.error("가이드 프로필 유무 조회 실패", error);
                 }
-            }
+            };
             fetchHasGuideProfile();
         }
     }, [travelId]);
@@ -67,19 +61,36 @@ const TravelDetailPage: React.FC = () => {
         <div style={styles.container}>
             <div style={styles.card}>
                 <h1 style={styles.title}>{travel.city}</h1>
-                <p style={styles.category}><strong>카테고리:</strong> {travel.categoryName}</p>
-                <p style={styles.status}><strong>상태:</strong> {travel.status}</p>
-                <p style={styles.content}><strong>관광지:</strong> {travel.places}</p>
-                <p style={styles.content}><strong>여행 기간:</strong> {travel.startDate} ~ {travel.endDate}</p>
-                <p style={styles.content}><strong>참여 인원:</strong> {travel.participants}명</p>
-                <p style={styles.content}><strong>상세 내용:</strong> {travel.content}</p>
-                <p style={styles.date}><strong>작성일:</strong> {new Date(travel.createdAt).toLocaleString()}</p>
-                <p style={styles.date}><strong>수정일:</strong> {new Date(travel.updatedAt).toLocaleString()}</p>
-
+                <div style={styles.infoContainer}>
+                    <div style={styles.infoItem}>
+                        <strong>카테고리:</strong> {travel.categoryName}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>상태:</strong> {travel.status}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>관광지:</strong> {travel.places}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>여행 기간:</strong> {travel.startDate} ~ {travel.endDate}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>참여 인원:</strong> {travel.participants}명
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>상세 내용:</strong> {travel.content}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>작성일:</strong> {new Date(travel.createdAt).toLocaleString()}
+                    </div>
+                    <div style={styles.infoItem}>
+                        <strong>수정일:</strong> {new Date(travel.updatedAt).toLocaleString()}
+                    </div>
+                </div>
                 <div style={styles.buttonContainer}>
                     {!isSelfRequest && isGuideProfileAvailable && (
                         <button
-                            style={styles.guideRequestButton}
+                            style={styles.offerButton}
                             onClick={handleTravelOfferRequest}
                         >
                             여행 제안 요청하기
@@ -89,8 +100,6 @@ const TravelDetailPage: React.FC = () => {
                         <button style={styles.backButton}>← 목록으로 돌아가기</button>
                     </Link>
                 </div>
-
-
                 {offerStatus && <p style={styles.statusMessage}>{offerStatus}</p>}
             </div>
         </div>
@@ -108,67 +117,60 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     card: {
         backgroundColor: "#FFFFFF",
-        borderRadius: "8px",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        borderRadius: "12px",
+        boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
         padding: "2rem",
         width: "100%",
-        maxWidth: "600px",
-        textAlign: "center",
+        maxWidth: "720px",
     },
     title: {
         fontSize: "2rem",
-        color: "#1E88E5",
-        marginBottom: "1rem",
-    },
-    category: {
-        fontSize: "1.2rem",
-        color: "#424242",
-        marginBottom: "0.5rem",
-    },
-    status: {
-        fontSize: "1.1rem",
         fontWeight: "bold",
         color: "#1565C0",
-        marginBottom: "1rem",
+        marginBottom: "1.5rem",
+        textAlign: "center",
     },
-    content: {
+    infoContainer: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+        gap: "1rem",
+        marginBottom: "1.5rem",
+    },
+    infoItem: {
+        backgroundColor: "#F9FAFB",
+        padding: "1rem",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
         fontSize: "1rem",
         color: "#424242",
-        marginBottom: "0.5rem",
-    },
-    date: {
-        fontSize: "0.9rem",
-        color: "#757575",
-        marginBottom: "0.5rem",
     },
     buttonContainer: {
         display: "flex",
         justifyContent: "space-between",
         marginTop: "1.5rem",
     },
-    guideRequestButton: {
+    offerButton: {
         backgroundColor: "#66BB6A",
         color: "#FFFFFF",
-        padding: "0.75rem 1rem",
+        padding: "0.75rem 1.5rem",
         border: "none",
-        borderRadius: "4px",
+        borderRadius: "8px",
         cursor: "pointer",
         fontWeight: "bold",
     },
     backButton: {
         backgroundColor: "#1E88E5",
         color: "#FFFFFF",
-        padding: "0.75rem 1rem",
+        padding: "0.75rem 1.5rem",
         border: "none",
-        borderRadius: "4px",
+        borderRadius: "8px",
         cursor: "pointer",
         fontWeight: "bold",
     },
     statusMessage: {
-        marginTop: "1rem",
         fontSize: "1rem",
+        marginTop: "1rem",
         color: "#1565C0",
-        fontWeight: "bold",
     },
     loading: {
         fontSize: "1.5rem",

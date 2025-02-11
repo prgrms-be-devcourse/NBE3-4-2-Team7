@@ -1,12 +1,10 @@
 package com.tripmarket.domain.guide.entity;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
-
-import com.tripmarket.global.jpa.entity.BaseTimeEntity;
+import com.tripmarket.global.jpa.entity.BaseEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -30,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Guide extends BaseTimeEntity {
+public class Guide extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

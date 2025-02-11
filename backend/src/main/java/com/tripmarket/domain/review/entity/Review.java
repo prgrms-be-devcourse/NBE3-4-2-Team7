@@ -25,9 +25,9 @@ import lombok.NoArgsConstructor;
 @Table(name = "REVIEW")
 public class Review extends BaseEntity {
 
-	//아이디
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)

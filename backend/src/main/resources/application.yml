@@ -2,9 +2,7 @@ logging:
   level:
     org.springframework.messaging: DEBUG
     org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    com.tripmarket.global.oauth2: DEBUG
+    #com.tripmarket: DEBUG
 server:
   port: 8080
 
@@ -50,7 +48,6 @@ spring:
             authorization-uri: https://github.com/login/oauth/authorize
             token-uri: https://github.com/login/oauth/access_token
             user-info-uri: https://api.github.com/user
-            user-name-attribute: id
       authorized-redirect-uri: "http://localhost:3000/oauth/callback" # 프론트엔드 리다이렉트 URI
   h2:
     console:
@@ -67,7 +64,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-#      ddl-auto: create
+    # ddl-auto: create
     properties:
       hibernate:
         default_batch_fetch_size: 100

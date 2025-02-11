@@ -33,7 +33,10 @@ const GuideDetailPage: React.FC = () => {
         // 셀프 요청 검증
         verifyMyGuide(Number(id))
             .then((response) => setIsMyGuide(response.data))
-            .catch(() => console.error("가이드 검증에 실패했습니다."));
+            .catch((error) => {
+                console.error("가이드 검증에 실패했습니다:", error);
+                setError("가이드 검증에 실패했습니다.");
+            });
     }, [id]);
 
     // 가이드 요청 보내기
@@ -45,7 +48,7 @@ const GuideDetailPage: React.FC = () => {
 
         try {
             await axios.post(`/guide-requests/${guide.id}`, {
-                travelId: selectedTravelId, // ✅ Query Parameter가 아닌 Body로 전달
+                travelId: selectedTravelId,
             });
             setRequestStatus("가이드 요청이 성공적으로 완료되었습니다.");
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -63,11 +66,28 @@ const GuideDetailPage: React.FC = () => {
                 <h1 style={styles.title}>가이드 상세 정보</h1>
                 {guide ? (
                     <>
-                        <h2 style={styles.guideName}>{guide.name}</h2>
-                        <p style={styles.introduction}><strong>소개:</strong> {guide.introduction}</p>
-                        <p><strong>활동 지역:</strong> {guide.activityRegion}</p>
-                        <p><strong>경험 연수:</strong> {guide.experienceYears}년</p>
-                        <p><strong>사용 언어:</strong> {guide.languages}</p>
+                        <div style={styles.guideInfoContainer}>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>이름</h3>
+                                <p style={styles.infoValue}>{guide.name}</p>
+                            </div>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>소개</h3>
+                                <p style={styles.infoValue}>{guide.introduction || "정보 없음"}</p>
+                            </div>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>활동 지역</h3>
+                                <p style={styles.infoValue}>{guide.activityRegion || "정보 없음"}</p>
+                            </div>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>경험 연수</h3>
+                                <p style={styles.infoValue}>{guide.experienceYears || "0"}년</p>
+                            </div>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>사용 언어</h3>
+                                <p style={styles.infoValue}>{guide.languages || "정보 없음"}</p>
+                            </div>
+                        </div>
 
                         {/* 여행 요청 선택 */}
                         {travels.length > 0 ? (
@@ -89,12 +109,11 @@ const GuideDetailPage: React.FC = () => {
                             </div>
                         ) : (
                             <p style={styles.noTravelMessage}>
-                                여행 요청이 없습니다.{" "}
+                                여행 요청이 없습니다.{' '}
                                 <Link href="/travels/create" style={styles.link}>
                                     여행 요청을 먼저 작성해주세요.
                                 </Link>
                             </p>
-
                         )}
 
                         {!isMyGuide && (
@@ -129,23 +148,41 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     card: {
         backgroundColor: "#FFFFFF",
-        borderRadius: "8px",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        borderRadius: "12px",
+        boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
         padding: "2rem",
         width: "100%",
-        maxWidth: "600px",
-        textAlign: "center",
+        maxWidth: "720px",
     },
-    guideName: {
-        fontSize: "1.8rem",
+    title: {
+        fontSize: "2rem",
         fontWeight: "bold",
         color: "#1565C0",
-        marginBottom: "0.5rem",
-    },
-    introduction: {
-        fontSize: "1.2rem",
-        color: "#424242",
         marginBottom: "1rem",
+        textAlign: "center",
+    },
+    guideInfoContainer: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+        gap: "1rem",
+        marginBottom: "1.5rem",
+    },
+    guideInfoItem: {
+        backgroundColor: "#F1F8E9",
+        borderRadius: "8px",
+        padding: "1rem",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+        textAlign: "center",
+    },
+    infoLabel: {
+        fontSize: "1.1rem",
+        fontWeight: "600",
+        marginBottom: "0.5rem",
+        color: "#2E7D32",
+    },
+    infoValue: {
+        fontSize: "1rem",
+        color: "#424242",
     },
     travelSelectContainer: {
         marginTop: "1rem",
@@ -158,10 +195,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     selectBox: {
         width: "100%",
-        padding: "0.5rem",
-        borderRadius: "4px",
-        border: "1px solid #ccc",
+        padding: "0.75rem",
+        borderRadius: "8px",
+        border: "1px solid #E0E0E0",
         fontSize: "1rem",
+        backgroundColor: "#F9FAFB",
     },
     noTravelMessage: {
         fontSize: "1rem",
@@ -181,7 +219,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#FFFFFF",
         padding: "0.75rem 1.5rem",
         border: "none",
-        borderRadius: "4px",
+        borderRadius: "8px",
         cursor: "pointer",
         fontSize: "1rem",
         fontWeight: "bold",

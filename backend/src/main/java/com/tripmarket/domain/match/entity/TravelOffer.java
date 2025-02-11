@@ -1,9 +1,9 @@
 package com.tripmarket.domain.match.entity;
 
 import com.tripmarket.domain.guide.entity.Guide;
+import com.tripmarket.domain.match.enums.MatchRequestStatus;
+import com.tripmarket.domain.match.util.MatchRequestStatusUpdater;
 import com.tripmarket.domain.travel.entity.Travel;
-import com.tripmarket.global.exception.CustomException;
-import com.tripmarket.global.exception.ErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,31 +42,13 @@ public class TravelOffer {
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	@Builder.Default
-	private RequestStatus status = RequestStatus.PENDING;
+	private MatchRequestStatus status = MatchRequestStatus.PENDING;
 
 	@Column(columnDefinition = "TEXT")
-	private String message; // 가이더의 제안 메시지 (선택 사항)
+	private String message;
 
-	public void updateStatus(RequestStatus newStatus) {
-		if (this.status == RequestStatus.ACCEPTED || this.status == RequestStatus.REJECTED) {
-			throw new CustomException(ErrorCode.REQUEST_ALREADY_PROCESSED);
-		}
-
-		if (newStatus == RequestStatus.PENDING) {
-			throw new CustomException(ErrorCode.INVALID_REQUEST_STATUS);
-		}
+	public void updateStatus(MatchRequestStatus newStatus) {
+		MatchRequestStatusUpdater.updateStatus(this.status, newStatus, this.travel);
 		this.status = newStatus;
-
-		if (newStatus == RequestStatus.ACCEPTED) {
-			this.travel.updateTravelStatus(Travel.Status.MATCHED);
-		}
-
-		if (newStatus == RequestStatus.REJECTED) {
-			this.travel.updateTravelStatus(Travel.Status.WAITING_FOR_MATCHING);
-		}
-	}
-
-	public enum RequestStatus {
-		PENDING, ACCEPTED, REJECTED
 	}
 }
