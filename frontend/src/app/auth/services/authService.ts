@@ -18,6 +18,12 @@ export const authService = {
         window.location.href = `${BACKEND_URL}/oauth2/authorization/google`;
     },
 
+    // 구글 로그인 추가
+    loginWithGithub: () => {
+        const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        window.location.href = `${BACKEND_URL}/oauth2/authorization/github`;
+    },
+
     // 로그인 상태 확인
     checkLoginStatus: async () => {
         try {

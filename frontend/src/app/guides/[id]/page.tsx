@@ -53,7 +53,7 @@ const GuideDetailPage: React.FC = () => {
             setRequestStatus("가이드 요청이 성공적으로 완료되었습니다.");
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            setRequestStatus("가이드 요청 중 오류가 발생했습니다.");
+            setRequestStatus("요청 신청이 반려된 가이드에게는, 중복 신청이 불가능 합니다. 다른 가이더에게 요청해주세요.");
         }
     };
 

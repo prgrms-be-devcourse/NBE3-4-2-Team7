@@ -16,6 +16,7 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.oauth2.userinfo.GithubOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.GoogleOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.KakaoOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
@@ -62,6 +63,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 		OAuth2UserInfo userInfo = switch (registrationId.toLowerCase()) {
 			case "kakao" -> new KakaoOAuth2UserInfo(oAuth2User.getAttributes());
 			case "google" -> new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
+			case "github" -> new GithubOAuth2UserInfo(oAuth2User.getAttributes());
 			default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
 		};
 
