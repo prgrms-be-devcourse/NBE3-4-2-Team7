@@ -16,7 +16,7 @@ public record SignupRequestDTO(
 	@NotBlank(message = "이메일은 필수입니다.")
 	@Pattern(
 		regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
-		message = "이메일은 영어로만 작성해야 합니다."
+		message = "이메일은 영문자와 숫자로 작성해야 합니다."
 	)
 	String email,
 
