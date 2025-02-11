@@ -1,10 +1,23 @@
 package com.tripmarket.domain.auth.service;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
+import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.tripmarket.domain.auth.dto.LoginRequestDTO;
+import com.tripmarket.domain.auth.dto.SignupRequestDTO;
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +29,11 @@ public class AuthService {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RedisTemplate<String, String> redisTemplate;
+	private final MemberRepository memberRepository;
+	private final PasswordEncoder passwordEncoder;
+
+	@Value("${jwt.refresh-token-expire-time-seconds}")
+	private long refreshTokenValidityInSeconds;
 
 	public String refreshAccessToken(String accessToken) {
 		// 1. Access Token 블랙리스트 체크
@@ -52,6 +70,39 @@ public class AuthService {
 		redisTemplate.delete("RT:" + userId);
 	}
 
+	@Transactional
+	public void signup(SignupRequestDTO signupRequestDTO) {
+		// 이메일 중복 체크
+		if (checkEmailDuplication(signupRequestDTO.email())) {
+			throw new RuntimeException("이미 가입된 이메일입니다.");
+		}
+		Member member = new Member(
+			signupRequestDTO.name(),
+			signupRequestDTO.email(),
+			passwordEncoder.encode(signupRequestDTO.password()),
+			signupRequestDTO.imageUrl()
+		);
+		memberRepository.save(member);
+	}
+
+	@Transactional
+	public String login(LoginRequestDTO loginRequestDTO) {
+		Member member = memberRepository.findByEmail(loginRequestDTO.email())
+			.orElseThrow(() -> new RuntimeException("가입되지 않은 이메일입니다."));
+		if (!passwordEncoder.matches(loginRequestDTO.password(), member.getPassword())) {
+			throw new RuntimeException("잘못된 비밀번호입니다.");
+		}
+		// Authentication 객체 생성
+		UserDetails userDetails = new CustomUserDetails(member);
+		Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+			userDetails.getAuthorities());
+		// RefreshToken 생성 및 저장
+		String refreshToken = jwtTokenProvider.createRefreshToken();
+		redisTemplate.opsForValue()
+			.set("RT:" + member.getId(), refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
+		return jwtTokenProvider.createAccessToken(authentication);
+	}
+
 	// AccessToken 블랙리스트 체크
 	private void validateAccessToken(String accessToken) {
 		if (jwtTokenProvider.isBlacklisted(accessToken)) {
@@ -67,5 +118,13 @@ public class AuthService {
 			log.warn("RefreshToken 없음: userId={}", userId);
 			throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
 		}
+	}
+
+	// 이메일 중복 체크
+	private boolean checkEmailDuplication(String email) {
+		if (memberRepository.findByEmail(email).isPresent()) {
+			return true;
+		}
+		return false;
 	}
 }

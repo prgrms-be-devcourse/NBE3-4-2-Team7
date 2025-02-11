@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -134,12 +135,23 @@ public class JwtTokenProvider {
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
-		CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
+		String userId;
+		String email;
+
+		if (authentication.getPrincipal() instanceof CustomOAuth2User) { // OAuth2 기반 로그인
+			CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
+			userId = String.valueOf(user.getId());
+			email = user.getEmail();
+		} else { // 일반 로그인
+			CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
+			userId = String.valueOf(userDetails.getMember().getId());
+			email = userDetails.getMember().getEmail();
+		}
 
 		return Jwts.builder()
-			.subject(String.valueOf(user.getId())) // 식별자로 id만 사용
+			.subject(String.valueOf(userId)) // 식별자로 id만 사용
 			.claim("auth", getAuthorities(authentication)) // 권한 정보
-			.claim("email", user.getEmail()) // email claim 추가
+			.claim("email", email) // email claim 추가
 			.issuedAt(now)
 			.expiration(validity)
 			.signWith(key)

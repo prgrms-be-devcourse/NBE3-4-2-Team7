@@ -5,9 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tripmarket.domain.auth.dto.LoginRequestDTO;
+import com.tripmarket.domain.auth.dto.SignupRequestDTO;
 import com.tripmarket.domain.auth.service.AuthService;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
@@ -17,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,5 +105,33 @@ public class AuthController {
 			log.error("로그아웃 실패: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그아웃 실패");
 		}
+	}
+
+	/**
+	 * 일반 회원가입
+	 *
+	 * @param signupRequestDTO 회원가입 폼
+	 */
+	@PostMapping("/signup")
+	@Operation(summary = "일반 회원가입")
+	public ResponseEntity<String> signup(@Valid @RequestBody SignupRequestDTO signupRequestDTO) {
+		log.debug("회원가입 시도: email={}", signupRequestDTO.email());
+		authService.signup(signupRequestDTO);
+		return ResponseEntity.ok("회원가입 완료");
+	}
+
+	/**
+	 * 일반 로그인
+	 *
+	 * @param loginRequestDTO 로그인 폼 (email, password)
+	 * @param response HTTP 응답 (Access Token을 쿠키에 설정)
+	 */
+	@PostMapping("/login")
+	@Operation(summary = "일반 로그인")
+	public ResponseEntity<String> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse response) {
+		String accessToken = authService.login(loginRequestDTO);
+		ResponseCookie cookie = cookieUtil.createAccessTokenCookie(accessToken);
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+		return ResponseEntity.ok("일반 로그인이 성공적으로 완료되었습니다.");
 	}
 }

@@ -27,6 +27,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final CookieUtil cookieUtil;
 
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String path = request.getRequestURI();
+
+		// SecurityConfig의 permitAll()과 일치하는 경로들
+		return path.startsWith("/h2-console") ||
+			path.startsWith("/swagger-ui") ||
+			path.startsWith("/api-docs") ||
+			path.startsWith("/chat-test.html") ||
+			path.startsWith("/chat") ||
+			path.equals("/") ||
+			path.startsWith("/auth") ||
+			path.startsWith("/oauth2") ||
+			path.startsWith("/login/auth") ||
+			path.startsWith("/login/oauth2");
+	}
+
 	/**
 	 * 실제 필터링 로직
 	 * 1. 쿠키에서 토큰 추출
