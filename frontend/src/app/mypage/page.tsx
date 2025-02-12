@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
-import axiosInstance from "../utils/axios"; 
+import axiosInstance from "../utils/axios";
 import {
     getGuideRequestsByRequester,
     getMyTravels,
@@ -23,7 +23,7 @@ import {convertFromGuideDto} from "@/app/utils/converters";
 import axios from "axios";
 
 const MyPage: React.FC = () => {
-    const [userInfo, setUserInfo] = useState<MemberResponseDTO >();
+    const [userInfo, setUserInfo] = useState<MemberResponseDTO>();
     const [guideRequests, setGuideRequests] = useState<GuideRequestDto[]>([]);
     const [myTravels, setMyTravels] = useState<TravelDto[]>([]);
     const [travelOffersForUser, setTravelOffersForUser] = useState<TravelOfferDto[]>([]);
@@ -33,7 +33,9 @@ const MyPage: React.FC = () => {
     const [error, setError] = useState<string>("");
     const [guideProfile, setGuideProfile] = useState<GuideProfileDto | null>(null);
     const router = useRouter();
-    const [reviewedTravels, setReviewedTravels] = useState<{ [key: number]: { reviewId: number, comment: string, reviewScore: number } }>({});
+    const [reviewedTravels, setReviewedTravels] = useState<{
+        [key: number]: { reviewId: number, comment: string, reviewScore: number }
+    }>({});
 
     useEffect(() => {
         setLoading(true);
@@ -45,9 +47,9 @@ const MyPage: React.FC = () => {
                     getGuideRequestsByRequester(),
                     getMyTravels(),
                     getTravelOffersForUser(),
-                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({ data: [] }),
-                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({ data: [] }),
-                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({ data: null }),
+                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({data: null}),
                 ]);
             })
             .then(async ([
@@ -56,7 +58,7 @@ const MyPage: React.FC = () => {
                              travelOffersForUserResponse,
                              guideRequestsByGuideResponse,
                              travelOffersResponse,
-                             { data: guideProfileData }
+                             {data: guideProfileData}
                          ]) => {
                 console.log("✅ 여행 목록 응답:", myTravelsResponse.data); // 여행 데이터 확인
                 console.log("🚀 여행 목록 응답:", myTravelsResponse.data);
@@ -119,82 +121,79 @@ const MyPage: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
-   // 채팅방 시작 함수
+    // 채팅방 시작 함수
 // 채팅방 시작 함수
-const startChat = async (guideEmail: string, userEmail: string) => {
-    try {
-        console.log("startChat 호출됨");
-        const accessToken = document.cookie
-            .split("; ")
-            .find((cookie) => cookie.startsWith("accessToken="))
-            ?.split("=")[1];
+    const startChat = async (guideEmail: string, userEmail: string) => {
+        try {
+            console.log("startChat 호출됨");
+            const accessToken = document.cookie
+                .split("; ")
+                .find((cookie) => cookie.startsWith("accessToken="))
+                ?.split("=")[1];
 
-        console.log("accessToken: ", accessToken);
+            console.log("accessToken: ", accessToken);
 
-        if (!accessToken) {
-            console.error("Access token이 없습니다.");
-            return;
+            if (!accessToken) {
+                console.error("Access token이 없습니다.");
+                return;
+            }
+
+            const response = await axiosInstance.get("/members/me", {
+                headers: {Authorization: `Bearer ${accessToken}`},
+            });
+
+            const currentUserEmail = response.data.email;
+
+            console.log("현재 사용자 이메일(currentUserEmail): ", currentUserEmail);
+            console.log("guideEmail: ", guideEmail);
+            console.log("userEmail: ", userEmail);
+
+            // 현재 사용자가 아니라면 그 값을 receiverEmail로 설정
+            let receiverEmail = null;
+
+            if (guideEmail !== currentUserEmail) {
+                receiverEmail = guideEmail;
+                console.log("guideEmail이 선택됨: ", receiverEmail);
+            } else if (userEmail && userEmail !== currentUserEmail) {  // userEmail이 존재하는지 체크
+                receiverEmail = userEmail;
+                console.log("userEmail이 선택됨: ", receiverEmail);
+            } else {
+                console.error("자기 자신과 채팅할 수 없습니다.");
+                return;
+            }
+
+            // receiverEmail이 올바르게 설정되었는지 확인
+            if (!receiverEmail) {
+                console.error("받는 사람(receiver)이 설정되지 않았습니다.");
+                return;
+            }
+
+            console.log("채팅방 생성 요청을 위한 receiverEmail: ", receiverEmail);
+
+            // 채팅방 생성 요청
+            const createRoomResponse = await axiosInstance.post('/chatting-room', {
+                receiver: receiverEmail,  // receiver는 guide 또는 member 이메일
+            });
+
+            const {roomId} = createRoomResponse.data;
+
+            console.log("채팅방 생성 완료, roomId: ", roomId);
+
+            router.push(`/chat-room/${roomId}`);
+
+        } catch (error) {
+            console.error("채팅방 생성 중 오류 발생:", error);
+            alert('채팅방 생성 중 문제가 발생했습니다.');
         }
-
-        const response = await axiosInstance.get("/members/me", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        const currentUserEmail = response.data.email;
-
-        console.log("현재 사용자 이메일(currentUserEmail): ", currentUserEmail);
-        console.log("guideEmail: ", guideEmail);
-        console.log("userEmail: ", userEmail);
-
-        // 현재 사용자가 아니라면 그 값을 receiverEmail로 설정
-        let receiverEmail = null;
-
-        if (guideEmail !== currentUserEmail) {
-            receiverEmail = guideEmail;
-            console.log("guideEmail이 선택됨: ", receiverEmail);
-        } else if (userEmail && userEmail !== currentUserEmail) {  // userEmail이 존재하는지 체크
-            receiverEmail = userEmail;
-            console.log("userEmail이 선택됨: ", receiverEmail);
-        } else {
-            console.error("자기 자신과 채팅할 수 없습니다.");
-            return;
-        }
-
-        // receiverEmail이 올바르게 설정되었는지 확인
-        if (!receiverEmail) {
-            console.error("받는 사람(receiver)이 설정되지 않았습니다.");
-            return;
-        }
-
-        console.log("채팅방 생성 요청을 위한 receiverEmail: ", receiverEmail);
-
-        // 채팅방 생성 요청
-        const createRoomResponse = await axiosInstance.post('/chatting-room', {
-            receiver: receiverEmail,  // receiver는 guide 또는 member 이메일
-        });
-
-        const { roomId } = createRoomResponse.data;
-
-        console.log("채팅방 생성 완료, roomId: ", roomId);
-
-        router.push(`/chat-room/${roomId}`);
-
-    } catch (error) {
-        console.error("채팅방 생성 중 오류 발생:", error);
-        alert('채팅방 생성 중 문제가 발생했습니다.');
-    }
-};
-
-
+    };
 
 
 // 채팅 시작 버튼 처리
-const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
-    const { guideEmail, userEmail } = offerOrRequest;
-    console.log("guideEmail: ", guideEmail, "userEmail: ", userEmail);
-    startChat(guideEmail, userEmail);
-};
-
+    const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
+        const {guideEmail, userEmail} = offerOrRequest;
+        console.log("guideEmail: ", guideEmail, "userEmail: ", userEmail);
+        startChat(guideEmail, userEmail);
+    };
 
 
     const handleCompleteTravelOffer = (requestId: number) => {
@@ -241,7 +240,7 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
 
             // 🔥 삭제 후 상태 업데이트 (리뷰를 목록에서 제거)
             setReviewedTravels(prev => {
-                const updated = { ...prev };
+                const updated = {...prev};
                 delete updated[travelId]; // 삭제된 리뷰 제거
                 return updated;
             });
@@ -385,30 +384,30 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
                     <div style={styles.card}>
                         <h3 style={styles.cardTitle}>📑 사용자(나) {"->"} 가이더 요청 내역 조회</h3>
                         <div style={styles.innerCard}>
-                        {guideRequests.map((request) => (
-                        <div key={request.id} style={styles.requestBox}>
-                        <div style={styles.requestDetails}>
-                        <p><b>여행 도시:</b> {request.travelCity}</p>
-                        <p><b>가이드 이름:</b> {request.guideName}</p>
-                        <p><b>상태:</b> <span
-                        style={getStatusStyle(request.status)}>{request.status}</span></p>
-                    </div>
-                    {request.status === "ACCEPTED" && (
-                  <button
-                      style={styles.viewProfileButton}
-                      onClick={() => handleStartChat(request)}  // 상태가 "ACCEPTED"일 때만 버튼 표시
-                      >
-                채팅 시작
-            </button>
-        )}
-        <button
-            style={styles.viewProfileButton}
-            onClick={() => handleViewProfile(request.guideId)}
-        >
-            🔵 가이드 프로필 보기
-        </button>
-    </div>
-))}
+                            {guideRequests.map((request) => (
+                                <div key={request.id} style={styles.requestBox}>
+                                    <div style={styles.requestDetails}>
+                                        <p><b>여행 도시:</b> {request.travelCity}</p>
+                                        <p><b>가이드 이름:</b> {request.guideName}</p>
+                                        <p><b>상태:</b> <span
+                                            style={getStatusStyle(request.status)}>{request.status}</span></p>
+                                    </div>
+                                    {request.status === "ACCEPTED" && (
+                                        <button
+                                            style={styles.viewProfileButton}
+                                            onClick={() => handleStartChat(request)}  // 상태가 "ACCEPTED"일 때만 버튼 표시
+                                        >
+                                            채팅 시작
+                                        </button>
+                                    )}
+                                    <button
+                                        style={styles.viewProfileButton}
+                                        onClick={() => handleViewProfile(request.guideId)}
+                                    >
+                                        🔵 가이드 프로필 보기
+                                    </button>
+                                </div>
+                            ))}
 
                         </div>
                     </div>
@@ -499,6 +498,14 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
                                                 </button>
                                             </div>
                                         )}
+                                        {offer.status === "ACCEPTED" && (
+                                            <button
+                                                style={styles.viewProfileButton}
+                                                onClick={() => handleStartChat(offer)}  // 상태가 "ACCEPTED"일 때만 버튼 표시
+                                            >
+                                                채팅 시작
+                                            </button>
+                                        )}
 
                                         {/* 추가된 부분: 여행 완료 버튼 */}
                                         {offer.status === "ACCEPTED" && (
@@ -538,13 +545,13 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
                                                     style={getStatusStyle(request.status)}>{request.status}</span></p>
                                             </div>
                                             {request.status === "ACCEPTED" && (
-                                    <button
-                                        style={styles.viewProfileButton}
-                                        onClick={() => handleStartChat(request)}
-                                    >
-                                        채팅 시작
-                                    </button>
-                                )}
+                                                <button
+                                                    style={styles.viewProfileButton}
+                                                    onClick={() => handleStartChat(request)}
+                                                >
+                                                    채팅 시작
+                                                </button>
+                                            )}
                                             <div>
                                                 <button
                                                     style={styles.viewProfileButton}
@@ -600,6 +607,14 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
                                                 <p><b>상태:</b> <span
                                                     style={getStatusStyle(offer.status)}>{offer.status}</span></p>
                                             </div>
+                                            {offer.status === "ACCEPTED" && (
+                                                <button
+                                                    style={styles.viewProfileButton}
+                                                    onClick={() => handleStartChat(offer)}
+                                                >
+                                                    채팅 시작
+                                                </button>
+                                            )}
                                         </div>
                                     ))
                                 )}

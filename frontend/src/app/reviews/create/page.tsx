@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, {useEffect, useState} from "react";
+import {useRouter, useSearchParams} from "next/navigation";
 import axios from "axios";
 
 const CreateReviewPage: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [travelId, setTravelId] = useState<number | null>(null);
+    const [review, setReview] = useState("");
+    const [reviewScore, setReviewScore] = useState<number>(0); // 기본값 0점
+    const [hoverScore, setHoverScore] = useState<number | null>(null); // 별 위에 올릴 때 표시용
 
     useEffect(() => {
         const id = searchParams.get("travelId");
@@ -16,52 +19,46 @@ const CreateReviewPage: React.FC = () => {
         }
     }, [searchParams]);
 
-    const [review, setReview] = useState("");
-    const [reviewScore, setReviewScore] = useState<number | "">("");
-
     // 리뷰 내용 변경 핸들러
     const handleReviewChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setReview(event.target.value);
     };
 
-    // 평점 변경 핸들러
-    const handleReviewScoreChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseFloat(event.target.value);
+    // 별점 클릭 핸들러 (0.5 단위로 반개 선택 가능)
+    const handleRatingClick = (score: number) => {
+        setReviewScore(score);
+    };
 
-        if (isNaN(value) || value < 0 || value > 5) {
-            alert("평점은 0.0에서 5.0 사이여야 합니다.");
-            return;
-        }
+    // 별 위에 올릴 때 점수 미리보기 (반개 단위로 선택 가능)
+    const handleMouseOver = (score: number) => {
+        setHoverScore(score);
+    };
 
-        setReviewScore(value);
+    // 마우스가 별에서 벗어나면 원래 점수로 복귀
+    const handleMouseLeave = () => {
+        setHoverScore(null);
     };
 
     // 리뷰 제출 핸들러
     const handleSubmit = async () => {
-        console.log("제출 데이터:", { travelId, review, reviewScore });
-
-        if (!travelId || review.trim() === "" || reviewScore === "") {
+        if (!travelId || review.trim() === "" || reviewScore === 0) {
             alert("여행 ID, 리뷰 내용, 평점을 입력해주세요.");
             return;
         }
 
         const requestData = {
-            travelId, // ✅ 여행 ID 추가
-            comment: review, // ✅ 백엔드 필드명 `comment`
-            reviewScore // ✅ 필드명 `reviewScore`
+            travelId,
+            comment: review,
+            reviewScore
         };
 
         try {
             await axios.post("/reviews", requestData);
             alert("리뷰가 작성되었습니다.");
-            router.push("/mypage"); // 마이페이지로 이동
+            router.push("/mypage");
         } catch (error) {
             console.error("리뷰 작성 에러:", error);
-            if (error.response && error.response.data) {
-                alert(error.response.data.errorMessage);
-            } else {
-                alert("리뷰 작성에 실패했습니다.");
-            }
+            alert("리뷰 작성에 실패했습니다.");
         }
     };
 
@@ -69,19 +66,29 @@ const CreateReviewPage: React.FC = () => {
         <div style={styles.reviewFormContainer}>
             <h2 style={styles.sectionTitle}>리뷰 작성</h2>
 
-            {/* 평점 입력 */}
+            {/* 별점 선택 */}
             <div style={styles.ratingContainer}>
-                <label style={styles.ratingLabel}>평점 (0.0 ~ 5.0):</label>
-                <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.5"
-                    value={reviewScore}
-                    onChange={handleReviewScoreChange}
-                    style={styles.ratingInput}
-                />
+                <label style={styles.ratingLabel}>평점:</label>
+                <div style={styles.stars}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                            key={star}
+                            style={{
+                                ...styles.star,
+                                color: (hoverScore || reviewScore) >= star ? "#FFD700" : "#ccc"
+                            }}
+                            onClick={() => handleRatingClick(star)}
+                            onMouseOver={() => handleMouseOver(star)}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            ★
+                        </span>
+                    ))}
+                </div>
             </div>
+
+            {/* 선택된 점수 표시 */}
+            <div style={styles.selectedScore}>선택한 점수: {reviewScore}점</div>
 
             {/* 리뷰 내용 입력 */}
             <textarea
@@ -119,6 +126,33 @@ const styles = {
         color: "#1E88E5",
         textAlign: "center",
     },
+    ratingContainer: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginBottom: "10px"
+    },
+    ratingLabel: {
+        fontSize: "16px",
+        fontWeight: "bold",
+        marginBottom: "5px"
+    },
+    stars: {
+        display: "flex",
+        gap: "5px",
+        cursor: "pointer"
+    },
+    star: {
+        fontSize: "30px",
+        transition: "color 0.2s",
+        cursor: "pointer"
+    },
+    selectedScore: {
+        textAlign: "center",
+        fontWeight: "bold",
+        fontSize: "16px",
+        color: "#333"
+    },
     reviewInput: {
         width: "100%",
         minHeight: "120px",
@@ -127,20 +161,6 @@ const styles = {
         border: "1px solid #ccc",
         fontSize: "14px",
         resize: "none",
-    },
-    ratingContainer: {
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-    },
-    ratingLabel: {
-        fontSize: "16px",
-        fontWeight: "bold",
-    },
-    ratingInput: {
-        width: "50px",
-        padding: "5px",
-        fontSize: "14px",
     },
     buttonGroup: {
         display: "flex",
