@@ -1,5 +1,7 @@
 package com.tripmarket.domain.chatting.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomRequestDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomsResponseDto;
 import com.tripmarket.domain.chatting.dto.CreateChattingRoomResponseDto;
+import com.tripmarket.domain.chatting.dto.ReceiverResponseDto;
 import com.tripmarket.domain.chatting.service.ChattingRoomService;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
@@ -78,15 +81,12 @@ public class ChattingRoomController {
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "채팅 내역 확인"),
 		@ApiResponse(responseCode = "500", description = "서버 오류")})
-	public ResponseEntity<Page<ChattingResponseDto>> getMessages(
+	public ResponseEntity<List<ChattingResponseDto>> getMessages(
 		@PathVariable String roomId,
-		@AuthenticationPrincipal CustomOAuth2User user,
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size) {
+		@AuthenticationPrincipal CustomOAuth2User user) {
 		String userEmail = user.getEmail();
 		chattingRoomService.markMessagesAsRead(roomId, userEmail);
-		Page<ChattingResponseDto> messages = chattingRoomService.getChattingMessages(roomId,
-			PageRequest.of(page, size));
+		List<ChattingResponseDto> messages = chattingRoomService.getChattingMessages(roomId);
 		return ResponseEntity.ok(messages);
 	}
 
@@ -101,5 +101,17 @@ public class ChattingRoomController {
 		@AuthenticationPrincipal CustomOAuth2User user) {
 		chattingRoomService.leaveChattingRoom(user.getEmail(), roomId);
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+	}
+
+	@GetMapping("/receiver")
+	@Operation(summary = "상대 이메일 받기", description = "상대방의 이메일을 받는 API")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "상대 이메일을 받음"),
+		@ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음"),
+		@ApiResponse(responseCode = "500", description = "서버 오류")})
+	public ResponseEntity<ReceiverResponseDto> getReceiverEmail(@RequestParam String roomId,
+		@AuthenticationPrincipal CustomOAuth2User user) {
+		String email = user.getEmail();
+		return ResponseEntity.ok(chattingRoomService.getReceiverEmail(roomId, email));
 	}
 }
