@@ -17,11 +17,11 @@ import {
     TravelOfferDto,
     updateTravelOfferStatus,
 } from "../travelOffers/services/travelOfferService";
-import {getGuideDetailByUser, GuideDto} from "@/app/guides/services/guideService";
+import {getGuideProfileByUser, GuideProfileDto} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
 
 const MyPage: React.FC = () => {
-    const [userInfo, setUserInfo] = useState<MemberResponseDTO | null>(null);
+    const [userInfo, setUserInfo] = useState<MemberResponseDTO >();
     const [guideRequests, setGuideRequests] = useState<GuideRequestDto[]>([]);
     const [myTravels, setMyTravels] = useState<TravelDto[]>([]);
     const [travelOffersForUser, setTravelOffersForUser] = useState<TravelOfferDto[]>([]);
@@ -29,7 +29,7 @@ const MyPage: React.FC = () => {
     const [travelOffers, setTravelOffers] = useState<TravelOfferDto[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
-    const [guideProfile, setGuideProfile] = useState<GuideDto>({});
+    const [guideProfile, setGuideProfile] = useState<GuideProfileDto | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -40,10 +40,10 @@ const MyPage: React.FC = () => {
                 return Promise.all([
                     getGuideRequestsByRequester(),
                     getMyTravels(),
-                    getTravelOffersForUser(), // 사용자에게 온 여행 제안 요청 API 추가
+                    getTravelOffersForUser(),
                     userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
                     userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
-                    userInfoResponse.hasGuideProfile ? getGuideDetailByUser() : Promise.resolve({data: []}),
+                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({data: null}), // ✅ 변경
                 ]);
             })
             .then(([
@@ -52,7 +52,7 @@ const MyPage: React.FC = () => {
                        travelOffersForUserResponse,
                        guideRequestsByGuideResponse,
                        travelOffersResponse,
-                       guideProfileResponse
+                       { data: guideProfileData } // 구조 분해 할당 적용
                    ]) => {
                 setGuideRequests(guideRequestsResponse.data);
                 setMyTravels(myTravelsResponse.data);
@@ -60,8 +60,8 @@ const MyPage: React.FC = () => {
                 setGuideRequestsByGuide(guideRequestsByGuideResponse.data);
                 setTravelOffers(travelOffersResponse.data);
 
-                if (guideProfileResponse?.data) {
-                    setGuideProfile(convertFromGuideDto(guideProfileResponse.data));
+                if (guideProfileData) {
+                    setGuideProfile(convertFromGuideDto(guideProfileData ?? {}));
                 }
             })
             .catch(() => {
@@ -85,7 +85,7 @@ const MyPage: React.FC = () => {
     const handleViewTravelRequest = (travelId: number) => {
         router.push(`/travels/${travelId}`);
     };
-
+    //   가이드 -> 사용자
     const handleTravelOfferStatusUpdate = (offerId: number, status: "ACCEPTED" | "REJECTED") => {
         updateTravelOfferStatus(offerId, status)
             .then(() => {
@@ -96,7 +96,7 @@ const MyPage: React.FC = () => {
             })
             .catch(() => alert("요청 상태를 업데이트하는 데 실패했습니다."));
     };
-
+    //  사용자 -> 가이드
     const handleUpdateStatus = (requestId: number, guideId: number, status: "ACCEPTED" | "REJECTED") => {
         updateGuideRequestStatus(requestId, guideId, status)
             .then(() => {
@@ -241,6 +241,15 @@ const MyPage: React.FC = () => {
                                             <p><b>여행 도시:</b> {travel.city}</p>
                                             <p><b>여행 기간:</b> {travel.startDate} ~ {travel.endDate}</p>
                                         </div>
+
+                                        {/* 🔵 리뷰 작성 버튼 추가 */}
+                                        <button
+                                            style={styles.reviewButton}
+                                            onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
+                                        >
+                                            ✍️ 리뷰 작성하기
+                                        </button>
+
                                         <button
                                             style={styles.viewProfileButton}
                                             onClick={() => handleViewTravelRequest(travel.id)}
@@ -498,6 +507,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     rejectButton: {
         backgroundColor: "#DC2626",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    reviewButton: {
+        backgroundColor: "#28a745",
         color: "#FFFFFF",
         padding: "0.5rem 1rem",
         borderRadius: "4px",

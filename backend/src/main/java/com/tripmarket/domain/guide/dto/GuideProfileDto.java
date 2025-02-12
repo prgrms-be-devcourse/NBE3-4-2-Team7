@@ -1,12 +1,12 @@
 package com.tripmarket.domain.guide.dto;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.review.dto.ReviewResponseDto;
 import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.domain.reviewstats.entity.ReviewStats;
-import com.tripmarket.domain.review.dto.ReviewResponseDto;
 
 public record GuideProfileDto(
 	Long id,
@@ -17,7 +17,7 @@ public record GuideProfileDto(
 	String introduction,
 	Long reviewCount,
 	double averageRating,
-	List<ReviewResponseDto>reviews
+	List<ReviewResponseDto> reviews
 ) {
 	public static GuideProfileDto fromEntity(Guide guide, ReviewStats reviewStats, List<ReviewResponseDto> reviews) {
 		return new GuideProfileDto(
