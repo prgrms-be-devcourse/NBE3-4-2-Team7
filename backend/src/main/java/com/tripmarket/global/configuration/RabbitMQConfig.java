@@ -1,3 +1,4 @@
+/*
 package com.tripmarket.global.configuration;
 
 import org.springframework.amqp.core.Binding;
@@ -102,3 +103,4 @@ public class RabbitMQConfig {
 	}
 
 }
+*/
