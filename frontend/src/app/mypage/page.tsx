@@ -38,6 +38,7 @@ const MyPage: React.FC = () => {
         setLoading(true);
         getMyInfo()
             .then((userInfoResponse) => {
+                console.log("✅ getMyInfo() 응답:", userInfoResponse); // 디버깅 로그 추가
                 setUserInfo(userInfoResponse);
                 return Promise.all([
                     getGuideRequestsByRequester(),
@@ -56,6 +57,15 @@ const MyPage: React.FC = () => {
                              travelOffersResponse,
                              { data: guideProfileData }
                          ]) => {
+                console.log("✅ 여행 목록 응답:", myTravelsResponse.data); // 여행 데이터 확인
+                console.log("🚀 여행 목록 응답:", myTravelsResponse.data);
+
+// 각 여행 데이터의 상태 확인
+                myTravelsResponse.data.forEach((travel: TravelDto) => {
+                    console.log(`🛠️ 여행 상태 체크 - ID: ${travel.id}, 상태: ${travel.status}`);
+                });
+                console.log("✅ 리뷰 응답 시작");
+
                 setGuideRequests(guideRequestsResponse.data);
                 setMyTravels(myTravelsResponse.data);
                 setTravelOffersForUser(travelOffersForUserResponse.data);
@@ -71,6 +81,7 @@ const MyPage: React.FC = () => {
                     myTravelsResponse.data.map(async (travel: TravelDto) => {
                         try {
                             const reviewResponse = await axios.get(`/reviews/travel/${travel.id}`);
+                            console.log(`✅ 리뷰 응답 [${travel.id}]:`, reviewResponse.data); // 개별 리뷰 데이터 확인
                             if (reviewResponse.data.length > 0) {
                                 return {
                                     travelId: travel.id,
@@ -80,20 +91,28 @@ const MyPage: React.FC = () => {
                                 };
                             }
                         } catch (err) {
+                            console.error(`❌ 리뷰 가져오기 실패 [${travel.id}]`, err);
                             return null; // 리뷰가 없는 경우 무시
                         }
                     })
                 );
+                console.log("🛠️ 최종 정리된 리뷰 데이터:", reviewedTravels);
+                myTravels.forEach((travel) => {
+                    console.log(`🛠️ 여행 ID: ${travel.id}, 상태: ${travel.status}, 리뷰 존재 여부:`, reviewedTravels[travel.id]);
+                });
+
 
                 // ✅ 유효한 리뷰만 상태에 저장
                 const validReviews = reviewResponses.filter((r) => r !== null);
+                console.log("✅ 최종 정리된 리뷰 데이터:", validReviews);
                 setReviewedTravels(validReviews.reduce((acc, curr) => {
                     if (curr) acc[curr.travelId] = curr;
                     return acc;
                 }, {} as { [key: number]: { reviewId: number, comment: string, reviewScore: number } }));
 
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error("❌ 데이터 불러오기 실패:", error);
                 setError("데이터를 불러오는 데 실패했습니다.");
             })
             .finally(() => setLoading(false));
@@ -295,33 +314,33 @@ const MyPage: React.FC = () => {
                                         </div>
 
                                         <div style={styles.buttonGroup}>
-                                            {/* ✅ 리뷰 버튼 (작성 or 삭제) */}
-                                            {reviewedTravels[travel.id] ? (
-                                                <div style={styles.buttonGroup}>
+                                            {travel.status?.trim().toUpperCase() === "COMPLETED" ? (
+                                                reviewedTravels[travel.id] ? (
+                                                    <div style={styles.buttonGroup}>
+                                                        <button
+                                                            style={styles.editButton}
+                                                            onClick={() => handleEditReview(travel.id)}
+                                                        >
+                                                            ✏️ 리뷰 수정
+                                                        </button>
+                                                        <button
+                                                            style={styles.deleteButton}
+                                                            onClick={() => handleDeleteReview(travel.id)}
+                                                        >
+                                                            ❌ 리뷰 삭제
+                                                        </button>
+                                                    </div>
+                                                ) : (
                                                     <button
-                                                        style={styles.editButton}
-                                                        onClick={() => handleEditReview(travel.id)}
+                                                        style={styles.reviewButton}
+                                                        onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
                                                     >
-                                                        ✏️ 리뷰 수정
+                                                        ✍️ 리뷰 작성하기
                                                     </button>
+                                                )
+                                            ) : null}
 
-                                                    <button
-                                                        style={styles.deleteButton}
-                                                        onClick={() => handleDeleteReview(travel.id)}
-                                                    >
-                                                        ❌ 리뷰 삭제
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    style={styles.reviewButton}
-                                                    onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
-                                                >
-                                                    ✍️ 리뷰 작성하기
-                                                </button>
-                                            )}
-
-                                            {/* ✅ 여행 상세보기 버튼 유지 */}
+                                            {/* 여행 상세보기 버튼은 항상 표시 */}
                                             <button
                                                 style={styles.viewProfileButton}
                                                 onClick={() => handleViewTravelRequest(travel.id)}
