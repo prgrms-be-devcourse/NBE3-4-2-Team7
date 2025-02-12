@@ -2,9 +2,6 @@ package com.tripmarket.domain.chatting.repository.message;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -36,16 +33,11 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 	}
 
 	@Override
-	public Page<Message> findMessagesByRoom(String roomId, Pageable pageable) {
+	public List<Message> findMessagesByRoom(String roomId) {
 		Query query = new Query()
 			.addCriteria(Criteria.where("roomId").is(roomId))
-			.with(Sort.by(Sort.Direction.DESC, "createdAt"))
-			.with(pageable);
-
-		List<Message> messages = mongoTemplate.find(query, Message.class);
-		long count = mongoTemplate.count(Query.query(Criteria.where("roomId").is(roomId)), Message.class);
-
-		return new PageImpl<>(messages, pageable, count);
+			.with(Sort.by(Sort.Direction.ASC, "createdAt"));
+		return mongoTemplate.find(query, Message.class);
 	}
 
 	@Override

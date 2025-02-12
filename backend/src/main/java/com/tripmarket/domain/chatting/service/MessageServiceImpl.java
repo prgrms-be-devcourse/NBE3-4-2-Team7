@@ -2,17 +2,21 @@ package com.tripmarket.domain.chatting.service;
 
 import java.util.Set;
 
+import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.MessageDto;
+import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.chatting.entity.Message;
+import com.tripmarket.domain.chatting.repository.chattingroom.ChattingRoomRepository;
 import com.tripmarket.domain.chatting.repository.message.MessageRepository;
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,39 +26,63 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageServiceImpl implements MessageService {
 
 	private final MessageRepository messageRepository;
-	private final RabbitTemplate rabbitTemplate;
+	private final SimpMessagingTemplate simpMessagingTemplate;
 	private final RedisChattingService redisChattingService;
-
-	@Value("${spring.rabbitmq.chat.exchange.name}")
-	private String chatExchangeName;
+	private final MemberRepository memberRepository;
+	private final ChattingRoomRepository chattingRoomRepository;
 
 	@Transactional
 	@Override
 	public void sendMessage(MessageDto messageDto, String roomId) {
+		log.info("메시지 전송 시도: sender={}, receiver={}, roomId={}", messageDto.sender(), messageDto.receiver(), roomId);
 
-		try {
-			rabbitTemplate.convertAndSend(chatExchangeName, "chat.room." + roomId, messageDto);
-		} catch (Exception e) {
-			throw new CustomException(ErrorCode.FAIL_MESSAGE_SEND);
-		}
-
+		// 메시지 저장
 		Message message = messageDto.toMessageEntity();
+		message.updateRead(false);  // 기본적으로 안 읽음 상태로 저장
+
 		Set<Object> connectedUsers = redisChattingService.getUsersByChattingRoom(roomId);
 		boolean isReceiverConnected = connectedUsers.contains(messageDto.receiver());
 
-		//메시지 생성 - 읽음 상태 바로 확인
 		if (isReceiverConnected) {
-			message.updateRead(true);
+			message.updateRead(true);  // 수신자가 접속 중이면 읽음 처리
+			redisChattingService.resetUnreadCount(roomId, messageDto.receiver()); // Redis 초기화
 		} else {
-			message.updateRead(false);
-			redisChattingService.addUnreadCount(roomId, messageDto.receiver());
+			redisChattingService.addUnreadCount(roomId, messageDto.receiver()); // 읽지 않은 메시지 수 증가
 		}
 
-		messageRepository.save(message);
+		Message save = messageRepository.save(message);
+		Member member = getMember(save);
+		ChattingResponseDto chattingResponseDto = ChattingResponseDto.of(save, member);
 
-		// 읽음 상태 실시간으로 반영할때
-		if (isReceiverConnected) {
-			redisChattingService.sendReadReceipt(messageDto.receiver(), roomId, message.getId());
+		ChattingRoom chattingRoom = getChattingRoom(roomId);
+
+		//상대가 채팅방나간경우 다시 상대에게 채팅이 보이게처리
+		reconnectChattingRoom(messageDto, chattingRoom);
+
+		// STOMP 브로커로 메시지 전송
+		String destination = "/topic/chat.room." + roomId;
+		try {
+			simpMessagingTemplate.convertAndSend(destination, chattingResponseDto);
+		} catch (Exception e) {
+			throw new CustomException(ErrorCode.FAIL_MESSAGE_SEND);
 		}
+	}
+
+	private static void reconnectChattingRoom(MessageDto messageDto, ChattingRoom chattingRoom) {
+		chattingRoom.getParticipants().forEach(participant -> {
+			if (participant.getMember().getEmail().equals(messageDto.receiver()) && !participant.isActive()) {
+				participant.updateActive();
+			}
+		});
+	}
+
+	private ChattingRoom getChattingRoom(String roomId) {
+		return chattingRoomRepository.findById(roomId)
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CHAT_ROOM));
+	}
+
+	private Member getMember(Message save) {
+		return memberRepository.findByEmail(save.getSender())
+			.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 	}
 }

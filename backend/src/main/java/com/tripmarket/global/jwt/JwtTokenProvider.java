@@ -183,7 +183,7 @@ public class JwtTokenProvider {
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public Authentication getAuthentication(String token) {
-		Claims claims = parseClaims(token);
+		Claims claims = parseClaims(token);  // 수정된 parseClaims 사용
 		Long userId = Long.valueOf(claims.getSubject());
 		String email = claims.get("email", String.class);
 
