@@ -18,12 +18,12 @@ import {
     TravelOfferDto,
     updateTravelOfferStatus,
 } from "../travelOffers/services/travelOfferService";
-import {getGuideDetailByUser, GuideDto} from "@/app/guides/services/guideService";
+import {getGuideProfileByUser, GuideProfileDto} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
 import axios from "axios";
 
 const MyPage: React.FC = () => {
-    const [userInfo, setUserInfo] = useState<MemberResponseDTO | null>(null);
+    const [userInfo, setUserInfo] = useState<MemberResponseDTO >();
     const [guideRequests, setGuideRequests] = useState<GuideRequestDto[]>([]);
     const [myTravels, setMyTravels] = useState<TravelDto[]>([]);
     const [travelOffersForUser, setTravelOffersForUser] = useState<TravelOfferDto[]>([]);
@@ -31,42 +31,89 @@ const MyPage: React.FC = () => {
     const [travelOffers, setTravelOffers] = useState<TravelOfferDto[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
-    const [guideProfile, setGuideProfile] = useState<GuideDto>({});
+    const [guideProfile, setGuideProfile] = useState<GuideProfileDto | null>(null);
     const router = useRouter();
+    const [reviewedTravels, setReviewedTravels] = useState<{ [key: number]: { reviewId: number, comment: string, reviewScore: number } }>({});
 
     useEffect(() => {
         setLoading(true);
         getMyInfo()
             .then((userInfoResponse) => {
+                console.log("✅ getMyInfo() 응답:", userInfoResponse); // 디버깅 로그 추가
                 setUserInfo(userInfoResponse);
                 return Promise.all([
                     getGuideRequestsByRequester(),
                     getMyTravels(),
-                    getTravelOffersForUser(), // 사용자에게 온 여행 제안 요청 API 추가
-                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
-                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
-                    userInfoResponse.hasGuideProfile ? getGuideDetailByUser() : Promise.resolve({data: []}),
+                    getTravelOffersForUser(),
+                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({ data: [] }),
+                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({ data: [] }),
+                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({ data: null }),
                 ]);
             })
-            .then(([
-                       guideRequestsResponse,
-                       myTravelsResponse,
-                       travelOffersForUserResponse,
-                       guideRequestsByGuideResponse,
-                       travelOffersResponse,
-                       guideProfileResponse
-                   ]) => {
+            .then(async ([
+                             guideRequestsResponse,
+                             myTravelsResponse,
+                             travelOffersForUserResponse,
+                             guideRequestsByGuideResponse,
+                             travelOffersResponse,
+                             { data: guideProfileData }
+                         ]) => {
+                console.log("✅ 여행 목록 응답:", myTravelsResponse.data); // 여행 데이터 확인
+                console.log("🚀 여행 목록 응답:", myTravelsResponse.data);
+
+// 각 여행 데이터의 상태 확인
+                myTravelsResponse.data.forEach((travel: TravelDto) => {
+                    console.log(`🛠️ 여행 상태 체크 - ID: ${travel.id}, 상태: ${travel.status}`);
+                });
+                console.log("✅ 리뷰 응답 시작");
+
                 setGuideRequests(guideRequestsResponse.data);
                 setMyTravels(myTravelsResponse.data);
                 setTravelOffersForUser(travelOffersForUserResponse.data);
                 setGuideRequestsByGuide(guideRequestsByGuideResponse.data);
                 setTravelOffers(travelOffersResponse.data);
 
-                if (guideProfileResponse?.data) {
-                    setGuideProfile(convertFromGuideDto(guideProfileResponse.data));
+                if (guideProfileData) {
+                    setGuideProfile(convertFromGuideDto(guideProfileData ?? {}));
                 }
+
+                // 🚀 여행 목록을 가져온 후, 각 여행의 리뷰 조회
+                const reviewResponses = await Promise.all(
+                    myTravelsResponse.data.map(async (travel: TravelDto) => {
+                        try {
+                            const reviewResponse = await axios.get(`/reviews/travel/${travel.id}`);
+                            console.log(`✅ 리뷰 응답 [${travel.id}]:`, reviewResponse.data); // 개별 리뷰 데이터 확인
+                            if (reviewResponse.data.length > 0) {
+                                return {
+                                    travelId: travel.id,
+                                    reviewId: reviewResponse.data[0].id,
+                                    comment: reviewResponse.data[0].comment,
+                                    reviewScore: reviewResponse.data[0].reviewScore
+                                };
+                            }
+                        } catch (err) {
+                            console.error(`❌ 리뷰 가져오기 실패 [${travel.id}]`, err);
+                            return null; // 리뷰가 없는 경우 무시
+                        }
+                    })
+                );
+                console.log("🛠️ 최종 정리된 리뷰 데이터:", reviewedTravels);
+                myTravels.forEach((travel) => {
+                    console.log(`🛠️ 여행 ID: ${travel.id}, 상태: ${travel.status}, 리뷰 존재 여부:`, reviewedTravels[travel.id]);
+                });
+
+
+                // ✅ 유효한 리뷰만 상태에 저장
+                const validReviews = reviewResponses.filter((r) => r !== null);
+                console.log("✅ 최종 정리된 리뷰 데이터:", validReviews);
+                setReviewedTravels(validReviews.reduce((acc, curr) => {
+                    if (curr) acc[curr.travelId] = curr;
+                    return acc;
+                }, {} as { [key: number]: { reviewId: number, comment: string, reviewScore: number } }));
+
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error("❌ 데이터 불러오기 실패:", error);
                 setError("데이터를 불러오는 데 실패했습니다.");
             })
             .finally(() => setLoading(false));
@@ -180,6 +227,29 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
     };
 
 
+    const handleEditReview = (travelId: number) => {
+        const reviewId = reviewedTravels[travelId].reviewId;
+        router.push(`/reviews/edit?travelId=${travelId}&reviewId=${reviewId}`);
+    };
+
+    const handleDeleteReview = async (travelId: number) => {
+        if (!reviewedTravels[travelId]) return;
+
+        try {
+            await axios.patch(`/reviews/${reviewedTravels[travelId].reviewId}`);
+            alert("리뷰가 삭제되었습니다.");
+
+            // 🔥 삭제 후 상태 업데이트 (리뷰를 목록에서 제거)
+            setReviewedTravels(prev => {
+                const updated = { ...prev };
+                delete updated[travelId]; // 삭제된 리뷰 제거
+                return updated;
+            });
+        } catch (error) {
+            alert("리뷰 삭제에 실패했습니다.");
+        }
+    };
+
     // 가이드 생성 페이지로 이동
     const handleGuideCreate = () => {
         if (userInfo.hasGuideProfile) {
@@ -195,7 +265,7 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
     const handleViewTravelRequest = (travelId: number) => {
         router.push(`/travels/${travelId}`);
     };
-
+    //   가이드 -> 사용자
     const handleTravelOfferStatusUpdate = (offerId: number, status: "ACCEPTED" | "REJECTED") => {
         updateTravelOfferStatus(offerId, status)
             .then(() => {
@@ -206,7 +276,7 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
             })
             .catch(() => alert("요청 상태를 업데이트하는 데 실패했습니다."));
     };
-
+    //  사용자 -> 가이드
     const handleUpdateStatus = (requestId: number, guideId: number, status: "ACCEPTED" | "REJECTED") => {
         updateGuideRequestStatus(requestId, guideId, status)
             .then(() => {
@@ -356,12 +426,42 @@ const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
                                             <p><b>여행 도시:</b> {travel.city}</p>
                                             <p><b>여행 기간:</b> {travel.startDate} ~ {travel.endDate}</p>
                                         </div>
-                                        <button
-                                            style={styles.viewProfileButton}
-                                            onClick={() => handleViewTravelRequest(travel.id)}
-                                        >
-                                            🔵 여행 상세 보기
-                                        </button>
+
+                                        <div style={styles.buttonGroup}>
+                                            {travel.status?.trim().toUpperCase() === "COMPLETED" ? (
+                                                reviewedTravels[travel.id] ? (
+                                                    <div style={styles.buttonGroup}>
+                                                        <button
+                                                            style={styles.editButton}
+                                                            onClick={() => handleEditReview(travel.id)}
+                                                        >
+                                                            ✏️ 리뷰 수정
+                                                        </button>
+                                                        <button
+                                                            style={styles.deleteButton}
+                                                            onClick={() => handleDeleteReview(travel.id)}
+                                                        >
+                                                            ❌ 리뷰 삭제
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        style={styles.reviewButton}
+                                                        onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
+                                                    >
+                                                        ✍️ 리뷰 작성하기
+                                                    </button>
+                                                )
+                                            ) : null}
+
+                                            {/* 여행 상세보기 버튼은 항상 표시 */}
+                                            <button
+                                                style={styles.viewProfileButton}
+                                                onClick={() => handleViewTravelRequest(travel.id)}
+                                            >
+                                                🔵 여행 상세 보기
+                                            </button>
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -654,7 +754,35 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: "1rem",
         fontWeight: "bold",
         transition: "background 0.3s",
-    }
+    },
+
+    reviewButton: {
+        backgroundColor: "#28a745",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    deleteButton: {
+        backgroundColor: "#DC2626",
+        color: "#FFFFFF", // ⚪️ 글씨는 흰색
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    editButton: {
+        backgroundColor: "#F59E0B", // 🟠 주황색 버튼
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
 };
 
 export default MyPage;

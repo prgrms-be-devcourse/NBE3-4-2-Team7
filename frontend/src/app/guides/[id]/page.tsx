@@ -3,13 +3,13 @@
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import Link from "next/link";
-import {getGuideDetail, GuideDto, verifyMyGuide} from "../services/guideService";
+import { getGuideProfile, GuideProfileDto, verifyMyGuide } from "../services/guideService";
 import {getMyTravels, TravelDto} from "../../travel/services/travelService";
 import axios from "axios";
 
 const GuideDetailPage: React.FC = () => {
     const {id} = useParams();
-    const [guide, setGuide] = useState<GuideDto | null>(null);
+    const [guide, setGuide] = useState<GuideProfileDto | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [travels, setTravels] = useState<TravelDto[]>([]);
@@ -20,7 +20,7 @@ const GuideDetailPage: React.FC = () => {
     useEffect(() => {
         setLoading(true);
         // 가이드 상세 정보 가져오기
-        getGuideDetail(Number(id))
+        getGuideProfile(Number(id))
             .then((response) => setGuide(response.data))
             .catch(() => setError("가이드 정보를 불러오는데 실패했습니다."))
             .finally(() => setLoading(false));
@@ -87,7 +87,32 @@ const GuideDetailPage: React.FC = () => {
                                 <h3 style={styles.infoLabel}>사용 언어</h3>
                                 <p style={styles.infoValue}>{guide.languages || "정보 없음"}</p>
                             </div>
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>리뷰 개수</h3>
+                                <p style={styles.infoValue}>{guide.reviewCount}개</p>
+                            </div>
+
+                            <div style={styles.guideInfoItem}>
+                                <h3 style={styles.infoLabel}>평균 평점</h3>
+                                <p style={styles.infoValue}>{guide.averageRating.toFixed(1)} ⭐</p>
+                            </div>
                         </div>
+
+                        {guide.reviews.length > 0 ? (
+                            <div style={styles.reviewContainer}>
+                                <h3 style={styles.infoLabel}>리뷰 목록</h3>
+                                <ul style={styles.reviewList}>
+                                    {guide.reviews.map((review) => (
+                                        <li key={review.id} style={styles.reviewItem}>
+                                            <p style={styles.reviewText}>{review.comment}</p>
+                                            <p style={styles.reviewScore}>평점: {review.reviewScore} ⭐</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : (
+                            <p>아직 등록된 리뷰가 없습니다.</p>
+                        )}
 
                         {/* 여행 요청 선택 */}
                         {travels.length > 0 ? (
@@ -242,6 +267,30 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: "1.5rem",
         color: "red",
         textAlign: "center",
+    },
+    reviewContainer: {
+        marginTop: "1.5rem",
+        padding: "1rem",
+        backgroundColor: "#F9FAFB",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    },
+    reviewList: {
+        listStyleType: "none",
+        padding: 0,
+    },
+    reviewItem: {
+        padding: "0.75rem",
+        borderBottom: "1px solid #E0E0E0",
+    },
+    reviewText: {
+        fontSize: "1rem",
+        color: "#424242",
+    },
+    reviewScore: {
+        fontSize: "1rem",
+        fontWeight: "bold",
+        color: "#1565C0",
     },
 };
 

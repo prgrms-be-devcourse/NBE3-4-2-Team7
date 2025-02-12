@@ -1,5 +1,8 @@
 package com.tripmarket.global.exception;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,11 +59,12 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler({CustomException.class})
-	public ResponseEntity<CustomErrorResponse> handleCustomException(CustomException ex) {
-		CustomErrorResponse errorResponse = new CustomErrorResponse(
-			ex.getHttpStatus().name(),
-			ex.getErrorCode().name(),
-			ex.getErrorMessage());
-		return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+	public ResponseEntity<Map<String, String>> handleCustomException(CustomException ex) {
+		Map<String, String> response = new HashMap<>();
+		response.put("status", ex.getHttpStatus().name()); // HTTP 상태명 (예: BAD_REQUEST)
+		response.put("code", ex.getErrorCode().name());   // 에러 코드 (예: TRAVEL_NOT_FOUND)
+		response.put("message", ex.getErrorMessage());    // 사용자에게 보여줄 메시지
+
+		return ResponseEntity.status(ex.getHttpStatus()).body(response);
 	}
 }

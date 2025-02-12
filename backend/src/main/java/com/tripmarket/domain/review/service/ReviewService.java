@@ -164,7 +164,7 @@ public class ReviewService {
 		reviewRepository.save(review);
 
 		// 리뷰 통계 업데이트
-		reviewStatsService.updateReviewStats(guideId, reviewScore, null);
+		reviewStatsService.deleteReviewStats(guideId, reviewScore);
 		log.debug("리뷰 삭제 완료 - reviewId: {}", review.getId());
 	}
 
