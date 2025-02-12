@@ -45,7 +45,7 @@ public class CookieUtil {
 	 */
 	public ResponseCookie createAccessTokenCookie(String token) {
 		ResponseCookie cookie = ResponseCookie.from("accessToken", token)
-			.httpOnly(true)    // JavaScript에서 접근 불가
+			.httpOnly(false)    // JavaScript에서 접근 불가
 			.secure(false)      // HTTPS에서만 전송, localhost에서는 false로 설정해야 함
 			.sameSite("Lax")   // CSRF 방지
 			.path("/")         // 모든 경로에서 접근 가능
@@ -63,7 +63,7 @@ public class CookieUtil {
 	 */
 	public ResponseCookie createLogoutCookie() {
 		return ResponseCookie.from("accessToken", "")
-			.httpOnly(true)
+			.httpOnly(false)
 			.secure(false)
 			.sameSite("Lax")
 			.path("/")
