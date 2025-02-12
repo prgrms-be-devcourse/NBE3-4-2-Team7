@@ -19,6 +19,7 @@ import {
 } from "../travelOffers/services/travelOfferService";
 import {getGuideProfileByUser, GuideProfileDto} from "@/app/guides/services/guideService";
 import {convertFromGuideDto} from "@/app/utils/converters";
+import axios from "@/app/utils/axios";
 
 const MyPage: React.FC = () => {
     const [userInfo, setUserInfo] = useState<MemberResponseDTO >();
@@ -31,6 +32,7 @@ const MyPage: React.FC = () => {
     const [error, setError] = useState<string>("");
     const [guideProfile, setGuideProfile] = useState<GuideProfileDto | null>(null);
     const router = useRouter();
+    const [reviewedTravels, setReviewedTravels] = useState<{ [key: number]: { reviewId: number, comment: string, reviewScore: number } }>({});
 
     useEffect(() => {
         setLoading(true);
@@ -41,19 +43,19 @@ const MyPage: React.FC = () => {
                     getGuideRequestsByRequester(),
                     getMyTravels(),
                     getTravelOffersForUser(),
-                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({data: []}),
-                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({data: []}),
-                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({data: null}), // ✅ 변경
+                    userInfoResponse.hasGuideProfile ? getGuideRequestsByGuide() : Promise.resolve({ data: [] }),
+                    userInfoResponse.hasGuideProfile ? getTravelOffersByGuide() : Promise.resolve({ data: [] }),
+                    userInfoResponse.hasGuideProfile ? getGuideProfileByUser() : Promise.resolve({ data: null }),
                 ]);
             })
-            .then(([
-                       guideRequestsResponse,
-                       myTravelsResponse,
-                       travelOffersForUserResponse,
-                       guideRequestsByGuideResponse,
-                       travelOffersResponse,
-                       { data: guideProfileData } // 구조 분해 할당 적용
-                   ]) => {
+            .then(async ([
+                             guideRequestsResponse,
+                             myTravelsResponse,
+                             travelOffersForUserResponse,
+                             guideRequestsByGuideResponse,
+                             travelOffersResponse,
+                             { data: guideProfileData }
+                         ]) => {
                 setGuideRequests(guideRequestsResponse.data);
                 setMyTravels(myTravelsResponse.data);
                 setTravelOffersForUser(travelOffersForUserResponse.data);
@@ -63,12 +65,62 @@ const MyPage: React.FC = () => {
                 if (guideProfileData) {
                     setGuideProfile(convertFromGuideDto(guideProfileData ?? {}));
                 }
+
+                // 🚀 여행 목록을 가져온 후, 각 여행의 리뷰 조회
+                const reviewResponses = await Promise.all(
+                    myTravelsResponse.data.map(async (travel: TravelDto) => {
+                        try {
+                            const reviewResponse = await axios.get(`/reviews/travel/${travel.id}`);
+                            if (reviewResponse.data.length > 0) {
+                                return {
+                                    travelId: travel.id,
+                                    reviewId: reviewResponse.data[0].id,
+                                    comment: reviewResponse.data[0].comment,
+                                    reviewScore: reviewResponse.data[0].reviewScore
+                                };
+                            }
+                        } catch (err) {
+                            return null; // 리뷰가 없는 경우 무시
+                        }
+                    })
+                );
+
+                // ✅ 유효한 리뷰만 상태에 저장
+                const validReviews = reviewResponses.filter((r) => r !== null);
+                setReviewedTravels(validReviews.reduce((acc, curr) => {
+                    if (curr) acc[curr.travelId] = curr;
+                    return acc;
+                }, {} as { [key: number]: { reviewId: number, comment: string, reviewScore: number } }));
+
             })
             .catch(() => {
                 setError("데이터를 불러오는 데 실패했습니다.");
             })
             .finally(() => setLoading(false));
     }, []);
+
+    const handleEditReview = (travelId: number) => {
+        const reviewId = reviewedTravels[travelId].reviewId;
+        router.push(`/reviews/edit?travelId=${travelId}&reviewId=${reviewId}`);
+    };
+
+    const handleDeleteReview = async (travelId: number) => {
+        if (!reviewedTravels[travelId]) return;
+
+        try {
+            await axios.patch(`/reviews/${reviewedTravels[travelId].reviewId}`);
+            alert("리뷰가 삭제되었습니다.");
+
+            // 🔥 삭제 후 상태 업데이트 (리뷰를 목록에서 제거)
+            setReviewedTravels(prev => {
+                const updated = { ...prev };
+                delete updated[travelId]; // 삭제된 리뷰 제거
+                return updated;
+            });
+        } catch (error) {
+            alert("리뷰 삭제에 실패했습니다.");
+        }
+    };
 
     // 가이드 생성 페이지로 이동
     const handleGuideCreate = () => {
@@ -149,38 +201,38 @@ const MyPage: React.FC = () => {
                 <div style={styles.sectionBox}>
                     <h2 style={styles.sectionTitle}>👤 내 가이드 정보</h2>
                     {userInfo.hasGuideProfile ? (
-                        <div className="mt-6 space-y-4 animate-fade-in">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
-                                    <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                            <div className="mt-6 space-y-4 animate-fade-in">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">활동 지역</h3>
+                                        <p className="text-gray-800">{guideProfile.activityRegion}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
+                                        <p className="text-gray-800">{guideProfile.languages}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
+                                        <p className="text-gray-800">{guideProfile.experienceYears}년</p>
+                                    </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">사용 가능 언어</h3>
-                                    <p className="text-gray-800">{guideProfile.languages}</p>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
+                                    <p className="text-gray-800">{guideProfile.introduction}</p>
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-500 mb-1">경력</h3>
-                                    <p className="text-gray-800">{guideProfile.experienceYears}년</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-500 mb-1">소개</h3>
-                                <p className="text-gray-800">{guideProfile.introduction}</p>
-                            </div>
 
-                            {/* 프로필 수정 버튼 추가 */}
-                            <div className="flex justify-end mt-4">
-                                <button
-                                    onClick={() => router.push('/mypage/guide/edit')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                                {/* 프로필 수정 버튼 추가 */}
+                                <div className="flex justify-end mt-4">
+                                    <button
+                                        onClick={() => router.push('/mypage/guide/edit')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg
                                          hover:bg-blue-700 transition-colors duration-200
                                          flex items-center space-x-2 text-sm font-medium"
-                                >
-                                    <span>프로필 수정</span>
-                                </button>
+                                    >
+                                        <span>프로필 수정</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
                         ) :
                         (
                             <div style={styles.guideSectionBox}>
@@ -242,20 +294,41 @@ const MyPage: React.FC = () => {
                                             <p><b>여행 기간:</b> {travel.startDate} ~ {travel.endDate}</p>
                                         </div>
 
-                                        {/* 🔵 리뷰 작성 버튼 추가 */}
-                                        <button
-                                            style={styles.reviewButton}
-                                            onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
-                                        >
-                                            ✍️ 리뷰 작성하기
-                                        </button>
+                                        <div style={styles.buttonGroup}>
+                                            {/* ✅ 리뷰 버튼 (작성 or 삭제) */}
+                                            {reviewedTravels[travel.id] ? (
+                                                <div style={styles.buttonGroup}>
+                                                    <button
+                                                        style={styles.editButton}
+                                                        onClick={() => handleEditReview(travel.id)}
+                                                    >
+                                                        ✏️ 리뷰 수정
+                                                    </button>
 
-                                        <button
-                                            style={styles.viewProfileButton}
-                                            onClick={() => handleViewTravelRequest(travel.id)}
-                                        >
-                                            🔵 여행 상세 보기
-                                        </button>
+                                                    <button
+                                                        style={styles.deleteButton}
+                                                        onClick={() => handleDeleteReview(travel.id)}
+                                                    >
+                                                        ❌ 리뷰 삭제
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    style={styles.reviewButton}
+                                                    onClick={() => router.push(`/reviews/create?travelId=${travel.id}`)}
+                                                >
+                                                    ✍️ 리뷰 작성하기
+                                                </button>
+                                            )}
+
+                                            {/* ✅ 여행 상세보기 버튼 유지 */}
+                                            <button
+                                                style={styles.viewProfileButton}
+                                                onClick={() => handleViewTravelRequest(travel.id)}
+                                            >
+                                                🔵 여행 상세 보기
+                                            </button>
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -516,6 +589,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     reviewButton: {
         backgroundColor: "#28a745",
+        color: "#FFFFFF",
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    deleteButton: {
+        backgroundColor: "#DC2626",
+        color: "#FFFFFF", // ⚪️ 글씨는 흰색
+        padding: "0.5rem 1rem",
+        borderRadius: "4px",
+        fontSize: "0.9rem",
+        border: "none",
+        cursor: "pointer",
+    },
+    editButton: {
+        backgroundColor: "#F59E0B", // 🟠 주황색 버튼
         color: "#FFFFFF",
         padding: "0.5rem 1rem",
         borderRadius: "4px",
