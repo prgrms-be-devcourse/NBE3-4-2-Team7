@@ -24,13 +24,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.member.entity.Role;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.domain.travel.dto.request.TravelCreateRequest;
 import com.tripmarket.domain.travel.dto.request.TravelUpdateRequest;
 import com.tripmarket.domain.travel.entity.Travel;
 import com.tripmarket.domain.travel.entity.TravelCategory;
+import com.tripmarket.domain.travel.enums.TravelStatus;
 import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.domain.travel.service.TravelCategoryService;
 import com.tripmarket.domain.travel.service.TravelService;
@@ -67,11 +67,11 @@ class TravelServiceTest {
 			"파리 야경을 중심으로 여행하고 싶어요."
 		);
 
-		Member mockMember = new Member("asd@naver.com", "testPassword", "John Doe", Role.USER);
+		Member mockMember = new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null);
 		TravelCategory mockCategory = new TravelCategory("힐링");
 		Travel mockTravel = request.toEntity(mockMember, mockCategory);
 
-		when(memberService.getMember(userId)).thenReturn(mockMember);
+		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(travelCategoryService.getTravelCategory(categoryId)).thenReturn(mockCategory);
 		when(travelRepository.save(any(Travel.class))).thenReturn(mockTravel);
 
@@ -82,9 +82,9 @@ class TravelServiceTest {
 		assertNotNull(result);
 		assertEquals("Paris", result.getCity());
 		assertEquals(2, result.getParticipants());
-		assertEquals(Travel.Status.WAITING_FOR_MATCHING, result.getStatus());
+		assertEquals(TravelStatus.WAITING_FOR_MATCHING, result.status());
 
-		verify(memberService, times(1)).getMember(userId);
+		verify(memberService, times(1)).getMemberById(userId);
 		verify(travelCategoryService, times(1)).getTravelCategory(categoryId);
 		verify(travelRepository, times(1)).save(any(Travel.class));
 	}
@@ -106,7 +106,7 @@ class TravelServiceTest {
 			.content("파리 야경을 중심으로 여행하고 싶어요.")
 			.build();
 
-		when(memberService.getMember(userId)).thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+		when(memberService.getMemberById(userId)).thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 		// When & Then
 		CustomException exception = assertThrows(CustomException.class, () -> {
@@ -135,9 +135,9 @@ class TravelServiceTest {
 			.content("파리 야경을 중심으로 여행하고 싶어요.")
 			.build();
 
-		Member mockMember = new Member("asd@naver.com", "testPassword", "John Doe", Role.USER);
+		Member mockMember = new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null);
 
-		when(memberService.getMember(userId)).thenReturn(mockMember);
+		when(memberService.getMemberById(userId)).thenReturn(mockMember);
 		when(travelCategoryService.getTravelCategory(invalidCategoryId))
 			.thenThrow(new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
@@ -164,7 +164,7 @@ class TravelServiceTest {
 
 		when(mockMember.getId()).thenReturn(userId);
 		when(mockTravel.getUser()).thenReturn(mockMember);
-		when(mockTravel.getStatus()).thenReturn(Travel.Status.WAITING_FOR_MATCHING);
+		when(mockTravel.getStatus()).thenReturn(TravelStatus.WAITING_FOR_MATCHING);
 		when(travelCategoryService.getTravelCategory(categoryId)).thenReturn(mockCategory);
 		when(travelRepository.findById(travelId)).thenReturn(Optional.of(mockTravel));
 		when(mockTravel.getCategory()).thenReturn(mockCategory);
@@ -232,7 +232,7 @@ class TravelServiceTest {
 
 		when(mockMember.getId()).thenReturn(userId);
 		when(mockTravel.getUser()).thenReturn(mockMember);
-		when(mockTravel.getStatus()).thenReturn(Travel.Status.IN_PROGRESS);
+		when(mockTravel.getStatus()).thenReturn(TravelStatus.IN_PROGRESS);
 		when(travelRepository.findById(travelId)).thenReturn(Optional.of(mockTravel));
 
 		TravelUpdateRequest request = TravelUpdateRequest.builder()
@@ -274,7 +274,7 @@ class TravelServiceTest {
 
 		when(mockMember.getId()).thenReturn(userId);
 		when(mockTravel.getUser()).thenReturn(mockMember);
-		when(mockTravel.getStatus()).thenReturn(Travel.Status.WAITING_FOR_MATCHING);
+		when(mockTravel.getStatus()).thenReturn(TravelStatus.WAITING_FOR_MATCHING);
 		when(travelRepository.findById(travelId)).thenReturn(Optional.of(mockTravel));
 		when(travelCategoryService.getTravelCategory(invalidCategoryId))
 			.thenThrow(new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
@@ -294,7 +294,7 @@ class TravelServiceTest {
 		Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
 		List<Travel> mockTravelList = Arrays.asList(
 			Travel.builder()
-				.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+				.user(new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("힐링"))
 				.city("Paris")
 				.places("Eiffel Tower, Louvre Museum")
@@ -304,7 +304,7 @@ class TravelServiceTest {
 				.content("파리 야경 여행")
 				.build(),
 			Travel.builder()
-				.user(new Member("test2@example.com", "password", "Jane Doe", Role.USER))
+				.user(new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("자연"))
 				.places("Gyeongbokgung, Namsan Tower")
 				.participants(2)
@@ -335,7 +335,7 @@ class TravelServiceTest {
 		Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
 		List<Travel> mockTravelList = Collections.singletonList(
 			Travel.builder()
-				.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+				.user(new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null))
 				.category(new TravelCategory("힐링"))
 				.city("Paris")
 				.places("Eiffel Tower, Louvre Museum")
@@ -385,7 +385,7 @@ class TravelServiceTest {
 		LocalDateTime now = LocalDateTime.now();
 
 		Travel mockTravel = Travel.builder()
-			.user(new Member("test@example.com", "password", "John Doe", Role.USER))
+			.user(new Member("힐링", "asd@naver.com", "testPassword", "John Doe", null))
 			.category(new TravelCategory("힐링"))
 			.city("Paris")
 			.places("Eiffel Tower, Louvre Museum")
@@ -393,7 +393,7 @@ class TravelServiceTest {
 			.startDate(LocalDate.of(2025, 6, 1))
 			.endDate(LocalDate.of(2025, 6, 7))
 			.content("파리 여행을 계획 중입니다.")
-			.status(Travel.Status.WAITING_FOR_MATCHING)
+			.status(TravelStatus.WAITING_FOR_MATCHING)
 			.build();
 
 		ReflectionTestUtils.setField(mockTravel, "createdAt", now);

@@ -1,3 +1,8 @@
+logging:
+  level:
+    org.springframework.messaging: DEBUG
+    org.springframework.web: DEBUG
+    #com.tripmarket: DEBUG
 server:
   port: 8080
 
@@ -19,20 +24,38 @@ spring:
               - profile_image
               - account_email
             client-name: Kakao
+          google:
+            client-id: ${google.client.id}
+            client-secret: ${google.client.secret}
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            scope:
+              - email
+              - profile
+          github:
+            client-id: ${github.client.id}
+            client-secret: ${github.client.secret}
+            redirect-uri: "http://localhost:8080/login/oauth2/code/github"
+            scope:
+              - read:user
+              - user:email
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+      authorized-redirect-uri: "http://localhost:3000/oauth/callback" # 프론트엔드 리다이렉트 URI
   h2:
     console:
       enabled: true
       path: /h2-console
 
   datasource:
-    # url: jdbc:h2:mem:tripmarket;MODE=MYSQL
-    url: jdbc:h2:./backend/db/tripmarket;MODE=MYSQL
+    url: jdbc:h2:file:./backend/db/tripmarket;MODE=MYSQL
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -51,11 +74,39 @@ spring:
         use_sql_comments: true
     defer-datasource-initialization: true
 
+  #    sql:
+  #      init:
+  #        mode: never
+
   data:
+    mongodb:
+      uri: mongodb://root:1234@localhost:27017/chatdb?authSource=admin
     redis:
       host: localhost
       port: 6379
-
+#  rabbitmq:
+#    dynamic: true
+#    host: "localhost"
+#    port: 5672
+#    virtual-host: "/"
+#    username: "guest"
+#    password: "guest"
+#    chat:
+#      queue:
+#        name: "chat.queue"
+#      exchange:
+#        name: "chat.exchange"
+#      routing:
+#        key: "chat.room.#"
+#    relay:
+#      port: 61613
+#      system-login: guest
+#      system-passcode: guest
+#      client-login: guest
+#      client-passcode: guest
+#    listener:
+#      simple:
+#        auto-startup: true
 springdoc:
   api-docs:
     path: /api-docs

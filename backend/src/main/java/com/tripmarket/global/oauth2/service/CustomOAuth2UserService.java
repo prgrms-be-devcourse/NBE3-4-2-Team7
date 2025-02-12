@@ -16,12 +16,18 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.oauth2.userinfo.GithubOAuth2UserInfo;
+import com.tripmarket.global.oauth2.userinfo.GoogleOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.KakaoOAuth2UserInfo;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * OAuth2 인증 후 사용자 정보를 처리하는 서비스
+ * 카카오 등 OAuth2 제공자로부터 받은 정보로 회원가입/로그인 처리
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,7 +36,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 	private final MemberRepository memberRepository;
 
 	/**
-	 * OAuth2 인증 후 받아온 유저 정보를 처리
+	 * OAuth2 인증 후 받아온 사용자 정보를 처리
+	 * 1. 기본 OAuth2UserService로 사용자 정보 조회
+	 * 2. 우리 서비스의 회원으로 가입 또는 정보 업데이트
+	 * 3. CustomOAuth2User 객체 생성하여 반환
 	 */
 	@Override
 	@Transactional
@@ -40,37 +49,51 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
 		// 현재 진행중인 서비스를 구분하기 위해 문자열로 받음
 		String registrationId = userRequest.getClientRegistration().getRegistrationId();
+		log.debug("Provider: {}", registrationId);
+		log.debug("OAuth2User attributes: {}", oAuth2User.getAttributes());
 
 		// OAuth2 로그인 시 키가 되는 필드값 (PK)
 		String usernameAttributeName = userRequest.getClientRegistration()
 			.getProviderDetails()
 			.getUserInfoEndpoint()
 			.getUserNameAttributeName();
+		log.debug("Username attribute name: {}", usernameAttributeName);
 
 		// OAuth2UserInfo 객체 생성
-		OAuth2UserInfo userInfo = new KakaoOAuth2UserInfo(oAuth2User.getAttributes());
+		OAuth2UserInfo userInfo = switch (registrationId.toLowerCase()) {
+			case "kakao" -> new KakaoOAuth2UserInfo(oAuth2User.getAttributes());
+			case "google" -> new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
+			case "github" -> new GithubOAuth2UserInfo(oAuth2User.getAttributes());
+			default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
+		};
+
+		log.debug("Extracted user info - id:{}, email: {}, name: {}",
+			userInfo.getId(), userInfo.getEmail(), userInfo.getName());
 
 		// 유저 정보 저장 또는 업데이트
 		Member member = saveOrUpdate(userInfo, registrationId);
+		log.debug("Saved/Updated member - id: {}, email: {}", member.getId(), member.getEmail());
 
 		return new CustomOAuth2User(
 			Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())),
 			oAuth2User.getAttributes(),
 			usernameAttributeName,
-			member.getEmail(),
-			member.getName(),
-			member.getImageUrl()
+			member.getId(),
+			member.getEmail()
 		);
 	}
 
 	/**
-	 * OAuth2 유저 정보로 회원가입 또는 정보 업데이트
-	 * @param userInfo OAuth2 제공자로부터 받은 유저 정보
-	 * @param registrationId OAuth2 서비스 구분 ID (kakao, google 등)
+	 * OAuth2 사용자 정보로 회원가입 또는 정보 업데이트
+	 *
+	 * @param userInfo OAuth2 제공자로부터 받은 사용자 정보
+	 * @param registrationId OAuth2 서비스 구분자 (kakao, google 등)
+	 * @return 저장 또는 업데이트된 회원 엔티티
 	 */
 	private Member saveOrUpdate(OAuth2UserInfo userInfo, String registrationId) {
 		Provider provider = getProvider(registrationId);
-		Optional<Member> optionalMember = memberRepository.findByEmail(userInfo.getEmail());
+		Optional<Member> optionalMember = memberRepository
+			.findByProviderAndProviderId(provider, userInfo.getId());
 
 		if (optionalMember.isPresent()) {
 			// 기존 회원이면 정보 업데이트
@@ -79,7 +102,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 				userInfo.getName(),
 				userInfo.getImageUrl()
 			);
-			return memberRepository.save(member);
+			return member;
 		} else {
 			// 새 회원이면 회원가입
 			Member member = Member.builder()
@@ -102,8 +125,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 		try {
 			return Provider.valueOf(registrationId.toUpperCase());
 		} catch (IllegalArgumentException e) {
-			log.error("Unsupported OAuth2 provider: {}", registrationId);
-			throw new OAuth2AuthenticationException("Unsupported OAuth2 provider");
+			log.debug("Unsupported OAuth2 provider: {}", registrationId);
+			throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
 		}
 	}
 }

@@ -3,7 +3,8 @@ package com.tripmarket.global.oauth2.userinfo;
 import java.util.Map;
 
 /**
- * 소셜 로그인 제공자별 유저 정보를 매핑하기 위한 추상 클래스
+ * OAuth2 제공자별 사용자 정보를 표준화하기 위한 추상 클래스
+ * 각 OAuth2 제공자(카카오, 구글 등)는 이 클래스를 구현하여 사용
  */
 public abstract class OAuth2UserInfo {
 	protected Map<String, Object> attributes;
