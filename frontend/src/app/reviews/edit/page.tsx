@@ -4,27 +4,39 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 
-const CreateReviewPage: React.FC = () => {
+const ReviewEditPage: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [travelId, setTravelId] = useState<number | null>(null);
-
-    useEffect(() => {
-        const id = searchParams.get("travelId");
-        if (id) {
-            setTravelId(Number(id));
-        }
-    }, [searchParams]);
+    const travelId = searchParams.get("travelId");
+    const reviewId = searchParams.get("reviewId");
 
     const [review, setReview] = useState("");
-    const [reviewScore, setReviewScore] = useState<number | "">("");
+    const [reviewScore, setReviewScore] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchReview = async () => {
+            try {
+                const response = await axios.get(`/reviews/travel/${travelId}`); // ✅ travelId로 조회
+                if (response.data.length > 0) {
+                    setReview(response.data[0].comment);
+                    setReviewScore(response.data[0].reviewScore);
+                } else {
+                    alert("해당 여행에 대한 리뷰가 없습니다.");
+                }
+            } catch (error) {
+                alert("리뷰 정보를 불러오는 데 실패했습니다.");
+            }
+        };
+
+        if (travelId) fetchReview();
+    }, [travelId]);
 
     // 리뷰 내용 변경 핸들러
     const handleReviewChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setReview(event.target.value);
     };
 
-    // 평점 변경 핸들러
+    // 평점 변경 핸들러 (0.5 단위 조정)
     const handleReviewScoreChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseFloat(event.target.value);
 
@@ -36,38 +48,37 @@ const CreateReviewPage: React.FC = () => {
         setReviewScore(value);
     };
 
-    // 리뷰 제출 핸들러
-    const handleSubmit = async () => {
-        console.log("제출 데이터:", { travelId, review, reviewScore });
-
-        if (!travelId || review.trim() === "" || reviewScore === "") {
-            alert("여행 ID, 리뷰 내용, 평점을 입력해주세요.");
+    // 리뷰 수정 핸들러
+    const handleUpdateReview = async () => {
+        if (!reviewId || review.trim() === "" || reviewScore === null) {
+            alert("리뷰 내용과 평점을 입력해주세요.");
             return;
         }
 
         const requestData = {
-            travelId, // ✅ 여행 ID 추가
-            comment: review, // ✅ 백엔드 필드명 `comment`
-            reviewScore // ✅ 필드명 `reviewScore`
+            comment: review,
+            reviewScore
         };
 
+        console.log("📡 PATCH 요청 전송:", `/reviews/${reviewId}/update`, requestData);
+
         try {
-            await axios.post("/reviews", requestData);
-            alert("리뷰가 작성되었습니다.");
+            const response = await axios.patch(`/reviews/${reviewId}/update`, requestData);
+            console.log("✅ PATCH 응답:", response);
+            alert("리뷰가 수정되었습니다.");
             router.push("/mypage"); // 마이페이지로 이동
         } catch (error) {
-            console.error("리뷰 작성 에러:", error);
-            if (error.response && error.response.data) {
-                alert(error.response.data.errorMessage);
-            } else {
-                alert("리뷰 작성에 실패했습니다.");
+            console.error("❌ 리뷰 수정 에러:", error);
+            if (error.response) {
+                console.error("🔥 서버 응답 데이터:", error.response.data);
             }
+            alert("리뷰 수정에 실패했습니다.");
         }
     };
 
     return (
         <div style={styles.reviewFormContainer}>
-            <h2 style={styles.sectionTitle}>리뷰 작성</h2>
+            <h2 style={styles.sectionTitle}>✏️ 리뷰 수정</h2>
 
             {/* 평점 입력 */}
             <div style={styles.ratingContainer}>
@@ -86,21 +97,21 @@ const CreateReviewPage: React.FC = () => {
             {/* 리뷰 내용 입력 */}
             <textarea
                 style={styles.reviewInput}
-                placeholder="여행에 대한 리뷰를 작성해주세요."
+                placeholder="여행에 대한 리뷰를 수정해주세요."
                 value={review}
                 onChange={handleReviewChange}
             />
 
             {/* 버튼 그룹 */}
             <div style={styles.buttonGroup}>
-                <button style={styles.submitButton} onClick={handleSubmit}>작성 완료</button>
+                <button style={styles.submitButton} onClick={handleUpdateReview}>수정 완료</button>
                 <button style={styles.cancelButton} onClick={() => router.back()}>취소</button>
             </div>
         </div>
     );
 };
 
-// ✅ 스타일 추가
+// ✅ 리뷰 생성 페이지와 동일한 스타일 적용
 const styles = {
     reviewFormContainer: {
         maxWidth: "600px",
@@ -168,4 +179,4 @@ const styles = {
     }
 };
 
-export default CreateReviewPage;
+export default ReviewEditPage;
