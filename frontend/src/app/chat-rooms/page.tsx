@@ -11,7 +11,6 @@ interface ChatRoom {
   profileImage: string;
   lastMessage: string;
   lastMessageTime: string;
-  unreadMessageCnt: number;
 }
 
 const ChatRoomListPage: React.FC = () => {
@@ -110,11 +109,7 @@ const ChatRoomListPage: React.FC = () => {
                     : room.lastMessage}
                 </div>
                 <div className="text-gray-500 text-xs">{room.lastMessageTime}</div>
-                {room.unreadMessageCnt > 0 && (
-                  <div className="text-red-500 text-sm font-bold mt-1">
-                    미읽은 메시지 {room.unreadMessageCnt}개
-                  </div>
-                )}
+              
               </div>
               <button
                 onClick={(e) => {

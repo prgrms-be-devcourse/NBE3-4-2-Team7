@@ -17,6 +17,8 @@ export interface TravelOfferDto {
     guideName: string;
     isGuideDeleted: boolean;
     status: string;
+    guideEmail: string;    // 가이드 이메일 추가
+    userEmail: string;    // 사용자 이메일 추가
 }
 
 // 📌 가이드 요청 DTO
@@ -30,6 +32,8 @@ export interface GuideRequestDto {
     isGuideDeleted: boolean;
     memberName: string;
     status: string;
+    guideEmail: string;    // 가이드 이메일 추가
+    userEmail: string;    // 사용자 이메일 추가
 }
 
 // 📌 가이드 : 내가 사용자에게 보낸 여행 제안 요청 내역

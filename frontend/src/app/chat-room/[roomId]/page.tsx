@@ -220,7 +220,6 @@ const ChatRoomPage: React.FC = () => {
 
     <div className="text-xs text-gray-500 mt-1 flex justify-between">
       <span>{message.time}</span>
-      {!message.readStatus && <span className="text-red-500 ml-2">1</span>}
     </div>
   </div>
 </div>
