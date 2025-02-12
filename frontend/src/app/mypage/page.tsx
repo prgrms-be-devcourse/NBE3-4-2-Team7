@@ -2,6 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
+import axiosInstance from "../utils/axios"; 
 import {
     getGuideRequestsByRequester,
     getMyTravels,
@@ -70,6 +71,84 @@ const MyPage: React.FC = () => {
             })
             .finally(() => setLoading(false));
     }, []);
+
+   // 채팅방 시작 함수
+// 채팅방 시작 함수
+const startChat = async (guideEmail: string, userEmail: string) => {
+    try {
+        console.log("startChat 호출됨");
+        const accessToken = document.cookie
+            .split("; ")
+            .find((cookie) => cookie.startsWith("accessToken="))
+            ?.split("=")[1];
+
+        console.log("accessToken: ", accessToken);
+
+        if (!accessToken) {
+            console.error("Access token이 없습니다.");
+            return;
+        }
+
+        const response = await axiosInstance.get("/members/me", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        const currentUserEmail = response.data.email;
+
+        console.log("현재 사용자 이메일(currentUserEmail): ", currentUserEmail);
+        console.log("guideEmail: ", guideEmail);
+        console.log("userEmail: ", userEmail);
+
+        // 현재 사용자가 아니라면 그 값을 receiverEmail로 설정
+        let receiverEmail = null;
+
+        if (guideEmail !== currentUserEmail) {
+            receiverEmail = guideEmail;
+            console.log("guideEmail이 선택됨: ", receiverEmail);
+        } else if (userEmail && userEmail !== currentUserEmail) {  // userEmail이 존재하는지 체크
+            receiverEmail = userEmail;
+            console.log("userEmail이 선택됨: ", receiverEmail);
+        } else {
+            console.error("자기 자신과 채팅할 수 없습니다.");
+            return;
+        }
+
+        // receiverEmail이 올바르게 설정되었는지 확인
+        if (!receiverEmail) {
+            console.error("받는 사람(receiver)이 설정되지 않았습니다.");
+            return;
+        }
+
+        console.log("채팅방 생성 요청을 위한 receiverEmail: ", receiverEmail);
+
+        // 채팅방 생성 요청
+        const createRoomResponse = await axiosInstance.post('/chatting-room', {
+            receiver: receiverEmail,  // receiver는 guide 또는 member 이메일
+        });
+
+        const { roomId } = createRoomResponse.data;
+
+        console.log("채팅방 생성 완료, roomId: ", roomId);
+
+        router.push(`/chat-room/${roomId}`);
+
+    } catch (error) {
+        console.error("채팅방 생성 중 오류 발생:", error);
+        alert('채팅방 생성 중 문제가 발생했습니다.');
+    }
+};
+
+
+
+
+// 채팅 시작 버튼 처리
+const handleStartChat = (offerOrRequest: TravelOfferDto | GuideRequestDto) => {
+    const { guideEmail, userEmail } = offerOrRequest;
+    console.log("guideEmail: ", guideEmail, "userEmail: ", userEmail);
+    startChat(guideEmail, userEmail);
+};
+
+
 
     const handleCompleteTravelOffer = (requestId: number) => {
         axios.patch(`/travel-offers/${requestId}/complete`)
@@ -236,26 +315,31 @@ const MyPage: React.FC = () => {
                     <div style={styles.card}>
                         <h3 style={styles.cardTitle}>📑 사용자(나) {"->"} 가이더 요청 내역 조회</h3>
                         <div style={styles.innerCard}>
-                            {guideRequests.length === 0 ? (
-                                <p style={styles.noRequests}>요청한 가이드 내역이 없습니다.</p>
-                            ) : (
-                                guideRequests.map((request) => (
-                                    <div key={request.id} style={styles.requestBox}>
-                                        <div style={styles.requestDetails}>
-                                            <p><b>여행 도시:</b> {request.travelCity}</p>
-                                            <p><b>가이드 이름:</b> {request.guideName}</p>
-                                            <p><b>상태:</b> <span
-                                                style={getStatusStyle(request.status)}>{request.status}</span></p>
-                                        </div>
-                                        <button
-                                            style={styles.viewProfileButton}
-                                            onClick={() => handleViewProfile(request.guideId)}
-                                        >
-                                            🔵 가이드 프로필 보기
-                                        </button>
-                                    </div>
-                                ))
-                            )}
+                        {guideRequests.map((request) => (
+                        <div key={request.id} style={styles.requestBox}>
+                        <div style={styles.requestDetails}>
+                        <p><b>여행 도시:</b> {request.travelCity}</p>
+                        <p><b>가이드 이름:</b> {request.guideName}</p>
+                        <p><b>상태:</b> <span
+                        style={getStatusStyle(request.status)}>{request.status}</span></p>
+                    </div>
+                    {request.status === "ACCEPTED" && (
+                  <button
+                      style={styles.viewProfileButton}
+                      onClick={() => handleStartChat(request)}  // 상태가 "ACCEPTED"일 때만 버튼 표시
+                      >
+                채팅 시작
+            </button>
+        )}
+        <button
+            style={styles.viewProfileButton}
+            onClick={() => handleViewProfile(request.guideId)}
+        >
+            🔵 가이드 프로필 보기
+        </button>
+    </div>
+))}
+
                         </div>
                     </div>
 
@@ -353,6 +437,14 @@ const MyPage: React.FC = () => {
                                                 <p><b>상태:</b> <span
                                                     style={getStatusStyle(request.status)}>{request.status}</span></p>
                                             </div>
+                                            {request.status === "ACCEPTED" && (
+                                    <button
+                                        style={styles.viewProfileButton}
+                                        onClick={() => handleStartChat(request)}
+                                    >
+                                        채팅 시작
+                                    </button>
+                                )}
                                             <div>
                                                 <button
                                                     style={styles.viewProfileButton}
