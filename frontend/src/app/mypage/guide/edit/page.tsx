@@ -4,7 +4,6 @@ import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import { IoChevronBack } from "react-icons/io5";
 import axios from "axios";
-import {useAuth} from "@/app/contexts/AuthContext";
 import {getGuideDetailByUser} from "@/app/guides/services/guideService";
 import {convertFromGuideDto, convertToGuideDto} from "@/app/utils/converters";
 
@@ -12,7 +11,6 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:808
 
 const GuideEditPage = () => {
     const router = useRouter();
-    const {user} = useAuth();
     const [guideData, setGuideData] = useState({});
 
     useEffect(() => {
