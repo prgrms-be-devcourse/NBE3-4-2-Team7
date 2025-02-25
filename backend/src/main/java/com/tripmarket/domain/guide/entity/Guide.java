@@ -1,6 +1,6 @@
 package com.tripmarket.domain.guide.entity;
 
-import java.util.Objects;
+
 
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
@@ -43,7 +43,6 @@ public class Guide extends BaseEntity {
 
 	@Column(nullable = false, length = 100)
 	@Size(min = 1, max = 100)
-	// TODO: 국가 단위면 ISO 국가코드 사용하면 되고, 도시는 어떻게 검증?
 	private String activityRegion;
 
 	@Column(nullable = false, length = 300)
@@ -62,9 +61,6 @@ public class Guide extends BaseEntity {
 	@Builder.Default
 	private boolean isDeleted = false;
 
-	// 리뷰 통계 테이블
-	// @OneToOne
-	// GuideReviewStats guideReviewStats;
 
 	public void setMember(Member member) {
 		this.member = member;
@@ -75,24 +71,6 @@ public class Guide extends BaseEntity {
 		this.introduction = guideDto.introduction();
 		this.languages = guideDto.languages();
 		this.experienceYears = guideDto.experienceYears();
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		Guide guide = (Guide)o;
-		return isDeleted == guide.isDeleted
-			&& Objects.equals(id, guide.getId())
-			&& Objects.equals(name, guide.name)
-			&& Objects.equals(activityRegion, guide.activityRegion)
-			&& Objects.equals(introduction, guide.introduction)
-			&& Objects.equals(languages, guide.languages)
-			&& Objects.equals(experienceYears, guide.experienceYears);
 	}
 
 	public void setDeleted(boolean isDeleted) {
