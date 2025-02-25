@@ -89,7 +89,7 @@ public class CookieUtil {
 	 *
 	 * @return 만료된 쿠키 객체
 	 */
-	public ResponseCookie createLogoutCookie() {
+	public ResponseCookie createLogoutAccessCookie() {
 		return ResponseCookie.from("accessToken", "")
 				.httpOnly(false)
 				.secure(false)
@@ -97,5 +97,15 @@ public class CookieUtil {
 				.path("/")
 				.maxAge(0) // 즉시 만료
 				.build();
+	}
+
+	public ResponseCookie createLogoutRefreshCookie() {
+		return ResponseCookie.from("refreshToken", "")
+			.httpOnly(false)
+			.secure(false)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(0) // 즉시 만료
+			.build();
 	}
 }

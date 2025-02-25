@@ -82,7 +82,7 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
 	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-		String accessToken = cookieUtil.extractRefreshTokenFromCookie(request);
+		String accessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
 		if (accessToken == null) {
 			log.error("토큰이 요청에 없습니다(auth/logout)");
@@ -92,8 +92,11 @@ public class AuthController {
 		try {
 			authService.logout(accessToken);
 			// 쿠키 삭제
-			ResponseCookie emptyCookie = cookieUtil.createLogoutCookie();
-			response.addHeader(HttpHeaders.SET_COOKIE, emptyCookie.toString());
+			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
+			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
+
+			response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
 
 			log.debug("로그아웃 성공");
 			return ResponseEntity.ok("로그아웃이 성공적으로 완료되었습니다.");

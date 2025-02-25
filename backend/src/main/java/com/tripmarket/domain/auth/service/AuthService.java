@@ -41,17 +41,26 @@ public class AuthService {
 	}
 
 	public void logout(String accessToken) {
-		// 1. 블랙리스트 체크
-		validateAccessToken(accessToken);
+		try {
+			// 1. 토큰에서 사용자 정보 추출 (만료된 토큰도 처리 가능)
+			Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
 
-		// 2. 토큰에서 사용자 정보 추출
-		Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
+			// 2. Access Token 블랙리스트 추가
+			jwtTokenProvider.addToBlacklist(accessToken);
 
-		// 3. Access Token 블랙리스트 추가
-		jwtTokenProvider.addToBlacklist(accessToken);
+			// 3. Refresh Token 삭제
+			String refreshTokenKey = "RT:" + userId;
+			Boolean deleted = redisTemplate.delete(refreshTokenKey);
 
-		// 4. Refresh Token 삭제
-		redisTemplate.delete("RT:" + userId);
+			if (Boolean.FALSE.equals(deleted)) {
+				log.warn("Refresh Token not found for userId: {}", userId);
+			}
+
+			log.debug("로그아웃 처리 완료 - userId: {}", userId);
+		} catch (Exception e) {
+			log.error("로그아웃 처리 중 오류 발생", e);
+			throw new JwtAuthenticationException("로그아웃 처리 중 오류가 발생했습니다.");
+		}
 	}
 
 	// AccessToken 블랙리스트 체크
