@@ -48,15 +48,15 @@ public class AuthController {
 	@PostMapping("/refresh")
 	@Operation(summary = "AccessToken 재발급")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
-		String accessToken = cookieUtil.extractTokenFromCookie(request);
+		String refreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 
-		if (accessToken == null) {
+		if (refreshToken == null) {
 			log.error("토큰이 요청에 없습니다(auth/refresh)");
 			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
 		}
 
 		try {
-			String newAccessToken = authService.refreshAccessToken(accessToken);
+			String newAccessToken = authService.refreshAccessToken(refreshToken);
 
 			// 새로운 Access Token을 쿠키에 저장
 			ResponseCookie cookie = cookieUtil.createAccessTokenCookie(newAccessToken);
@@ -82,7 +82,7 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
 	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-		String accessToken = cookieUtil.extractTokenFromCookie(request);
+		String accessToken = cookieUtil.extractRefreshTokenFromCookie(request);
 
 		if (accessToken == null) {
 			log.error("토큰이 요청에 없습니다(auth/logout)");

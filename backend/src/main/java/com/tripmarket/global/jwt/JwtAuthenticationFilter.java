@@ -36,11 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	 */
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain) throws ServletException, IOException {
+			FilterChain filterChain) throws ServletException, IOException {
 
 		try {
 			// 쿠키에서 JWT 토큰 추출
-			String accessToken = cookieUtil.extractTokenFromCookie(request);
+			String accessToken = cookieUtil.extractAccessTokenFromCookie(request);
 			log.debug("JwtAuthenticationFilter - 쿠키에서 accessToken 추출: {}", accessToken);
 
 			if (accessToken != null) {

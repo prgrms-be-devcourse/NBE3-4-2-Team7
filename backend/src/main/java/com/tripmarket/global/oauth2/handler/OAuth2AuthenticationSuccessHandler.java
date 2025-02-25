@@ -48,33 +48,35 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 	 */
 	@Override
 	public void onAuthenticationSuccess(
-		HttpServletRequest request,
-		HttpServletResponse response,
-		Authentication authentication) throws IOException {
+			HttpServletRequest request,
+			HttpServletResponse response,
+			Authentication authentication) throws IOException {
 
-		CustomOAuth2User oAuth2User = (CustomOAuth2User)authentication.getPrincipal();
+		CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 		Long userId = oAuth2User.getId();
 
 		log.debug("OAuth2 사용자 정보 - userId: {}, email: {}", userId, oAuth2User.getEmail());
 
 		// Access Token 생성 및 쿠키에 설정 (30분)
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);
-		ResponseCookie cookie = cookieUtil.createAccessTokenCookie(accessToken);
+		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(accessToken);
 
-		// Refresh Token 생성 및 Redis 저장 (7일)
+		// Refresh Token 생성 및 Redis 저장, 쿠키에 설정 (7일)
 		String refreshToken = jwtTokenProvider.createRefreshToken();
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(refreshToken);
 		redisTemplate.opsForValue()
-			.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
+				.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);
 
 		// 쿠키 추가
-		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 		log.info("OAuth2 Login Success: userId-{}", userId);
 
 		// 성공 상태와 함께 리다이렉트
 		String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-			.queryParam("status", "success")
-			.build().toUriString();
+				.queryParam("status", "success")
+				.build().toUriString();
 
 		getRedirectStrategy().sendRedirect(request, response, targetUrl);
 	}

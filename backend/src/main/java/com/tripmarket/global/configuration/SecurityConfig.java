@@ -43,62 +43,56 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
-			// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
-			.cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+				// CORS 설정 활성화 - corsConfigurationSource 빈을 통해 설정
+				.cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
 
-			.csrf(AbstractHttpConfigurer::disable)
+				.csrf(AbstractHttpConfigurer::disable)
 
-			// H2 콘솔 설정 추가
-			.headers(headers ->
-				headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+				// H2 콘솔 설정 추가
+				.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
-			// 인증 실패 처리 추가
-			.exceptionHandling(exception -> exception
-				.authenticationEntryPoint((request, response, authException) -> {
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentType("application/json; charset=utf-8");
-					response.getWriter().write("{\"message\": \"인증되지 않은 사용자입니다.\"");
-				})
-			)
+				// 인증 실패 처리 추가
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint((request, response, authException) -> {
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							response.setContentType("application/json; charset=utf-8");
+							response.getWriter().write("{\"message\": \"인증되지 않은 사용자입니다.\"");
+						}))
 
-			// 세션 설정 - JWT를 사용하므로 세션을 생성하지 않음
-			.sessionManagement((sessionManagement) ->
-				sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-			)
+				// 세션 설정 - JWT를 사용하므로 세션을 생성하지 않음
+				.sessionManagement(
+						(sessionManagement) -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-			// 요청에 대한 권한 설정
-			.authorizeHttpRequests((authorizeHttpRequests) ->
-				authorizeHttpRequests
-					// H2 콘솔 관련 경로
-					.requestMatchers("/h2-console/**").permitAll()
+				// 요청에 대한 권한 설정
+				.authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
+						// H2 콘솔 관련 경로
+						.requestMatchers("/h2-console/**").permitAll()
 
-					// Swagger UI 관련 경로 (swagger-ui.html 추가)
-					.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
-					//채팅 관련 경로
-					.requestMatchers("/chat-test.html", "/chat/**").permitAll()
-					.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
-					.requestMatchers("/", "login/auth/**", "login/oauth2/**").permitAll()
+						// Swagger UI 관련 경로 (swagger-ui.html 추가)
+						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+						// 채팅 관련 경로
+						.requestMatchers("/chat-test.html", "/chat/**").permitAll()
+						.requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+						.requestMatchers("/", "login/auth/**", "login/oauth2/**").permitAll()
 
-					.requestMatchers(HttpMethod.GET, "/travels/*").permitAll()
-					.requestMatchers(HttpMethod.GET, "/travels/**").permitAll()
-					.requestMatchers(HttpMethod.GET, "/guides/*").permitAll()
-					.requestMatchers(HttpMethod.GET, "/guides/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/travels/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/travels/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/guides/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/guides/**").permitAll()
 
-					.requestMatchers("/guide-requests/**").permitAll()
+						.requestMatchers("/guide-requests/**").permitAll()
 
-					.anyRequest().authenticated()
-			)
+						.anyRequest().authenticated())
 
-			// OAuth2 로그인 설정
-			.oauth2Login(oauth2 -> oauth2
-				.successHandler(oAuth2AuthenticationSuccessHandler) // 로그인 성공 시 처리할 핸들러
-				.failureHandler(oAuth2AuthenticationFailureHandler) // 로그인 실패 시 처리할 핸들러
-				.userInfoEndpoint(userinfo -> userinfo
-					.userService(customOAuth2UserService))
-			)
+				// OAuth2 로그인 설정
+				.oauth2Login(oauth2 -> oauth2
+						.successHandler(oAuth2AuthenticationSuccessHandler) // 로그인 성공 시 처리할 핸들러
+						.failureHandler(oAuth2AuthenticationFailureHandler) // 로그인 실패 시 처리할 핸들러
+						.userInfoEndpoint(userinfo -> userinfo
+								.userService(customOAuth2UserService)))
 
-			// JWT 필터 추가
-			.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+				// JWT 필터 추가
+				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}

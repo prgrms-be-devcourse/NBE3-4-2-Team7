@@ -27,6 +27,8 @@ public class AuthService {
 		// 3. Redis에서 Refresh Token 조회 및 검증
 		validateRefreshToken(userId);
 
+		// 3-1. Redis에서 Refresh Token 조회 및 검증
+
 		// 4. 새로운 Access Token 발급
 		String newAccessToken = jwtTokenProvider.refreshAccessToken(accessToken);
 		log.debug("New access token created for userId: {}", userId);

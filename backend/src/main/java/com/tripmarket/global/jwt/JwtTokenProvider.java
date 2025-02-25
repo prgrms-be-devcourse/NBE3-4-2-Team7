@@ -264,6 +264,8 @@ public class JwtTokenProvider {
 		}
 	}
 
+
+
 	/**
 	 * Authentication 객체에서 권한 정보 추출
 	 * @param authentication 인증 객체
