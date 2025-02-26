@@ -15,13 +15,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
+import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
-import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -154,20 +157,23 @@ public class JwtTokenProvider {
 					.expiration(validity)
 					.signWith(key)
 					.compact();
-		} else {
-			// 일반 로그인
-			String email = (String) authentication.getPrincipal();
-			Member member = memberRepository.findByEmail(email)
-					.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
+
+		// 일반 로그인 - CustomUserDetails 사용
+		} else if (authentication.getPrincipal() instanceof CustomUserDetails) {
+			CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+			Member member = userDetails.getMember();
 
 			return Jwts.builder()
 					.subject(String.valueOf(member.getId()))
 					.claim("auth", authorities)
-					.claim("email", email)
+					.claim("email", member.getEmail())
 					.issuedAt(now)
 					.expiration(validity)
 					.signWith(key)
 					.compact();
+
+		} else {
+			throw new JwtAuthenticationException("지원하지 않는 인증 방식입니다.");
 		}
 	}
 
@@ -182,11 +188,11 @@ public class JwtTokenProvider {
 		Date validity = new Date(now.getTime() + refreshTokenValidityInSeconds * 1000);
 
 		return Jwts.builder()
-			.subject(String.valueOf(userId))
-			.issuedAt(now)
-			.expiration(validity)
-			.signWith(key)
-			.compact();
+				.subject(String.valueOf(userId))
+				.issuedAt(now)
+				.expiration(validity)
+				.signWith(key)
+				.compact();
 	}
 
 	/**
@@ -206,7 +212,6 @@ public class JwtTokenProvider {
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		// OAuth2 사용자 정보 조회
 		Member member = memberRepository.findById(userId)
 				.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
 
@@ -220,8 +225,9 @@ public class JwtTokenProvider {
 					email);
 			return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 		} else {
-			// 일반 로그인
-			return new UsernamePasswordAuthenticationToken(email, null, authorities);
+			// 일반 로그인 - UserDetails 객체 사용
+			UserDetails userDetails = new User(email, member.getPassword(), authorities);
+			return new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 		}
 	}
 
@@ -306,6 +312,5 @@ public class JwtTokenProvider {
 				.map(GrantedAuthority::getAuthority)
 				.collect(Collectors.joining(","));
 	}
-
 
 }

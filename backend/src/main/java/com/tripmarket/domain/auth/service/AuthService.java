@@ -1,15 +1,17 @@
 package com.tripmarket.domain.auth.service;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import com.tripmarket.domain.auth.dto.LoginRequestDTO;
 import com.tripmarket.domain.auth.dto.SignUpRequestDTO;
@@ -17,15 +19,14 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
-import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.security.CustomUserDetails;
+import com.tripmarket.global.util.CookieUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class AuthService {
 	private final RedisTemplate<String, String> redisTemplate;
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final CookieUtil cookieUtil;
 
 	public String refreshAccessToken(String refreshToken) {
 		// 1. Refresh Token에서 userId 추출
@@ -65,23 +67,33 @@ public class AuthService {
 		return jwtTokenProvider.createAccessToken(authentication);
 	}
 
-	public void logout(String accessToken) {
+	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		String logoutRefreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
+		String logoutAccessToken = cookieUtil.extractAccessTokenFromCookie(request);
+
 		try {
-			// 1. 토큰에서 사용자 정보 추출 (만료된 토큰도 처리 가능)
-			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(accessToken);
+			// 1. Refresh Token에서 사용자 ID 추출
+			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
 
 			// 2. Access Token 블랙리스트 추가
-			jwtTokenProvider.addToBlacklist(accessToken);
+			jwtTokenProvider.addToBlacklist(logoutAccessToken);
 
 			// 3. Refresh Token 삭제
 			String refreshTokenKey = "RT:" + userId;
 			Boolean deleted = redisTemplate.delete(refreshTokenKey);
-
 			if (Boolean.FALSE.equals(deleted)) {
-				log.warn("Refresh Token not found for userId: {}", userId);
+				log.warn("리프레시 토큰을 찾을 수 없습니다.: {}", userId);
 			}
 
+			// 4. 쿠키 삭제
+			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
+			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
+
+			response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
+
 			log.debug("로그아웃 처리 완료 - userId: {}", userId);
+
 		} catch (Exception e) {
 			log.error("로그아웃 처리 중 오류 발생", e);
 			throw new JwtAuthenticationException("로그아웃 처리 중 오류가 발생했습니다.");
@@ -132,11 +144,13 @@ public class AuthService {
 			throw new JwtAuthenticationException("잘못된 비밀번호입니다.");
 		}
 
-		// 3. 일반 인증 객체 생성
+		// 3. CustomUserDetails를 사용한 인증 객체 생성
+		CustomUserDetails userDetails = new CustomUserDetails(member);
 		Authentication authentication = new UsernamePasswordAuthenticationToken(
-				member.getEmail(),
-				null,
-				Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
+				userDetails, // principal을 CustomUserDetails로 변경
+				null, // credentials
+				userDetails.getAuthorities() // authorities도 CustomUserDetails에서 가져옴
+		);
 
 		// 4. JWT 토큰 생성
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);

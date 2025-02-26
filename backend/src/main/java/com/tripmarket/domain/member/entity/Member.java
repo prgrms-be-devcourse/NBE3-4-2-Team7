@@ -1,7 +1,5 @@
 package com.tripmarket.domain.member.entity;
 
-import java.security.AuthProvider;
-
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
@@ -77,9 +75,8 @@ public class Member extends BaseEntity {
 		this.email = email;
 		this.password = password;
 		this.role = Role.ROLE_USER;
-		this.imageUrl = imageUrl;
-		this.provider = Provider.LOCAL;
-		this.providerId = email;
+		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
+			? imageUrl : "https://i.imgur.com/yCUGLR3.jpeg";
 	}
 
 	/**
@@ -114,5 +111,4 @@ public class Member extends BaseEntity {
 	public boolean isAdmin() {
 		return this.role == Role.ROLE_ADMIN;
 	}
-
 }

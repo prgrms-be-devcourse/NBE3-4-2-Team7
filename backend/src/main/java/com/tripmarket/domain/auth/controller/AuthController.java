@@ -41,8 +41,7 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	@Operation(summary = "일반 회원가입")
-	public ResponseEntity<String> signUp(
-		@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
+	public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
 		authService.signUp(signUpRequestDTO);
 		return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
 	}
@@ -51,7 +50,8 @@ public class AuthController {
 	@Operation(summary = "일반 로그인")
 	public ResponseEntity<String> login(
 		@Valid @RequestBody LoginRequestDTO loginRequestDTO,
-		HttpServletResponse response) {
+		HttpServletResponse response
+	) {
 		Map<String, String> tokens = authService.login(loginRequestDTO);
 
 		// Access Token 쿠키 설정
@@ -112,24 +112,11 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃")
 	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-		String accessToken = cookieUtil.extractAccessTokenFromCookie(request);
-
-		if (accessToken == null) {
-			log.error("토큰이 요청에 없습니다(auth/logout)");
-			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
-		}
-
 		try {
-			authService.logout(accessToken);
-			// 쿠키 삭제
-			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
-			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
-
-			response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
-			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
-
+			authService.logout(request, response);
 			log.debug("로그아웃 성공");
-			return ResponseEntity.ok("로그아웃이 성공적으로 완료되었습니다.");
+			return ResponseEntity.status(HttpStatus.OK).body("로그아웃이 성공적으로 완료되었습니다.");
+
 		} catch (Exception e) {
 			log.error("로그아웃 실패: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그아웃 실패");
