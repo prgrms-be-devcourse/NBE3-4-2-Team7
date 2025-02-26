@@ -6,6 +6,7 @@ const nextConfig = {
             'img1.kakaocdn.net', // 추가 카카오 이미지 도메인
             'lh3.googleusercontent.com',  // 구글 프로필 이미지 도메인
             'avatars.githubusercontent.com'  // GitHub 프로필 이미지 도메인 추가
+            'i.imgur.com'
         ],
     },
 }
