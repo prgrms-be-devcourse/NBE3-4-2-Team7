@@ -81,25 +81,26 @@ public class AuthController {
 	 * @throws JwtAuthenticationException 토큰 재발급 실패 시
 	 */
 	@PostMapping("/refresh")
-	@Operation(summary = "AccessToken 재발급")
-	public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
+	@Operation(summary = "Access Token 재발급")
+	public ResponseEntity<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 
 		if (refreshToken == null) {
-			log.error("토큰이 요청에 없습니다(auth/refresh)");
-			throw new JwtAuthenticationException("토큰이 존재하지 않습니다.");
+			throw new JwtAuthenticationException("Refresh Token이 없습니다.");
 		}
 
 		try {
-			String newAccessToken = authService.refreshAccessToken(refreshToken);
+			Map<String, String> tokens = authService.refreshToken(refreshToken);
 
-			// 새로운 Access Token을 쿠키에 저장
-			ResponseCookie cookie = cookieUtil.createAccessTokenCookie(newAccessToken);
-			response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+			// 새로운 토큰을 쿠키에 설정
+			ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(tokens.get("accessToken"));
+			ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(tokens.get("refreshToken"));
 
-			log.debug("토큰 갱신 성공");
+			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+			return ResponseEntity.ok("토큰이 갱신되었습니다.");
 		} catch (Exception e) {
-			log.warn("AccessToken refresh failed: {}", e.getMessage());
 			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
 		}
 	}

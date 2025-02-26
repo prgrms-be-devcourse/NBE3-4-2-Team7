@@ -71,29 +71,6 @@ public class JwtTokenProvider {
 	}
 
 	/**
-	 * 토큰 갱신 메서드
-	 * 만료된 토큰으로부터 새로운 토큰 생성
-	 *
-	 * @param expiredToken 만료된 JWT 토큰
-	 * @return 새로 생성된 access token
-	 */
-	public String refreshAccessToken(String expiredToken) {
-		Claims claims = parseClaims(expiredToken);
-
-		Date now = new Date();
-		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
-
-		return Jwts.builder()
-				.subject(claims.getSubject())
-				.claim("auth", claims.get("auth"))
-				.claim("email", claims.get("email"))
-				.issuedAt(now)
-				.expiration(validity)
-				.signWith(key)
-				.compact();
-	}
-
-	/**
 	 * 토큰을 블랙리스트에 추가
 	 * Redis에 토큰을 저장하고 남은 유효 시간만큼 유지
 	 *
@@ -158,7 +135,7 @@ public class JwtTokenProvider {
 					.signWith(key)
 					.compact();
 
-		// 일반 로그인 - CustomUserDetails 사용
+			// 일반 로그인 - CustomUserDetails 사용
 		} else if (authentication.getPrincipal() instanceof CustomUserDetails) {
 			CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 			Member member = userDetails.getMember();
@@ -179,8 +156,8 @@ public class JwtTokenProvider {
 
 	/**
 	 * Refresh Token 생성
-	 * 인증 정보 없이 만료 시간만 포함하여 생성
 	 *
+	 * @Param userId 사용자 ID
 	 * @return 생성된 refresh token
 	 */
 	public String createRefreshToken(Long userId) {
@@ -292,12 +269,12 @@ public class JwtTokenProvider {
 	 * @return 사용자 ID
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
-
 	public Long getUserIdFromRefreshToken(String refreshToken) {
 		try {
-			return Long.valueOf(parseClaims(refreshToken).getSubject());
+			Claims claims = parseClaims(refreshToken);
+			return Long.valueOf(claims.getSubject());
 		} catch (Exception e) {
-			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
+			throw new JwtAuthenticationException("Refresh Token에서 사용자 ID를 추출할 수 없습니다.");
 		}
 	}
 
