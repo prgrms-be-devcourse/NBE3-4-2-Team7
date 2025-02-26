@@ -1,13 +1,31 @@
 package com.tripmarket.domain.auth.service;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import com.tripmarket.domain.auth.dto.LoginRequestDTO;
+import com.tripmarket.domain.auth.dto.SignUpRequestDTO;
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
+import com.tripmarket.global.oauth2.CustomOAuth2User;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -16,34 +34,41 @@ public class AuthService {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RedisTemplate<String, String> redisTemplate;
+	private final MemberRepository memberRepository;
+	private final PasswordEncoder passwordEncoder;
 
-	public String refreshAccessToken(String accessToken) {
-		// 1. Access Token 블랙리스트 체크
-		validateAccessToken(accessToken);
+	public String refreshAccessToken(String refreshToken) {
+		// 1. Refresh Token에서 userId 추출
+		Long userId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
 
-		// 2. 토큰에서 사용자 정보 추출
-		Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
+		// 2. Redis에 저장된 Refresh Token 조회
+		String storedRefreshToken = redisTemplate.opsForValue().get("RT:" + userId);
+		if (storedRefreshToken == null) {
+			throw new JwtAuthenticationException("저장된 Refresh Token이 없습니다.");
+		}
 
-		// 3. Redis에서 Refresh Token 조회 및 검증
-		validateRefreshToken(userId);
+		// 3. 전달받은 Refresh Token과 저장된 Token 비교
+		if (!refreshToken.equals(storedRefreshToken)) {
+			throw new JwtAuthenticationException("Refresh Token이 일치하지 않습니다.");
+		}
 
-		// 3-1. Redis에서 Refresh Token 조회 및 검증
+		// 4. Member 정보 조회
+		Member member = memberRepository.findById(userId)
+				.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
 
-		// 4. 새로운 Access Token 발급
-		String newAccessToken = jwtTokenProvider.refreshAccessToken(accessToken);
-		log.debug("New access token created for userId: {}", userId);
+		// 5. 새로운 Access Token 생성
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+				member.getEmail(),
+				null,
+				Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
 
-		// 5. 기존 Access Token을 블랙리스트에 추가
-		jwtTokenProvider.addToBlacklist(accessToken);
-
-		log.debug("새 토큰 발급: userId={}", userId);
-		return newAccessToken;
+		return jwtTokenProvider.createAccessToken(authentication);
 	}
 
 	public void logout(String accessToken) {
 		try {
 			// 1. 토큰에서 사용자 정보 추출 (만료된 토큰도 처리 가능)
-			Long userId = jwtTokenProvider.getUserIdFromExpiredToken(accessToken);
+			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(accessToken);
 
 			// 2. Access Token 블랙리스트 추가
 			jwtTokenProvider.addToBlacklist(accessToken);
@@ -78,5 +103,51 @@ public class AuthService {
 			log.warn("RefreshToken 없음: userId={}", userId);
 			throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
 		}
+	}
+
+	@Transactional
+	public void signUp(SignUpRequestDTO signUpRequestDTO) {
+		// 중복 검사
+		if (memberRepository.findByEmail(signUpRequestDTO.email()).isPresent()) {
+			throw new JwtAuthenticationException("이미 가입된 이메일입니다.");
+		}
+
+		Member member = new Member(
+				signUpRequestDTO.name(),
+				signUpRequestDTO.email(),
+				passwordEncoder.encode(signUpRequestDTO.password()),
+				signUpRequestDTO.imageUrl());
+
+		memberRepository.save(member);
+	}
+
+	@Transactional
+	public Map<String, String> login(LoginRequestDTO loginRequestDTO) {
+		// 1. 회원 존재 여부 확인
+		Member member = memberRepository.findByEmail(loginRequestDTO.email())
+				.orElseThrow(() -> new JwtAuthenticationException("가입되지 않은 이메일입니다."));
+
+		// 2. 비밀번호 확인
+		if (!passwordEncoder.matches(loginRequestDTO.password(), member.getPassword())) {
+			throw new JwtAuthenticationException("잘못된 비밀번호입니다.");
+		}
+
+		// 3. 일반 인증 객체 생성
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+				member.getEmail(),
+				null,
+				Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
+
+		// 4. JWT 토큰 생성
+		String accessToken = jwtTokenProvider.createAccessToken(authentication);
+		String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
+
+		// 5. Refresh Token을 Redis에 저장
+		redisTemplate.opsForValue()
+				.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
+
+		return Map.of(
+				"accessToken", accessToken,
+				"refreshToken", refreshToken);
 	}
 }

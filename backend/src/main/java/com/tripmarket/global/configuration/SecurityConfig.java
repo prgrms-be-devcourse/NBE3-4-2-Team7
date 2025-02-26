@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -34,6 +36,11 @@ public class SecurityConfig {
 	private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CookieUtil cookieUtil;
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
 	@Bean
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -81,8 +88,10 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/guides/**").permitAll()
 
 						.requestMatchers("/guide-requests/**").permitAll()
-
+						.requestMatchers("/auth/signup", "/auth/login").permitAll()
 						.anyRequest().authenticated())
+
+
 
 				// OAuth2 로그인 설정
 				.oauth2Login(oauth2 -> oauth2
@@ -92,7 +101,10 @@ public class SecurityConfig {
 								.userService(customOAuth2UserService)))
 
 				// JWT 필터 추가
-				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+
+				.formLogin(AbstractHttpConfigurer::disable)  // 폼 로그인 비활성화
+				.httpBasic(AbstractHttpConfigurer::disable);  // HTTP Basic 인증 비활성화
 
 		return http.build();
 	}

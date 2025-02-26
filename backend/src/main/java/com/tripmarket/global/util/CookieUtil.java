@@ -73,12 +73,12 @@ public class CookieUtil {
 
 	public ResponseCookie createRefreshTokenCookie(String refreshToken) {
 		ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-			.httpOnly(false)
-			.secure(false)
-			.sameSite("Lax")
-			.path("/")
-			.maxAge(refreshTokenValidityInSeconds)
-			.build();
+				.httpOnly(false)
+				.secure(false)
+				.sameSite("Lax")
+				.path("/")
+				.maxAge(refreshTokenValidityInSeconds)
+				.build();
 
 		log.debug("Refresh Token 쿠키 생성: {}", cookie);
 		return cookie;
@@ -101,11 +101,11 @@ public class CookieUtil {
 
 	public ResponseCookie createLogoutRefreshCookie() {
 		return ResponseCookie.from("refreshToken", "")
-			.httpOnly(false)
-			.secure(false)
-			.sameSite("Lax")
-			.path("/")
-			.maxAge(0) // 즉시 만료
-			.build();
+				.httpOnly(false)
+				.secure(false)
+				.sameSite("Lax")
+				.path("/")
+				.maxAge(0) // 즉시 만료
+				.build();
 	}
 }

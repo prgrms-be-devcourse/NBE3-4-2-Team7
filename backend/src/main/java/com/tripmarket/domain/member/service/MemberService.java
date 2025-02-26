@@ -19,6 +19,7 @@ import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

@@ -62,7 +62,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(accessToken);
 
 		// Refresh Token 생성 및 Redis 저장, 쿠키에 설정 (7일)
-		String refreshToken = jwtTokenProvider.createRefreshToken();
+		String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(refreshToken);
 		redisTemplate.opsForValue()
 				.set("RT:" + userId, refreshToken, refreshTokenValidityInSeconds, TimeUnit.SECONDS);

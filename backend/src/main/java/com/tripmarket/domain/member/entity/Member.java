@@ -1,5 +1,7 @@
 package com.tripmarket.domain.member.entity;
 
+import java.security.AuthProvider;
+
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
@@ -41,14 +43,15 @@ public class Member extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private Role role; // 회원 역할 (예: 관리자, 사용자)
 
-	@Column(nullable = false)
+
 	@Enumerated(EnumType.STRING)
-	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE 등)
+	@Column(columnDefinition = "VARCHAR(10) CHECK (provider IN ('KAKAO', 'GOOGLE', 'GITHUB', 'LOCAL'))")
+	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE, LOCAL 등)
 
 	@Column(nullable = false)
 	private Boolean hasGuideProfile = false; // 가이드 프로필 여부
 
-	@Column(nullable = false, unique = true)
+	@Column(unique = true)
 	private String providerId; // OAuth2 회원 고유 ID
 
 	private String imageUrl;
@@ -69,6 +72,16 @@ public class Member extends BaseEntity {
 		this.role = Role.ROLE_USER;
 	}
 
+	public Member(String name, String email, String password, String imageUrl) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = Role.ROLE_USER;
+		this.imageUrl = imageUrl;
+		this.provider = Provider.LOCAL;
+		this.providerId = email;
+	}
+
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
 	 * 소셜 로그인(카카오, 구글 등) 프로필 정보가 변경되었을 때 호출
@@ -79,8 +92,8 @@ public class Member extends BaseEntity {
 	}
 
 	/**
-	 * 	멤버에 가이드 프로필 추가하는 함수
-	 * */
+	 * 멤버에 가이드 프로필 추가하는 함수
+	 */
 	public void addGuideProfile(Guide guide) {
 		this.guide = guide;
 		this.hasGuideProfile = true;

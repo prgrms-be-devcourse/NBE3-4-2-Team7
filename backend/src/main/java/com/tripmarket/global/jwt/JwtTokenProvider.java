@@ -17,8 +17,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.repository.MemberRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -42,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtTokenProvider {
 
 	private final RedisTemplate<String, String> redisTemplate;
+	private final MemberRepository memberRepository;
 
 	@Value("${jwt.secret}")
 	private String secretKey;
@@ -77,13 +81,13 @@ public class JwtTokenProvider {
 		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
 		return Jwts.builder()
-			.subject(claims.getSubject())
-			.claim("auth", claims.get("auth"))
-			.claim("email", claims.get("email"))
-			.issuedAt(now)
-			.expiration(validity)
-			.signWith(key)
-			.compact();
+				.subject(claims.getSubject())
+				.claim("auth", claims.get("auth"))
+				.claim("email", claims.get("email"))
+				.issuedAt(now)
+				.expiration(validity)
+				.signWith(key)
+				.compact();
 	}
 
 	/**
@@ -102,7 +106,7 @@ public class JwtTokenProvider {
 
 			if (remainingTime > 0) {
 				redisTemplate.opsForValue()
-					.set("BL:" + token, "blacklisted", remainingTime, TimeUnit.SECONDS);
+						.set("BL:" + token, "blacklisted", remainingTime, TimeUnit.SECONDS);
 				log.debug("Token added to blacklist, expires in {} seconds", remainingTime);
 			} else {
 				log.debug("Token is already expired, skipping blacklist");
@@ -127,35 +131,58 @@ public class JwtTokenProvider {
 
 	/**
 	 * 사용자 인증 정보를 기반으로 Access Token을 생성
+	 * 
 	 * @param authentication 인증 정보
 	 * @return 생성된 access token
 	 */
 	public String createAccessToken(Authentication authentication) {
+		String authorities = authentication.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(","));
+
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
-		CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
+		// OAuth2 로그인과 일반 로그인 구분
+		if (authentication.getPrincipal() instanceof CustomOAuth2User) {
+			CustomOAuth2User user = (CustomOAuth2User) authentication.getPrincipal();
+			return Jwts.builder()
+					.subject(String.valueOf(user.getId()))
+					.claim("auth", authorities)
+					.claim("email", user.getEmail())
+					.issuedAt(now)
+					.expiration(validity)
+					.signWith(key)
+					.compact();
+		} else {
+			// 일반 로그인
+			String email = (String) authentication.getPrincipal();
+			Member member = memberRepository.findByEmail(email)
+					.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
 
-		return Jwts.builder()
-			.subject(String.valueOf(user.getId())) // 식별자로 id만 사용
-			.claim("auth", getAuthorities(authentication)) // 권한 정보
-			.claim("email", user.getEmail()) // email claim 추가
-			.issuedAt(now)
-			.expiration(validity)
-			.signWith(key)
-			.compact();
+			return Jwts.builder()
+					.subject(String.valueOf(member.getId()))
+					.claim("auth", authorities)
+					.claim("email", email)
+					.issuedAt(now)
+					.expiration(validity)
+					.signWith(key)
+					.compact();
+		}
 	}
 
 	/**
 	 * Refresh Token 생성
 	 * 인증 정보 없이 만료 시간만 포함하여 생성
+	 *
 	 * @return 생성된 refresh token
 	 */
-	public String createRefreshToken() {
+	public String createRefreshToken(Long userId) {
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + refreshTokenValidityInSeconds * 1000);
 
 		return Jwts.builder()
+			.subject(String.valueOf(userId))
 			.issuedAt(now)
 			.expiration(validity)
 			.signWith(key)
@@ -171,31 +198,37 @@ public class JwtTokenProvider {
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public Authentication getAuthentication(String token) {
-		Claims claims = parseClaims(token);  // 수정된 parseClaims 사용
-		Long userId = Long.valueOf(claims.getSubject());
+		Claims claims = parseClaims(token);
 		String email = claims.get("email", String.class);
+		Long userId = Long.valueOf(claims.getSubject());
 
-		Collection<? extends GrantedAuthority> authorities =
-			Arrays.stream(claims.get("auth").toString().split(","))
+		Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get("auth").toString().split(","))
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		CustomOAuth2User principal = new CustomOAuth2User(
-			authorities, // 권한 정보
-			Map.of(
-				"id", userId,
-				"email", email
-			), // OAuth2 속성
-			"id", // nameAttributeKey
-			userId, // id
-			email // email
-		);
-		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+		// OAuth2 사용자 정보 조회
+		Member member = memberRepository.findById(userId)
+				.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
+
+		if (member.getProvider() != Provider.LOCAL) {
+			// OAuth2 로그인
+			CustomOAuth2User principal = new CustomOAuth2User(
+					authorities,
+					Map.of("id", userId, "email", email),
+					"id",
+					userId,
+					email);
+			return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+		} else {
+			// 일반 로그인
+			return new UsernamePasswordAuthenticationToken(email, null, authorities);
+		}
 	}
 
 	/**
 	 * 토큰의 유효성 검증
 	 * 서명 검증, 만료 여부 등 확인
+	 * 
 	 * @param token 검증할 토큰
 	 * @return 유효성 여부
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
@@ -203,9 +236,9 @@ public class JwtTokenProvider {
 	public boolean validateToken(String token) {
 		try {
 			Jwts.parser()
-				.verifyWith(key)
-				.build()
-				.parseSignedClaims(token);
+					.verifyWith(key)
+					.build()
+					.parseSignedClaims(token);
 			return true;
 		} catch (SecurityException | MalformedJwtException e) {
 			log.error("Invalid JWT signature: {}", e.getMessage());
@@ -233,10 +266,10 @@ public class JwtTokenProvider {
 	private Claims parseClaims(String token) {
 		try {
 			return Jwts.parser()
-				.verifyWith(key)
-				.build()
-				.parseSignedClaims(token)
-				.getPayload();
+					.verifyWith(key)
+					.build()
+					.parseSignedClaims(token)
+					.getPayload();
 		} catch (ExpiredJwtException e) {
 			// 만료된 토큰이어도 Claims 반환
 			return e.getClaims();
@@ -249,31 +282,30 @@ public class JwtTokenProvider {
 	 * 만료된 토큰을 포함하여 사용자 ID를 추출
 	 * 토큰의 서명이 유효한 경우에만 ID 반환
 	 *
-	 * @param token JWT 토큰
+	 * @param refreshToken JWT 토큰
 	 * @return 사용자 ID
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
-	public Long getUserIdFromExpiredToken(String token) {
+
+	public Long getUserIdFromRefreshToken(String refreshToken) {
 		try {
-			return Long.valueOf(parseClaims(token).getSubject());
-		} catch (ExpiredJwtException e) {
-			// 만료된 토큰이어도 서명이 유효하면 ID 반환
-			return Long.valueOf(e.getClaims().getSubject());
+			return Long.valueOf(parseClaims(refreshToken).getSubject());
 		} catch (Exception e) {
 			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
 		}
 	}
 
-
-
 	/**
 	 * Authentication 객체에서 권한 정보 추출
+	 * 
 	 * @param authentication 인증 객체
 	 * @return 쉼표로 구분된 권한 문자열
 	 */
 	private String getAuthorities(Authentication authentication) {
 		return authentication.getAuthorities().stream()
-			.map(GrantedAuthority::getAuthority)
-			.collect(Collectors.joining(","));
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(","));
 	}
+
+
 }
