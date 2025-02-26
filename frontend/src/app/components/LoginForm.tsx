@@ -1,12 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { authService } from "../auth/services/authService";
+import { authService } from "../auth/services/authService"
 
 const LoginForm: React.FC<{ onClose?: () => void; onLoginSuccess?: () => void }> = ({ onClose, onLoginSuccess }) => {
     const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        try {
+            await authService.login(email, password);
+            handleLogin();
+        } catch (error) {
+            setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        }
+    };
     
     const handleKakaoLogin = () => {
         authService.loginWithKakao();
@@ -48,9 +62,36 @@ const LoginForm: React.FC<{ onClose?: () => void; onLoginSuccess?: () => void }>
                 )}
                 <h2 className="text-2xl font-bold text-center mb-2 text-blue-600">로그인</h2>
                 <p className="text-center text-gray-600 mb-6">로그인 후 이용 가능합니다.</p>
+                <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="이메일"
+                        className="w-full h-[45px] px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="비밀번호"
+                        className="w-full h-[45px] px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    {error && (
+                        <p className="text-red-500 text-sm text-center">{error}</p>
+                    )}
+                    <button
+                        type="submit"
+                        className="w-full h-[45px] bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        이메일로 로그인
+                    </button>
+                </form>
                 <div className="space-y-4">
                     <div className="w-full h-[45px] bg-[#FEE500] rounded-md">
-                        <button 
+                        <button
                             onClick={() => { handleKakaoLogin(); handleLogin(); }}
                             className="w-full h-full flex items-center justify-center"
                         >
