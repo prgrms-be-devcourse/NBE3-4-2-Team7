@@ -49,20 +49,25 @@ public class AuthController {
 	@PostMapping("/login")
 	@Operation(summary = "일반 로그인")
 	public ResponseEntity<String> login(
-		@Valid @RequestBody LoginRequestDTO loginRequestDTO,
-		HttpServletResponse response
-	) {
-		Map<String, String> tokens = authService.login(loginRequestDTO);
+			@Valid @RequestBody LoginRequestDTO loginRequestDTO,
+			HttpServletResponse response) {
+		try {
+			log.debug("로그인 시도 - email: {}", loginRequestDTO.email());
+			Map<String, String> tokens = authService.login(loginRequestDTO);
 
-		// Access Token 쿠키 설정
-		response.addHeader(HttpHeaders.SET_COOKIE,
-			cookieUtil.createAccessTokenCookie(tokens.get("accessToken")).toString());
+			// Access Token 쿠키 설정
+			ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(tokens.get("accessToken"));
+			ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(tokens.get("refreshToken"));
 
-		// Refresh Token 쿠키 설정
-		response.addHeader(HttpHeaders.SET_COOKIE,
-			cookieUtil.createRefreshTokenCookie(tokens.get("refreshToken")).toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
-		return ResponseEntity.ok("로그인이 완료되었습니다.");
+			log.debug("로그인 성공 - email: {}", loginRequestDTO.email());
+			return ResponseEntity.ok("로그인 성공");
+		} catch (Exception e) {
+			log.error("로그인 실패 - email: {}, error: {}", loginRequestDTO.email(), e.getMessage());
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+		}
 	}
 
 	/**

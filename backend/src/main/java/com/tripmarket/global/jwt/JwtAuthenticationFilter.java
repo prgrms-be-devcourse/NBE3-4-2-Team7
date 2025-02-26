@@ -34,15 +34,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		// SecurityConfig의 permitAll()과 일치하는 경로들
 		return path.startsWith("/h2-console") ||
-			path.startsWith("/swagger-ui") ||
-			path.startsWith("/api-docs") ||
-			path.startsWith("/chat-test.html") ||
-			path.startsWith("/chat") ||
-			path.equals("/") ||
-			path.startsWith("/auth") ||
-			path.startsWith("/oauth2") ||
-			path.startsWith("/login/auth") ||
-			path.startsWith("/login/oauth2");
+				path.startsWith("/swagger-ui") ||
+				path.startsWith("/api-docs") ||
+				path.startsWith("/chat-test.html") ||
+				path.startsWith("/chat") ||
+				path.equals("/") ||
+				path.startsWith("/auth") ||
+				path.startsWith("/oauth2") ||
+				path.startsWith("/login/auth") ||
+				path.startsWith("/login/oauth2");
 	}
 
 	/**

@@ -41,7 +41,6 @@ public class Member extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private Role role; // 회원 역할 (예: 관리자, 사용자)
 
-
 	@Enumerated(EnumType.STRING)
 	@Column(columnDefinition = "VARCHAR(10) CHECK (provider IN ('KAKAO', 'GOOGLE', 'GITHUB', 'LOCAL'))")
 	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE, LOCAL 등)
@@ -76,7 +75,8 @@ public class Member extends BaseEntity {
 		this.password = password;
 		this.role = Role.ROLE_USER;
 		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-			? imageUrl : "https://i.imgur.com/yCUGLR3.jpeg";
+				? imageUrl
+				: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 	}
 
 	/**

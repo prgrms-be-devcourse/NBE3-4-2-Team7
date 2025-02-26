@@ -87,11 +87,17 @@ const UserHeader: React.FC = () => {
                                 className="relative hover:opacity-80 transition-opacity"
                             >
                                 <Image
-                                    src={user?.imageUrl || '/default-profile.png'}
+                                    src={user?.imageUrl && user.imageUrl.startsWith('http') 
+                                        ? user.imageUrl 
+                                        : 'https://i.imgur.com/yCUGLR3.jpeg'}
                                     alt="프로필"
                                     width={40}
                                     height={40}
                                     className="rounded-full"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = 'https://i.imgur.com/yCUGLR3.jpeg';
+                                    }}
                                 />
                             </button>
                             
