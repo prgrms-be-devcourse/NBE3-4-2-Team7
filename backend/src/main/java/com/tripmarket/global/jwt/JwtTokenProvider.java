@@ -201,6 +201,7 @@ public class JwtTokenProvider {
 					userId,
 					email);
 			return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+
 		} else {
 			// 일반 로그인 - UserDetails 객체 사용
 			UserDetails userDetails = new User(email, member.getPassword(), authorities);
@@ -228,7 +229,8 @@ public class JwtTokenProvider {
 			throw new JwtAuthenticationException("잘못된 JWT 서명입니다.");
 		} catch (ExpiredJwtException e) {
 			log.error("Expired JWT token: {}", e.getMessage());
-			throw new JwtAuthenticationException("만료된 JWT 토큰입니다.");
+			return false;
+
 		} catch (UnsupportedJwtException e) {
 			log.error("Unsupported JWT token: {}", e.getMessage());
 			throw new JwtAuthenticationException("지원되지 않는 JWT 토큰입니다.");
@@ -289,5 +291,4 @@ public class JwtTokenProvider {
 				.map(GrantedAuthority::getAuthority)
 				.collect(Collectors.joining(","));
 	}
-
 }

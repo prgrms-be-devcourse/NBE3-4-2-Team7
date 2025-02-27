@@ -44,20 +44,21 @@ public class AuthService {
 		String logoutAccessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
 		try {
-			// 1. Refresh Token에서 사용자 ID 추출
+			// 1. RefreshToken에서 사용자 ID 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
 
-			// 2. Access Token 블랙리스트 추가
-			jwtTokenProvider.addToBlacklist(logoutAccessToken);
-
-			// 3. Refresh Token 삭제
-			String refreshTokenKey = "RT:" + userId;
-			Boolean deleted = redisTemplate.delete(refreshTokenKey);
-			if (Boolean.FALSE.equals(deleted)) {
-				log.warn("리프레시 토큰을 찾을 수 없습니다.: {}", userId);
+			// 2. AccessToken 이 유효하면 블랙리스트 추가
+			if (jwtTokenProvider.validateToken(logoutAccessToken)) {
+				jwtTokenProvider.addToBlacklist(logoutAccessToken);
 			}
 
-			// 4. 쿠키 삭제
+			// 3. Refresh Token 유효한지 검증
+			validateRefreshToken(userId);
+
+			// 4. Redis에서 리프레시 토큰 삭제
+			deleteRefreshToken(userId);
+
+			// 5. 쿠키 삭제
 			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
 			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
 
@@ -72,22 +73,6 @@ public class AuthService {
 		}
 	}
 
-	// AccessToken 블랙리스트 체크
-	private void validateAccessToken(String accessToken) {
-		if (jwtTokenProvider.isBlacklisted(accessToken)) {
-			log.warn("블랙리스트된 토큰 사용");
-			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
-		}
-	}
-
-	// RefreshToken Redis에서 유효한지 체크
-	private void validateRefreshToken(Long userId) {
-		String refreshToken = redisTemplate.opsForValue().get("RT:" + userId);
-		if (refreshToken == null) {
-			log.warn("RefreshToken 없음: userId={}", userId);
-			throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
-		}
-	}
 
 	@Transactional
 	public void signUp(SignUpRequestDTO signUpRequestDTO) {
@@ -138,23 +123,15 @@ public class AuthService {
 	}
 
 	@Transactional
-	public Map<String, String> refreshToken(String refreshToken) {
+	public String refreshToken(String refreshToken) {
 		try {
-			// 1. Refresh Token 검증 (만료 여부 포함)
-			try {
-				jwtTokenProvider.validateToken(refreshToken);
-			} catch (JwtAuthenticationException e) {
-				if (e.getMessage().equals("만료된 JWT 토큰입니다.")) {
-					// 리프레시 토큰이 만료된 경우
-					throw new JwtAuthenticationException("Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
-				}
-				throw e;
-			}
+			// 1. 리프레시 토큰 유효성 검사
+			jwtTokenProvider.validateToken(refreshToken);
 
 			// 2. Refresh Token에서 userId 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
 
-			// 3. Redis에서 저장된 Refresh Token 확인
+			// 3. Redis에 저장된 Refresh Token 확인
 			String storedRefreshToken = redisTemplate.opsForValue().get("RT:" + userId);
 			if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
 				throw new JwtAuthenticationException("저장된 Refresh Token이 없거나 일치하지 않습니다.");
@@ -164,24 +141,39 @@ public class AuthService {
 			Member member = memberRepository.findById(userId)
 					.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
 
-			// 5. 새로운 Access Token과 Refresh Token 생성
+			// 5. 새로운 Access Token 생성
 			Authentication authentication = new UsernamePasswordAuthenticationToken(
 					new CustomUserDetails(member),
 					null,
 					Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
 
-			String newAccessToken = jwtTokenProvider.createAccessToken(authentication);
-			String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
+			return jwtTokenProvider.createAccessToken(authentication);
 
-			// 6. Redis Refresh Token 업데이트
-			redisTemplate.opsForValue()
-					.set("RT:" + userId, newRefreshToken, 7, TimeUnit.DAYS);
-
-			return Map.of(
-					"accessToken", newAccessToken,
-					"refreshToken", newRefreshToken);
 		} catch (Exception e) {
 			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
+		}
+	}
+
+	// RefreshToken Redis에서 유효한지 체크
+	private void validateRefreshToken(Long userId) {
+		String refreshTokenKey = "RT:" + userId;
+		String storedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
+
+		if (storedRefreshToken == null) {
+			log.warn("Refresh Token 없음: userId={}", userId);
+			throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
+		}
+	}
+
+	// Redis에 있는 refreshToken 삭제
+	private void deleteRefreshToken(Long userId) {
+		String refreshTokenKey = "RT:" + userId;
+		Boolean deleted = redisTemplate.delete(refreshTokenKey);
+
+		if (Boolean.TRUE.equals(deleted)) {
+			log.info("사용자 {}의 리프레시 토큰 삭제 완료 (자동 로그아웃 처리)", userId);
+		} else {
+			log.warn("리프레시 토큰 삭제 실패: userId={}", userId);
 		}
 	}
 }

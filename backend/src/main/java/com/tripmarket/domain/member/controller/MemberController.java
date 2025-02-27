@@ -2,6 +2,7 @@ package com.tripmarket.domain.member.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,7 @@ public class MemberController {
 	public ResponseEntity<MemberResponseDTO> getMyInfo(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 		log.debug("OAuth2User: {}", oAuth2User);
 		Member member = memberService.getMemberById(oAuth2User.getId());
-		return ResponseEntity.ok(MemberResponseDTO.from(member));
+		return ResponseEntity.status(HttpStatus.OK).body(MemberResponseDTO.from(member));
 	}
 
 	/**

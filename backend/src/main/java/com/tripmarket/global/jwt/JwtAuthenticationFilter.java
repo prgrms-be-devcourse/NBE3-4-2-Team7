@@ -56,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	 */
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-			FilterChain filterChain) throws ServletException, IOException {
+			FilterChain filterChain) throws IOException {
 		try {
 			String accessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
@@ -65,6 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					jwtTokenProvider.validateToken(accessToken);
 					Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
 					SecurityContextHolder.getContext().setAuthentication(authentication);
+
 				} catch (JwtAuthenticationException e) {
 					// 토큰이 만료된 경우 401 응답
 					if (e.getMessage().equals("만료된 JWT 토큰입니다.")) {

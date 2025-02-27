@@ -35,10 +35,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void configureWebSocketTransport(
-		org.springframework.web.socket.config.annotation.WebSocketTransportRegistration registration) {
+			org.springframework.web.socket.config.annotation.WebSocketTransportRegistration registration) {
 		registration
-			.setSendTimeLimit(20000)
-			.setSendBufferSizeLimit(512 * 1024)
-			.setMessageSizeLimit(128 * 1024);
+				.setSendTimeLimit(20000)
+				.setSendBufferSizeLimit(512 * 1024)
+				.setMessageSizeLimit(128 * 1024);
 	}
 }
