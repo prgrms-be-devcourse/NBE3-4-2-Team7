@@ -227,6 +227,7 @@ public class JwtTokenProvider {
 		} catch (SecurityException | MalformedJwtException e) {
 			log.error("Invalid JWT signature: {}", e.getMessage());
 			throw new JwtAuthenticationException("잘못된 JWT 서명입니다.");
+
 		} catch (ExpiredJwtException e) {
 			log.error("Expired JWT token: {}", e.getMessage());
 			return false;
@@ -234,6 +235,7 @@ public class JwtTokenProvider {
 		} catch (UnsupportedJwtException e) {
 			log.error("Unsupported JWT token: {}", e.getMessage());
 			throw new JwtAuthenticationException("지원되지 않는 JWT 토큰입니다.");
+
 		} catch (IllegalArgumentException e) {
 			log.error("JWT claims string is empty: {}", e.getMessage());
 			throw new JwtAuthenticationException("JWT 토큰이 잘못되었습니다.");

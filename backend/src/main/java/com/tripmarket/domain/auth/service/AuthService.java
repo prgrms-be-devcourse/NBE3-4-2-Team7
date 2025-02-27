@@ -40,16 +40,20 @@ public class AuthService {
 	private final CookieUtil cookieUtil;
 
 	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		log.info("로그아웃 요청 수신");
+
 		String logoutRefreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 		String logoutAccessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
 		try {
 			// 1. RefreshToken에서 사용자 ID 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
+			log.debug("로그아웃 userId: {}" , userId);
 
 			// 2. AccessToken 이 유효하면 블랙리스트 추가
 			if (jwtTokenProvider.validateToken(logoutAccessToken)) {
 				jwtTokenProvider.addToBlacklist(logoutAccessToken);
+				log.info("AccessToken 블랙리스트에 추가 완료 - userId: {}", userId);
 			}
 
 			// 3. Refresh Token 유효한지 검증
@@ -66,13 +70,11 @@ public class AuthService {
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
 
 			log.debug("로그아웃 처리 완료 - userId: {}", userId);
-
 		} catch (Exception e) {
 			log.error("로그아웃 처리 중 오류 발생", e);
 			throw new JwtAuthenticationException("로그아웃 처리 중 오류가 발생했습니다.");
 		}
 	}
-
 
 	@Transactional
 	public void signUp(SignUpRequestDTO signUpRequestDTO) {
@@ -92,12 +94,18 @@ public class AuthService {
 
 	@Transactional
 	public Map<String, String> login(LoginRequestDTO loginRequestDTO) {
+		log.info("로그인 요청 - email: {}", loginRequestDTO.email());
+
 		// 1. 회원 존재 여부 확인
 		Member member = memberRepository.findByEmail(loginRequestDTO.email())
-				.orElseThrow(() -> new JwtAuthenticationException("가입되지 않은 이메일입니다."));
+				.orElseThrow(() -> {
+					log.warn("로그인 실패 - 존재하지 않는 이메일: {}", loginRequestDTO.email());
+					return new JwtAuthenticationException("가입되지 않은 이메일입니다.");
+				});
 
 		// 2. 비밀번호 확인
 		if (!passwordEncoder.matches(loginRequestDTO.password(), member.getPassword())) {
+			log.warn("로그인 실패 - 잘못된 비밀번호: {}", loginRequestDTO.email());
 			throw new JwtAuthenticationException("잘못된 비밀번호입니다.");
 		}
 
@@ -112,14 +120,15 @@ public class AuthService {
 		// 4. JWT 토큰 생성
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);
 		String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
+		log.info("AccessToken 및 RefreshToken 생성 완료 - email: {}", member.getEmail());
 
 		// 5. Refresh Token을 Redis에 저장
 		redisTemplate.opsForValue()
-				.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
+			.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
+		log.debug("RefreshToken 저장 완료 - userId: {}", member.getId());
 
-		return Map.of(
-				"accessToken", accessToken,
-				"refreshToken", refreshToken);
+		log.info("로그인 성공 - email: {}", member.getEmail());
+		return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
 	}
 
 	@Transactional
@@ -130,10 +139,12 @@ public class AuthService {
 
 			// 2. Refresh Token에서 userId 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
+			log.debug("✅ Refresh Token 검증 완료 - userId: {}", userId);
 
 			// 3. Redis에 저장된 Refresh Token 확인
 			String storedRefreshToken = redisTemplate.opsForValue().get("RT:" + userId);
 			if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+				log.warn("🚨 저장된 Refresh Token과 일치하지 않음 - userId: {}", userId);
 				throw new JwtAuthenticationException("저장된 Refresh Token이 없거나 일치하지 않습니다.");
 			}
 
@@ -147,9 +158,11 @@ public class AuthService {
 					null,
 					Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
 
+			log.debug("Access token 발급 완료 - userId: {}", userId);
 			return jwtTokenProvider.createAccessToken(authentication);
 
 		} catch (Exception e) {
+			log.error("AccessToken 재발급 실패: {}", e.getMessage());
 			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
 		}
 	}

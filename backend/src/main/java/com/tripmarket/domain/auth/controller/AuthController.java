@@ -51,8 +51,10 @@ public class AuthController {
 	public ResponseEntity<String> login(
 			@Valid @RequestBody LoginRequestDTO loginRequestDTO,
 			HttpServletResponse response) {
+		log.debug("로그인 시도 - email: {}", loginRequestDTO.email());
+
 		try {
-			log.debug("로그인 시도 - email: {}", loginRequestDTO.email());
+			// 로그인 처리 및 토큰 발급
 			Map<String, String> tokens = authService.login(loginRequestDTO);
 
 			// Access Token 쿠키 설정
@@ -63,7 +65,8 @@ public class AuthController {
 			response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 			log.debug("로그인 성공 - email: {}", loginRequestDTO.email());
-			return ResponseEntity.ok("로그인 성공");
+			return ResponseEntity.status(HttpStatus.OK).body("로그인 성공");
+
 		} catch (Exception e) {
 			log.error("로그인 실패 - email: {}, error: {}", loginRequestDTO.email(), e.getMessage());
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -111,7 +114,7 @@ public class AuthController {
 	public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
 		try {
 			authService.logout(request, response);
-			log.debug("로그아웃 성공");
+			log.info("로그아웃 성공");
 			return ResponseEntity.status(HttpStatus.OK).body("로그아웃이 성공적으로 완료되었습니다.");
 
 		} catch (Exception e) {
