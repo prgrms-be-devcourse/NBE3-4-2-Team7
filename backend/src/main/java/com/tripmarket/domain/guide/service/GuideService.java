@@ -15,7 +15,6 @@ import com.tripmarket.domain.guide.repository.GuideRepository;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.domain.review.dto.ReviewResponseDto;
-import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.domain.review.service.ReviewService;
 import com.tripmarket.domain.reviewstats.entity.ReviewStats;
 import com.tripmarket.domain.reviewstats.repository.ReviewStatsRepository;
@@ -83,7 +82,6 @@ public class GuideService {
 		return GuideProfileDto.fromEntity(guide, reviewStats, reviews);
 	}
 
-
 	@Transactional
 	public void update(Long memberId, GuideDto guideDto) {
 		Guide guide = memberRepository.findById(memberId)
@@ -93,9 +91,12 @@ public class GuideService {
 		guideRepository.save(guide);
 	}
 
-	public List<GuideDto> getAllGuides() {
+	public List<GuideProfileDto> getAllGuides() {
+		// 현재 리뷰가 일대다 단방향이라 임시로 null
+		// 양방향 설정시 guide 에서 바로 조회,
+		// 없으면 별도로 조회 로직 필요
 		return guideRepository.findAll().stream()
-			.map(GuideDto::fromEntity)
+			.map(guide -> GuideProfileDto.fromEntity(guide, null, null))
 			.toList();
 	}
 

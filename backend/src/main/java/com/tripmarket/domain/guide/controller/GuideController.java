@@ -2,7 +2,6 @@ package com.tripmarket.domain.guide.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -31,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RestControllerAdvice
 @RestController
 @RequestMapping("/guides")
-@Tag(name = "GuideController", description = "가이드 컨트롤러")
+@Tag(name = "Guide", description = "가이드 API")
 @RequiredArgsConstructor
 public class GuideController {
 	private final GuideService guideService;
@@ -68,8 +66,8 @@ public class GuideController {
 
 	@Operation(summary = "가이드 리스트 조회")
 	@GetMapping
-	public ResponseEntity<List<GuideDto>> getAllGuides() {
-		List<GuideDto> guides = guideService.getAllGuides();
+	public ResponseEntity<List<GuideProfileDto>> getAllGuides() {
+		List<GuideProfileDto> guides = guideService.getAllGuides();
 		return ResponseEntity.ok(guides);
 	}
 

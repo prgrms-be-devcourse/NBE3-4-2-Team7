@@ -13,8 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -50,17 +48,13 @@ public class Guide extends BaseEntity {
 	private String introduction;
 
 	@Column(nullable = false)
-	@ValidLanguages
 	private String languages;
 
-	@Min(0)
-	@Max(100)
 	private Integer experienceYears;
 
 	@Column(nullable = false)
 	@Builder.Default
 	private boolean isDeleted = false;
-
 
 	public void setMember(Member member) {
 		this.member = member;

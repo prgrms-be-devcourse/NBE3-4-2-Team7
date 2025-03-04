@@ -1,6 +1,7 @@
 package com.tripmarket.domain.guide.dto;
 
 import com.tripmarket.domain.guide.entity.Guide;
+import com.tripmarket.domain.guide.entity.ValidLanguages;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
@@ -9,8 +10,7 @@ import lombok.Builder;
 public record GuideDto(
 	Long id,
 	@NotBlank String name,
-	Long userId,
-	@NotBlank String languages,
+	@NotBlank @ValidLanguages String languages,
 	@NotBlank String activityRegion,
 	Integer experienceYears,
 	@NotBlank String introduction,
@@ -21,7 +21,6 @@ public record GuideDto(
 		return new GuideDto(
 			guide.getId(),
 			guide.getName(),
-			null,
 			guide.getLanguages(),
 			guide.getActivityRegion(),
 			guide.getExperienceYears(),
