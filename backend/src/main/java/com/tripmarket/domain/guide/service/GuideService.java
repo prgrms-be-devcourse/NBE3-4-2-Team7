@@ -71,8 +71,8 @@ public class GuideService {
 	}
 
 	// 현재 로그인한 사용자가 자신의 가이드 프로필을 조회
-	public GuideProfileDto getMyGuideProfile(Long userId) {
-		Guide guide = guideRepository.findByMemberId(userId)
+	public GuideProfileDto getMyGuideProfile(Long memberId) {
+		Guide guide = guideRepository.findByMemberId(memberId)
 			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_PROFILE_NOT_FOUND));
 
 		ReviewStats reviewStats = reviewStatsRepository.findByGuideId(guide.getId())
