@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthService {
 
+	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RedisTemplate<String, String> redisTemplate;
 	private final MemberRepository memberRepository;
@@ -82,33 +84,25 @@ public class AuthService {
 	public Map<String, String> login(LoginRequestDto loginRequestDto) {
 		log.info("로그인 요청 - email: {}", loginRequestDto.email());
 
-		// 1. 회원 존재 여부 확인
-		Member member = memberRepository.findByEmail(loginRequestDto.email())
-			.orElseThrow(() -> {
-				log.warn("로그인 실패 - 존재하지 않는 이메일: {}", loginRequestDto.email());
-				return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-			});
-
-		// 2. 비밀번호 확인
-		if (!passwordEncoder.matches(loginRequestDto.password(), member.getPassword())) {
-			log.warn("로그인 실패 - 잘못된 비밀번호: {}", loginRequestDto.email());
-			throw new CustomException(ErrorCode.INVALID_PASSWORD);
+		Authentication authentication;
+		try {
+			authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequestDto.email(), loginRequestDto.password())
+			);
+		} catch (Exception e) {
+			log.warn("로그인 실패 - 잘못된 이메일 또는 비밀번호: {}", loginRequestDto.email());
+			throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
 		}
 
-		// 3. CustomUserDetails를 사용한 인증 객체 생성
-		CustomUserDetails userDetails = new CustomUserDetails(member);
-		Authentication authentication = new UsernamePasswordAuthenticationToken(
-			userDetails, // principal을 CustomUserDetails로 변경
-			null, // credentials
-			userDetails.getAuthorities() // authorities도 CustomUserDetails에서 가져옴
-		);
+		CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
+		Member member = userDetails.getMember();
 
-		// 4. JWT 토큰 생성
+		// 3. JWT 토큰 생성
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);
 		String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
 		log.info("AccessToken 및 RefreshToken 생성 완료 - email: {}", member.getEmail());
 
-		// 5. Refresh Token을 Redis에 저장
+		// 4. Refresh Token을 Redis에 저장
 		redisTemplate.opsForValue()
 			.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
 
