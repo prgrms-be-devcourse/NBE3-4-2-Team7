@@ -57,13 +57,10 @@ public class AuthService {
 				log.info("AccessToken 블랙리스트에 추가 완료 - userId: {}", userId);
 			}
 
-			// 3. Refresh Token 유효한지 검증
-			validateRefreshToken(userId);
-
-			// 4. Redis에서 리프레시 토큰 삭제
+			// 3. Redis에서 리프레시 토큰 삭제
 			deleteRefreshToken(userId);
 
-			// 5. 쿠키 삭제
+			// 4. 쿠키 삭제 및 빈 쿠키 반환
 			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
 			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
 
@@ -126,10 +123,13 @@ public class AuthService {
 	}
 
 	@Transactional
-	public String refreshToken(String refreshToken) {
+	public String refreshToken(String refreshToken, HttpServletRequest request, HttpServletResponse response) {
 		try {
-			// 1. 리프레시 토큰 유효성 검사
-			jwtTokenProvider.validateToken(refreshToken);
+			if (!jwtTokenProvider.validateToken(refreshToken)) {
+				log.warn("유효하지 않은 Refresh Token 감지 - 자동 로그아웃 처리");
+				logout(request, response); // 강제 로그아웃 처리
+				throw new CustomException(ErrorCode.INVALID_TOKEN);
+			}
 
 			// 2. Refresh Token에서 userId 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
@@ -160,7 +160,7 @@ public class AuthService {
 	}
 
 	// RefreshToken Redis에서 유효한지 체크
-	private void validateRefreshToken(Long userId) {
+	private void validateRefreshTokenInRedis(Long userId) {
 		String refreshTokenKey = "RT:" + userId;
 		String storedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
 

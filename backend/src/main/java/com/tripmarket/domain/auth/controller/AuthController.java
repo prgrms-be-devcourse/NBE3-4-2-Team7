@@ -84,7 +84,7 @@ public class AuthController {
 		String refreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 
 		// 2. 신규 AccessToken 발급
-		String newAccessToken = authService.refreshToken(refreshToken);
+		String newAccessToken = authService.refreshToken(refreshToken, request, response);
 
 		// 3. 발급한 AccessToken 을 쿠키에 저장 및 response
 		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(newAccessToken);
