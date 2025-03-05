@@ -3,7 +3,8 @@ package com.tripmarket.global.oauth2.userinfo;
 import java.util.Map;
 
 /**
- * 카카오 OAuth2 인증 결과로 받은 유저 정보를 매핑하는 클래스
+ * 카카오 OAuth2 사용자 정보를 처리하는 구현체
+ * 카카오 API가 제공하는 사용자 정보 구조에 맞춰 정보를 추출
  */
 public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 

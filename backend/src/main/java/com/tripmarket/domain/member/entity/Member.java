@@ -3,10 +3,14 @@ package com.tripmarket.domain.member.entity;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
@@ -17,9 +21,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Entity
+@Entity(name = "member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
+	private Long id;
 
 	@Column(nullable = false, length = 50)
 	private String name; // 회원 이름
@@ -44,6 +53,8 @@ public class Member extends BaseEntity {
 
 	private String imageUrl;
 
+	private String matchingList;
+
 	@OneToOne
 	@JoinColumn(name = "guide_id")
 	private Guide guide;
@@ -55,17 +66,40 @@ public class Member extends BaseEntity {
 		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = imageUrl;
-		this.role = Role.USER;
+		this.role = Role.ROLE_USER;
 	}
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
 	 * 소셜 로그인(카카오, 구글 등) 프로필 정보가 변경되었을 때 호출
 	 */
-	public Member updateOAuth2Profile(String name, String imageUrl) {
+	public void updateOAuth2Profile(String name, String imageUrl) {
 		this.name = name;
 		this.imageUrl = imageUrl;
-		return this;
+	}
+
+	/**
+	 * 	멤버에 가이드 프로필 추가하는 함수
+	 * */
+	public void addGuideProfile(Guide guide) {
+		this.guide = guide;
+		this.hasGuideProfile = true;
+	}
+
+	public boolean hasGuideProfile() {
+		return this.hasGuideProfile;
+	}
+
+	public Member(String name, String email, String password, Role role, boolean hasGuideProfile) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = role;
+		this.hasGuideProfile = hasGuideProfile;
+	}
+
+	public boolean isAdmin() {
+		return this.role == Role.ROLE_ADMIN;
 	}
 
 }

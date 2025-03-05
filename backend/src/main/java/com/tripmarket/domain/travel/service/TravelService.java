@@ -1,5 +1,7 @@
 package com.tripmarket.domain.travel.service;
 
+import java.util.Objects;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,8 +13,8 @@ import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.domain.travel.dto.request.TravelCreateRequest;
 import com.tripmarket.domain.travel.dto.request.TravelUpdateRequest;
 import com.tripmarket.domain.travel.entity.Travel;
-import com.tripmarket.domain.travel.entity.Travel.Status;
 import com.tripmarket.domain.travel.entity.TravelCategory;
+import com.tripmarket.domain.travel.enums.TravelStatus;
 import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
@@ -28,20 +30,21 @@ public class TravelService {
 	private final TravelRepository travelRepository;
 
 	@Transactional
-	public TravelDto createTravel(Long userId, TravelCreateRequest requestDto) {
-		Member member = memberService.getMember(userId);
-		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.getCategoryId());
+	public TravelDto createTravel(String email, TravelCreateRequest requestDto) {
+		Member member = memberService.getMemberByEmail(email);
+		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.categoryId());
 		Travel travel = requestDto.toEntity(member, category);
 		travelRepository.save(travel);
 		return TravelDto.of(travel);
 	}
 
 	@Transactional
-	public TravelDto updateTravel(Long travelId, Long userId, TravelUpdateRequest requestDto) {
+	public TravelDto updateTravel(Long travelId, String email, TravelUpdateRequest requestDto) {
+		Member member = memberService.getMemberByEmail(email);
 		Travel travel = getTravel(travelId);
-		validateOwnership(userId, travel);
+		validateOwnership(member, travel);
 		validateMatchStatus(travel);
-		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.getCategoryId());
+		TravelCategory category = travelCategoryService.getTravelCategory(requestDto.categoryId());
 
 		Travel updateTravel = requestDto.toEntity(travel, category);
 		travel.updateTravel(updateTravel, category);
@@ -61,20 +64,24 @@ public class TravelService {
 	}
 
 	@Transactional
-	public void deleteTravel(Long travelId, Long userId) {
+	public void deleteTravel(Long travelId, String email) {
+		Member member = memberService.getMemberByEmail(email);
 		Travel travel = getTravel(travelId);
-		validateOwnership(userId, travel);
+		validateOwnership(member, travel);
 		travel.markAsDeleted();
 	}
 
 	public void validateMatchStatus(Travel travel) {
-		if (travel.getStatus() == Status.IN_PROGRESS || travel.getStatus() == Status.MATCHED) {
+		if (travel.getStatus() == TravelStatus.IN_PROGRESS || travel.getStatus() == TravelStatus.MATCHED) {
 			throw new CustomException(ErrorCode.TRAVEL_ALREADY_IN_PROGRESS);
 		}
 	}
 
-	public void validateOwnership(Long userId, Travel travel) {
-		if (!travel.getUser().getId().equals(userId)) {
+	public void validateOwnership(Member member, Travel travel) {
+		Long ownerId = travel.getUser().getId();
+		Long requesterId = member.getId();
+
+		if (!Objects.equals(ownerId, requesterId)) {
 			throw new CustomException(ErrorCode.TRAVEL_ACCESS_DENIED);
 		}
 	}

@@ -1,10 +1,10 @@
 package com.tripmarket.domain.match.entity;
 
 import com.tripmarket.domain.guide.entity.Guide;
+import com.tripmarket.domain.match.enums.MatchRequestStatus;
+import com.tripmarket.domain.match.util.MatchRequestStatusUpdater;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.travel.entity.Travel;
-import com.tripmarket.global.exception.CustomException;
-import com.tripmarket.global.exception.ErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,8 +33,8 @@ public class GuideRequest {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private Member user; // 요청한 사용자
+	@JoinColumn(name = "member_id", nullable = false)
+	private Member member; // 요청한 사용자
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "guide_id", nullable = false)
@@ -46,28 +46,15 @@ public class GuideRequest {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private RequestStatus status = RequestStatus.PENDING;
+	@Builder.Default
+	private MatchRequestStatus status = MatchRequestStatus.PENDING;
 
-	public void updateStatus(RequestStatus newStatus) {
-		if (this.status == RequestStatus.ACCEPTED || this.status == RequestStatus.REJECTED) {
-			throw new CustomException(ErrorCode.REQUEST_ALREADY_PROCESSED);
-		}
-
-		if (newStatus == RequestStatus.PENDING) {
-			throw new CustomException(ErrorCode.INVALID_REQUEST_STATUS);
-		}
+	public void updateStatus(MatchRequestStatus newStatus) {
+		MatchRequestStatusUpdater.updateStatus(this.status, newStatus, this.travel);
 		this.status = newStatus;
-
-		if (newStatus == RequestStatus.ACCEPTED) {
-			this.travel.updateTravelStatus(Travel.Status.MATCHED);
-		}
-
-		if (newStatus == RequestStatus.REJECTED) {
-			this.travel.updateTravelStatus(Travel.Status.WAITING_FOR_MATCHING);
-		}
 	}
 
-	public enum RequestStatus {
-		PENDING, ACCEPTED, REJECTED
+	public void completeStatus() {
+		this.status = MatchRequestStatusUpdater.completeStatus(this.status);
 	}
 }
