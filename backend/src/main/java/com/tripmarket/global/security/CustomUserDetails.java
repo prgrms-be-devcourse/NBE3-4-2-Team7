@@ -8,12 +8,23 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.global.auth.AuthenticatedUser;
 
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, AuthenticatedUser {
 	private final Member member;
 
 	public CustomUserDetails(Member member) {
 		this.member = member;
+	}
+
+	@Override
+	public Long getId() {
+		return member.getId();
+	}
+
+	@Override
+	public String getEmail() {
+		return member.getEmail();
 	}
 
 	@Override

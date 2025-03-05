@@ -3,7 +3,6 @@ package com.tripmarket.global.jwt;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -18,8 +17,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import com.tripmarket.domain.member.entity.Member;
-import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.auth.AuthenticatedUser;
+import com.tripmarket.global.auth.TokenAuthentication;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.JwtAuthenticationException;
@@ -182,33 +182,17 @@ public class JwtTokenProvider {
 	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public Authentication getAuthentication(String token) {
-		Claims claims = parseClaims(token);
-		String email = claims.get("email", String.class);
+		Claims claims = parseClaims(token);  // 수정된 parseClaims 사용
 		Long userId = Long.valueOf(claims.getSubject());
-		String provider = claims.get("provider", String.class);
+		String email = claims.get("email", String.class);
 
-		Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get("auth").toString().split(","))
-			.map(SimpleGrantedAuthority::new)
-			.toList();
+		Collection<? extends GrantedAuthority> authorities =
+			Arrays.stream(claims.get("auth").toString().split(","))
+				.map(SimpleGrantedAuthority::new)
+				.toList();
 
-		Member member = memberRepository.findById(userId)
-			.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
-
-		if (Provider.LOCAL.name().equals(provider)) {
-			// 일반 로그인 - CustomUserDetails 사용
-			CustomUserDetails userDetails = new CustomUserDetails(member);
-			return new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
-
-		} else {
-			// OAuth2 로그인
-			CustomOAuth2User principal = new CustomOAuth2User(
-				authorities,
-				Map.of("id", userId, "email", email),
-				"id",
-				userId,
-				email);
-			return new UsernamePasswordAuthenticationToken(principal, "", authorities);
-		}
+		AuthenticatedUser principal = new TokenAuthentication(userId, email, authorities);
+		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 	}
 
 	/**
