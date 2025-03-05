@@ -6,6 +6,17 @@ interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
+const getAccessTokenFromCookie = (): string | null => {
+    const cookies = document.cookie.split("; ");
+    for (let i = 0; i < cookies.length; i++) {
+        const [name, value] = cookies[i].split("=");
+        if (name === "accessToken") {
+            return decodeURIComponent(value);
+        }
+    }
+    return null;
+};
+
 const axiosInstance = axios.create({
     baseURL: BACKEND_URL,
     withCredentials: true,
@@ -15,6 +26,20 @@ const axiosInstance = axios.create({
         'Accept': 'application/json'
     }
 });
+
+// 요청 인터셉터 - Authorization 헤더 설정
+axiosInstance.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        const accessToken = getAccessTokenFromCookie();
+        if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 // 토큰 갱신 진행 중인지 확인하는 플래그
 let isRefreshing = false;
@@ -79,7 +104,10 @@ axiosInstance.interceptors.response.use(
                         // 보호된 경로에서만 리다이렉트
                         const protectedRoutes = ['/travels/create', '/mypage'];
                         if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
-                            window.location.replace('/login');
+                            // 로그인 모달을 표시하기 위해 상태 업데이트
+                            window.dispatchEvent(new CustomEvent('showLoginModal'));
+                            // 안전한 페이지로 리다이렉트
+                            window.location.replace('/travels');
                         }
                     }
                     return Promise.reject(refreshError);

@@ -47,6 +47,8 @@ export interface GuideRequestDto {
     isGuideDeleted: boolean;
     memberName: string;
     status: string;
+    guideEmail: string;    // 가이드 이메일 추가
+    userEmail: string;    // 사용자 이메일 추가
 }
 
 // 📌 여행 요청 전체 조회 (페이징 및 선택적 카테고리 필터)

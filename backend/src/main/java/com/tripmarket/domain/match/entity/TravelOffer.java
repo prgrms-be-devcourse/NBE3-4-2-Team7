@@ -51,4 +51,8 @@ public class TravelOffer {
 		MatchRequestStatusUpdater.updateStatus(this.status, newStatus, this.travel);
 		this.status = newStatus;
 	}
+
+	public void completeStatus() {
+		this.status = MatchRequestStatusUpdater.completeStatus(this.status);
+	}
 }

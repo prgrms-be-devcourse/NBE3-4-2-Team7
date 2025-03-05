@@ -26,22 +26,28 @@ public class ReviewStatsService {
 		reviewStatsRepository.save(stats);
 	}
 
-	// 리뷰 수정 및 삭제 시
+	// 리뷰 수정시
 	@Transactional
 	public void updateReviewStats(Long guideId, double oldScore, Double newScore) {
 		ReviewStats stats = reviewStatsRepository.findById(guideId)
 			.orElseThrow(() -> new CustomException(ErrorCode.REVIEW_STATS_NOT_FOUND));
 
-		if (newScore == null) {
-			// 리뷰 삭제의 경우 (newScore가 null이면 삭제)
-			stats.removeReview(oldScore);
-		} else {
-			// 리뷰 수정의 경우
 			stats.updateReviewScore(oldScore, newScore);
-		}
 
 		reviewStatsRepository.save(stats);
 	}
+
+	// 리뷰 수정시
+	@Transactional
+	public void deleteReviewStats(Long guideId, double reviewScore) {
+		ReviewStats stats = reviewStatsRepository.findById(guideId)
+			.orElseThrow(() -> new CustomException(ErrorCode.REVIEW_STATS_NOT_FOUND));
+
+			stats.removeReview(reviewScore);
+
+		reviewStatsRepository.save(stats);
+	}
+
 
 	// 특정 가이드의 리뷰 통계를 조회
 	@Transactional(readOnly = true)

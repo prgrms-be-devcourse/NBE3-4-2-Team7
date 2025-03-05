@@ -12,6 +12,21 @@ public enum ErrorCode {
 	//Member
 	MEMBER_NOT_FOUND(NOT_FOUND, "사용자가 존재하지 않습니다"),
 
+	//Login
+	INVALID_TOKEN(UNAUTHORIZED, "잘못된 JWT 토큰입니다"),
+	EXPIRED_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다."),
+	UNSUPPORTED_TOKEN(UNAUTHORIZED, "지원하지 않는 토큰입니다."),
+	EMPTY_TOKEN(UNAUTHORIZED, "비어있는 토큰 입니다."),
+	REFRESH_TOKEN_NOT_FOUND(UNAUTHORIZED, "Refresh Token 이 존재하지 않습니다."),
+	TOKEN_REFRESH_FAILED(INTERNAL_SERVER_ERROR, "토큰 갱신 실패"),
+	INVALID_PASSWORD(BAD_REQUEST, "잘못된 비밀번호입니다."),
+	
+	// Logout
+	LOGOUT_FAILED(INTERNAL_SERVER_ERROR, "로그아웃 처리 중 서버 오류가 발생했습니다."),
+	INVALID_LOGOUT_REQUEST(BAD_REQUEST, "로그아웃 요청이 잘못되었습니다."),
+	INVALID_REFRESH_TOKEN(UNAUTHORIZED, "유효하지 않은 Refresh Token 입니다."),
+	TOKEN_REGISTRATION_FAILED(INTERNAL_SERVER_ERROR, "Access Token 을 블랙리스트에 등록하는 중 서버 오류가 발생했습니다."),
+
 	//Category
 	CATEGORY_NOT_FOUND(NOT_FOUND, "카테고리가 존재하지 않습니다."),
 
@@ -20,6 +35,7 @@ public enum ErrorCode {
 	TRAVEL_ACCESS_DENIED(FORBIDDEN, "현재 사용자가 본인이 작성한 여행 글이 아닙니다."),
 	TRAVEL_ALREADY_MATCHED(BAD_REQUEST, "이미 매칭된 여행 글입니다."),
 	TRAVEL_ALREADY_IN_PROGRESS(BAD_REQUEST, "이미 매칭 진행 중인 여행 요청 글입니다."),
+	INVALID_TRAVEL_STATUS(BAD_REQUEST, "매칭이 완료된 상태가 아닙니다"),
 
 	//Guide
 	GUIDE_NOT_FOUND(NOT_FOUND, "가이드가 존재하지 않습니다."),
@@ -61,7 +77,8 @@ public enum ErrorCode {
 	FAIL_MESSAGE_SEND(SERVICE_UNAVAILABLE, "메시지 전송에 실패했습니다."),
 	NOT_FOUND_CHAT_ROOM(NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 	STOMP_INVALID_HEADER(BAD_REQUEST, "Stomp 헤더값이 누락되었습니다."),
-	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다.");
+	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다."),
+	SESSION_ERROR(NOT_FOUND, "세션이 존재하지 않습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

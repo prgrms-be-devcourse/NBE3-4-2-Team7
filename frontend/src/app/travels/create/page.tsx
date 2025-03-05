@@ -5,10 +5,17 @@ import {useRouter} from "next/navigation";
 import Link from "next/link";
 import {createTravel, TravelCreateRequest} from "../../travel/services/travelService";
 
+const categoryOptions = [
+    {id: 1, name: "힐링"},
+    {id: 2, name: "먹기행"},
+    {id: 3, name: "자연 친화"},
+    {id: 4, name: "엑티비티"}
+];
+
 const CreateTravelPage: React.FC = () => {
     const router = useRouter();
     const [formData, setFormData] = useState<TravelCreateRequest>({
-        categoryId: 0,
+        categoryId: 1,  // 기본값: 힐링 (ID: 1)
         city: "",
         places: "",
         travelPeriod: {
@@ -20,15 +27,17 @@ const CreateTravelPage: React.FC = () => {
     });
     const [error, setError] = useState<string>("");
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const {name, value} = e.target;
         if (name === "startDate" || name === "endDate") {
             setFormData({
                 ...formData,
                 travelPeriod: {...formData.travelPeriod, [name]: value}
             });
-        } else if (name === "categoryId" || name === "participants") {
-            setFormData({...formData, [name]: Number(value)});
+        } else if (name === "categoryId") {
+            setFormData({...formData, categoryId: Number(value)});
+        } else if (name === "participants") {
+            setFormData({...formData, participants: Number(value)});
         } else {
             setFormData({...formData, [name]: value});
         }
@@ -45,6 +54,7 @@ const CreateTravelPage: React.FC = () => {
                 setError("여행 요청 생성에 실패했습니다.");
             });
     };
+
     return (
         <div style={styles.container}>
             <div style={styles.card}>
@@ -55,15 +65,20 @@ const CreateTravelPage: React.FC = () => {
                 {error && <p style={styles.error}>{error}</p>}
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.formGroup}>
-                        <label style={styles.label}>카테고리 ID:</label>
-                        <input
-                            type="number"
+                        <label style={styles.label}>여행 카테고리:</label>
+                        <select
                             name="categoryId"
                             value={formData.categoryId}
                             onChange={handleChange}
                             required
                             style={styles.input}
-                        />
+                        >
+                            {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div style={styles.formGroup}>
                         <label style={styles.label}>도시:</label>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Playfair_Display } from 'next/font/google';
+import { AiOutlineMessage } from 'react-icons/ai';
 
 const playfair = Playfair_Display({ subsets: ['latin'] });
 
@@ -48,6 +49,10 @@ const UserHeader: React.FC = () => {
         setIsDropdownOpen(false);
     };
 
+    const handleChatClick = () => {
+        router.push('/chat-rooms'); // 채팅방 목록 경로로 이동
+    };
+
     return (
         <header className="w-full bg-white shadow-sm">
             <div className="w-full h-16 flex items-center justify-between px-0">
@@ -70,6 +75,11 @@ const UserHeader: React.FC = () => {
                         <span className="mr-4 text-[#1a237e] font-medium whitespace-nowrap">
                             {user?.name}님 환영합니다!
                         </span>
+                        <AiOutlineMessage 
+                                    className="text-3xl mr-5 text-blue-700 cursor-pointer hover:opacity-80 transition-opacity" 
+                                    onClick={handleChatClick} 
+                                    title="채팅방으로 이동"
+                                    />
                         <div className="relative">
                             <button
                                 ref={buttonRef}
@@ -77,11 +87,17 @@ const UserHeader: React.FC = () => {
                                 className="relative hover:opacity-80 transition-opacity"
                             >
                                 <Image
-                                    src={user?.imageUrl || '/default-profile.png'}
+                                    src={user?.imageUrl && user.imageUrl.startsWith('http') 
+                                        ? user.imageUrl 
+                                        : 'https://i.imgur.com/yCUGLR3.jpeg'}
                                     alt="프로필"
                                     width={40}
                                     height={40}
                                     className="rounded-full"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = 'https://i.imgur.com/yCUGLR3.jpeg';
+                                    }}
                                 />
                             </button>
                             

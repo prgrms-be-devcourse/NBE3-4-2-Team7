@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tripmarket.domain.chatting.dto.ChattingResponseDto;
 import com.tripmarket.domain.chatting.dto.ChattingRoomsResponseDto;
 import com.tripmarket.domain.chatting.dto.CreateChattingRoomResponseDto;
+import com.tripmarket.domain.chatting.dto.ReceiverResponseDto;
 import com.tripmarket.domain.chatting.entity.ChattingRoom;
 import com.tripmarket.domain.chatting.entity.ChattingRoomParticipant;
 import com.tripmarket.domain.chatting.entity.Message;
@@ -86,8 +87,8 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 
 	//채팅내역 받기
 	@Override
-	public Page<ChattingResponseDto> getChattingMessages(String roomId, Pageable pageable) {
-		Page<Message> messages = messageRepository.findMessagesByRoom(roomId, pageable);
+	public List<ChattingResponseDto> getChattingMessages(String roomId) {
+		List<Message> messages = messageRepository.findMessagesByRoom(roomId);
 
 		return getMessages(messages);
 	}
@@ -106,7 +107,6 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		}
 	}
 
-	//채팅방 들어갔을때 기존에 안읽음 처리되었던 메시지들 읽음처리
 	@Override
 	@Transactional
 	public void markMessagesAsRead(String roomId, String userEmail) {
@@ -114,10 +114,27 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 
 		for (Message message : unreadMessages) {
 			message.updateRead(true);
+			log.info("Updating message read status for ID: {}", message.getId());
 		}
 
-		messageRepository.saveAll(unreadMessages);
+		messageRepository.saveAll(unreadMessages);  // 저장
+
+		// 확인용으로 다시 읽어와서 readStatus가 바뀌었는지 검사
+		List<Message> updatedMessages = messageRepository.findUnreadMessages(roomId, userEmail);
+		if (updatedMessages.isEmpty()) {
+			log.info("All messages marked as read successfully.");
+		} else {
+			log.error("Unread messages still exist, possible save issue.");
+		}
+
 		redisChattingService.resetUnreadCount(roomId, userEmail);
+	}
+
+	@Override
+	public ReceiverResponseDto getReceiverEmail(String roomId, String userEmail) {
+		ChattingRoom chattingRoom = findChattingRoom(roomId);
+		Member receiver = getReceiver(userEmail, chattingRoom);
+		return ReceiverResponseDto.of(receiver.getEmail());
 	}
 
 	// 채팅방 한명만 나갔을경우 다시 기존방에 들어가는 메서드
@@ -144,13 +161,12 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 		return chattingRoom;
 	}
 
-	private Page<ChattingResponseDto> getMessages(Page<Message> messages) {
-		return messages.map(message -> {
+	private List<ChattingResponseDto> getMessages(List<Message> messages) {
+		return messages.stream().map(message -> {
 			Member sender = memberRepository.findByEmail(message.getSender())
 				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-			return ChattingResponseDto.of(
-				message, sender);
-		});
+			return ChattingResponseDto.of(message, sender);
+		}).collect(Collectors.toList());
 	}
 
 	private List<ChattingRoomsResponseDto> getChattingRoomsResponse(String userEmail,

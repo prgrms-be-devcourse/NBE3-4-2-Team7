@@ -4,13 +4,13 @@ import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import {getTravels, TravelDto} from "../travel/services/travelService";
 import {getGuides, GuideDto} from "../guide/services/guideService";
-import { useAuth } from '../contexts/AuthContext';
+import {useAuth} from '../contexts/AuthContext';
 import LoginModal from '../components/LoginModal';
-import { IoLocationSharp, IoCalendarClear, IoPeople, IoChevronBack } from "react-icons/io5";
+import {IoCalendarClear, IoChevronBack, IoLocationSharp, IoPeople} from "react-icons/io5";
 import Image from 'next/image';
 
 const TravelListPage: React.FC = () => {
-    const { user } = useAuth();
+    const {user} = useAuth();
     const [travels, setTravels] = useState<TravelDto[]>([]);
     const [guides, setGuides] = useState<GuideDto[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -21,8 +21,8 @@ const TravelListPage: React.FC = () => {
     useEffect(() => {
         setLoading(true);
         Promise.all([
-            getTravels().catch(() => ({ data: { content: [] } })),
-            getGuides().catch(() => ({ data: [] }))
+            getTravels().catch(() => ({data: {content: []}})),
+            getGuides().catch(() => ({data: []}))
         ])
             .then(([travelResponse, guideResponse]) => {
                 setTravels(travelResponse.data.content);
@@ -54,8 +54,8 @@ const TravelListPage: React.FC = () => {
     if (error) return <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-red-600">
             <p className="text-lg">{error}</p>
-            <button 
-                onClick={() => window.location.reload()} 
+            <button
+                onClick={() => window.location.reload()}
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
                 다시 시도
@@ -105,28 +105,30 @@ const TravelListPage: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* 여행 요청 목록 */}
                         <div className="space-y-6">
-                            <div className="flex justify-between items-center mb-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm">
+                            <div
+                                className="flex justify-between items-center mb-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm">
                                 <h2 className="text-2xl font-bold text-gray-800 select-none">
                                     진행중인 여행 요청
                                 </h2>
-                                <button 
+                                <button
                                     onClick={() => router.push('/travels/list')}
                                     className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
                                 >
                                     <span className="select-none">더보기</span>
-                                    <IoChevronBack className="w-5 h-5 rotate-180 ml-1" />
+                                    <IoChevronBack className="w-5 h-5 rotate-180 ml-1"/>
                                 </button>
                             </div>
-                            
+
                             {/* 여행 요청 카드들 */}
                             <div className="space-y-4">
                                 {travels.length === 0 ? (
-                                    <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center text-gray-500">
+                                    <div
+                                        className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center text-gray-500">
                                         현재 진행중인 여행 요청이 없습니다.
                                     </div>
                                 ) : (
                                     travels.slice(0, 3).map((travel) => (
-                                        <div 
+                                        <div
                                             key={travel.id}
                                             className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md 
                                                      transition-shadow p-6"
@@ -137,23 +139,26 @@ const TravelListPage: React.FC = () => {
                                                 </h3>
                                                 <span className={`px-3 py-1 rounded-full text-sm font-medium select-none
                                                     ${travel.status === 'WAITING_FOR_MATCHING' ? 'bg-yellow-100 text-yellow-800' :
-                                                      travel.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                                                      'bg-green-100 text-green-800'}`}>
+                                                    travel.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                                                        travel.status === 'COMPLETED' ? 'bg-gray-300 text-gray-800' :
+                                                            'bg-green-100 text-green-800'}`}>
                                                     {travel.status === 'WAITING_FOR_MATCHING' ? '매칭 대기중' :
-                                                     travel.status === 'IN_PROGRESS' ? '진행중' : '매칭 완료'}
+                                                        travel.status === 'IN_PROGRESS' ? '진행중' :
+                                                            travel.status === 'COMPLETED' ? '여행 완료' :
+                                                                '매칭 완료'}
                                                 </span>
                                             </div>
                                             <div className="space-y-2 text-gray-600 select-none">
                                                 <div className="flex items-center">
-                                                    <IoLocationSharp className="w-5 h-5 mr-2" />
+                                                    <IoLocationSharp className="w-5 h-5 mr-2"/>
                                                     <span>{travel.places}</span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <IoCalendarClear className="w-5 h-5 mr-2" />
+                                                    <IoCalendarClear className="w-5 h-5 mr-2"/>
                                                     <span>{travel.startDate} - {travel.endDate}</span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <IoPeople className="w-5 h-5 mr-2" />
+                                                    <IoPeople className="w-5 h-5 mr-2"/>
                                                     <span>{travel.participants}명</span>
                                                 </div>
                                             </div>
@@ -173,28 +178,30 @@ const TravelListPage: React.FC = () => {
 
                         {/* 추천 가이드 목록 */}
                         <div className="space-y-6">
-                            <div className="flex justify-between items-center mb-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm">
+                            <div
+                                className="flex justify-between items-center mb-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm">
                                 <h2 className="text-2xl font-bold text-gray-800 select-none">
                                     추천 가이드
                                 </h2>
-                                <button 
+                                <button
                                     onClick={() => router.push('/guides')}
                                     className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
                                 >
                                     <span className="select-none">더보기</span>
-                                    <IoChevronBack className="w-5 h-5 rotate-180 ml-1" />
+                                    <IoChevronBack className="w-5 h-5 rotate-180 ml-1"/>
                                 </button>
                             </div>
-                            
+
                             {/* 가이드 카드들 */}
                             <div className="space-y-4">
                                 {guides.length === 0 ? (
-                                    <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center text-gray-500">
+                                    <div
+                                        className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center text-gray-500">
                                         현재 등록된 가이드가 없습니다.
                                     </div>
                                 ) : (
                                     guides.slice(0, 3).map((guide) => (
-                                        <div 
+                                        <div
                                             key={guide.id}
                                             className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md 
                                                      transition-shadow p-6 cursor-pointer"
@@ -231,7 +238,7 @@ const TravelListPage: React.FC = () => {
             </div>
 
             {showLoginModal && (
-                <LoginModal onClose={() => setShowLoginModal(false)} />
+                <LoginModal onClose={() => setShowLoginModal(false)}/>
             )}
         </div>
     );

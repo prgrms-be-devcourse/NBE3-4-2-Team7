@@ -1,7 +1,12 @@
 package com.tripmarket.domain.member.entity;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
+import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -41,14 +46,14 @@ public class Member extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private Role role; // 회원 역할 (예: 관리자, 사용자)
 
-	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
-	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE 등)
+	@Column(columnDefinition = "VARCHAR(10) CHECK (provider IN ('KAKAO', 'GOOGLE', 'GITHUB', 'LOCAL'))")
+	private Provider provider; // OAuth2 제공자 (KAKAO, GOOGLE, LOCAL 등)
 
 	@Column(nullable = false)
 	private Boolean hasGuideProfile = false; // 가이드 프로필 여부
 
-	@Column(nullable = false, unique = true)
+	@Column(unique = true)
 	private String providerId; // OAuth2 회원 고유 ID
 
 	private String imageUrl;
@@ -60,14 +65,53 @@ public class Member extends BaseEntity {
 	private Guide guide;
 
 	@Builder
-	public Member(String name, String email, String providerId, String imageUrl, Provider provider) {
+	private Member(String name, String email, String password, String providerId, String imageUrl, Provider provider) {
 		this.name = name;
 		this.email = email;
+		this.password = password;
 		this.provider = provider;
 		this.providerId = providerId;
-		this.imageUrl = imageUrl;
+		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
+			? imageUrl
+			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 		this.role = Role.ROLE_USER;
 	}
+
+	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
+		return Member.builder()
+			.name(signUpRequestDto.name())
+			.email(signUpRequestDto.email())
+			.password(passwordEncoder.encode(signUpRequestDto.password()))
+			.provider(Provider.LOCAL)
+			.providerId(null)
+			.imageUrl(signUpRequestDto.imageUrl())
+			.build();
+	}
+
+	public static Member createSocialMember(OAuth2UserInfo userInfo, Provider provider) {
+		return Member.builder()
+			.email(userInfo.getEmail())
+			.name(userInfo.getName())
+			.password(null)
+			.provider(provider)
+			.providerId(userInfo.getId())
+			.imageUrl(userInfo.getImageUrl())
+			.build();
+	}
+
+	// public Member(String name, String email, String password, String imageUrl) {
+	// 	this.name = name;
+	// 	this.email = email;
+	// 	this.password = password;
+	// 	this.provider = Provider.LOCAL;
+	// 	this.role = Role.ROLE_USER;
+	// 	this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
+	// 			? imageUrl
+	// 			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+	// }
+
+
+
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
@@ -79,8 +123,8 @@ public class Member extends BaseEntity {
 	}
 
 	/**
-	 * 	멤버에 가이드 프로필 추가하는 함수
-	 * */
+	 * 멤버에 가이드 프로필 추가하는 함수
+	 */
 	public void addGuideProfile(Guide guide) {
 		this.guide = guide;
 		this.hasGuideProfile = true;
@@ -101,5 +145,4 @@ public class Member extends BaseEntity {
 	public boolean isAdmin() {
 		return this.role == Role.ROLE_ADMIN;
 	}
-
 }
