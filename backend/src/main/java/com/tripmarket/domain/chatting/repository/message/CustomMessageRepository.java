@@ -11,5 +11,5 @@ public interface CustomMessageRepository {
 
 	void deleteByRoomId(String roomId);
 
-	List<Message> findUnreadMessages(String roomId, String userEmail);
+	void deleteMessage(String roomId, String sender);
 }
