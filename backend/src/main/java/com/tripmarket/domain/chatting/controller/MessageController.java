@@ -1,7 +1,6 @@
 package com.tripmarket.domain.chatting.controller;
 
 import com.tripmarket.domain.chatting.dto.MessageDto;
-import com.tripmarket.domain.chatting.service.ChattingRoomService;
 import com.tripmarket.domain.chatting.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
@@ -9,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Controller;
 public class MessageController {
 
 	private final MessageService messageService;
-	private final ChattingRoomService chattingRoomService;
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
 	@MessageMapping("/chat.message.{roomId}")
@@ -29,7 +26,6 @@ public class MessageController {
 
 	@MessageMapping("/chat.read.{roomId}")
 	public void markMessagesAsRead(@DestinationVariable String roomId, MessageDto messageDto) {
-		chattingRoomService.markMessagesAsRead(roomId, messageDto.receiver());
 		simpMessagingTemplate.convertAndSend("/topic/chat.read." + roomId, messageDto);
 	}
 
