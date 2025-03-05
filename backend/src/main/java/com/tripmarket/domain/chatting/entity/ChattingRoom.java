@@ -19,6 +19,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @Getter
 @AllArgsConstructor
+@Table(name = "chatting_room", indexes = {
+	@Index(name = "idx_chattingRoom_isDelete", columnList = "isDelete")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChattingRoom extends BaseEntity {
 
