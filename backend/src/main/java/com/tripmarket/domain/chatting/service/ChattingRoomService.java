@@ -15,6 +15,5 @@ public interface ChattingRoomService {
 	Page<ChattingRoomsResponseDto> findChattingRooms(String userEmail, String search, Pageable pageable);
 	List<ChattingResponseDto> getChattingMessages(String roomId);
 	void leaveChattingRoom(String userEmail, String roomId);
-	void markMessagesAsRead(String roomId, String userEmail);
 	ReceiverResponseDto getReceiverEmail(String roomId, String userEmail);
 }
