@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tripmarket.domain.auth.dto.LoginRequestDTO;
-import com.tripmarket.domain.auth.dto.SignUpRequestDTO;
+import com.tripmarket.domain.auth.dto.LoginRequestDto;
+import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.auth.service.AuthService;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.util.CookieUtil;
@@ -41,21 +41,21 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	@Operation(summary = "일반 회원가입")
-	public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
-		authService.signUp(signUpRequestDTO);
-		return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
+	public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+		authService.signUp(signUpRequestDto);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 	@PostMapping("/login")
 	@Operation(summary = "일반 로그인")
 	public ResponseEntity<String> login(
-			@Valid @RequestBody LoginRequestDTO loginRequestDTO,
-			HttpServletResponse response) {
-		log.debug("로그인 시도 - email: {}", loginRequestDTO.email());
+		@Valid @RequestBody LoginRequestDto loginRequestDto,
+		HttpServletResponse response) {
+		log.debug("로그인 시도 - email: {}", loginRequestDto.email());
 
 		try {
 			// 로그인 처리 및 토큰 발급
-			Map<String, String> tokens = authService.login(loginRequestDTO);
+			Map<String, String> tokens = authService.login(loginRequestDto);
 
 			// Access Token 쿠키 설정
 			ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(tokens.get("accessToken"));
@@ -64,11 +64,11 @@ public class AuthController {
 			response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
 			response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
-			log.debug("로그인 성공 - email: {}", loginRequestDTO.email());
-			return ResponseEntity.status(HttpStatus.OK).body("로그인 성공");
+			log.debug("로그인 성공 - email: {}", loginRequestDto.email());
+			return ResponseEntity.status(HttpStatus.OK).build();
 
 		} catch (Exception e) {
-			log.error("로그인 실패 - email: {}, error: {}", loginRequestDTO.email(), e.getMessage());
+			log.error("로그인 실패 - email: {}, error: {}", loginRequestDto.email(), e.getMessage());
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
 		}
 	}
@@ -96,7 +96,7 @@ public class AuthController {
 		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(newAccessToken);
 		response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
 
-		return ResponseEntity.status(HttpStatus.OK).body("엑세스 토큰이 갱신되었습니다.");
+		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 
 	/**
@@ -115,7 +115,7 @@ public class AuthController {
 		try {
 			authService.logout(request, response);
 			log.info("로그아웃 성공");
-			return ResponseEntity.status(HttpStatus.OK).body("로그아웃이 성공적으로 완료되었습니다.");
+			return ResponseEntity.status(HttpStatus.OK).build();
 
 		} catch (Exception e) {
 			log.error("로그아웃 실패: {}", e.getMessage());

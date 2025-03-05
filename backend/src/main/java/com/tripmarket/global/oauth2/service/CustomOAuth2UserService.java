@@ -49,15 +49,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
 		// 현재 진행중인 서비스를 구분하기 위해 문자열로 받음
 		String registrationId = userRequest.getClientRegistration().getRegistrationId();
-		log.debug("Provider: {}", registrationId);
-		log.debug("OAuth2User attributes: {}", oAuth2User.getAttributes());
+		log.info("OAuth2 Provider: {}", registrationId);
 
 		// OAuth2 로그인 시 키가 되는 필드값 (PK)
 		String usernameAttributeName = userRequest.getClientRegistration()
 			.getProviderDetails()
 			.getUserInfoEndpoint()
 			.getUserNameAttributeName();
-		log.debug("Username attribute name: {}", usernameAttributeName);
+		log.info("Username attribute name: {}", usernameAttributeName);
 
 		// OAuth2UserInfo 객체 생성
 		OAuth2UserInfo userInfo = switch (registrationId.toLowerCase()) {
@@ -67,12 +66,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 			default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
 		};
 
-		log.debug("Extracted user info - id:{}, email: {}, name: {}",
+		log.info("Extracted user info - id:{}, email: {}, name: {}",
 			userInfo.getId(), userInfo.getEmail(), userInfo.getName());
 
 		// 유저 정보 저장 또는 업데이트
 		Member member = saveOrUpdate(userInfo, registrationId);
-		log.debug("Saved/Updated member - id: {}, email: {}", member.getId(), member.getEmail());
+		log.info("Saved/Updated member - id: {}, email: {}",
+			member.getId(), member.getEmail());
 
 		return new CustomOAuth2User(
 			Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())),
@@ -103,15 +103,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 				userInfo.getImageUrl()
 			);
 			return member;
+
 		} else {
 			// 새 회원이면 회원가입
-			Member member = Member.builder()
-				.email(userInfo.getEmail())
-				.name(userInfo.getName())
-				.providerId(userInfo.getId())
-				.provider(provider)
-				.imageUrl(userInfo.getImageUrl())
-				.build();
+			Member member = Member.createSocialMember(userInfo, provider);
 			return memberRepository.save(member);
 		}
 	}
@@ -125,7 +120,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 		try {
 			return Provider.valueOf(registrationId.toUpperCase());
 		} catch (IllegalArgumentException e) {
-			log.debug("Unsupported OAuth2 provider: {}", registrationId);
+			log.warn("지원하지 않는 OAuth2 Provider 요청: {}", registrationId);
 			throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
 		}
 	}

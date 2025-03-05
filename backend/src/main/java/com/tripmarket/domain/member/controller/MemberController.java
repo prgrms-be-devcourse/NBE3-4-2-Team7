@@ -5,17 +5,14 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripmarket.domain.match.dto.GuideRequestDto;
 import com.tripmarket.domain.match.dto.TravelOfferDto;
 import com.tripmarket.domain.match.service.GuideRequestService;
-import com.tripmarket.domain.member.dto.MemberResponseDTO;
+import com.tripmarket.domain.member.dto.MemberResponseDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
@@ -23,8 +20,6 @@ import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +35,10 @@ public class MemberController {
 
 	@GetMapping("/me")
 	@Operation(summary = "내 정보 조회")
-	public ResponseEntity<MemberResponseDTO> getMyInfo(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+	public ResponseEntity<MemberResponseDto> getMyInfo(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 		log.debug("OAuth2User: {}", oAuth2User);
 		Member member = memberService.getMemberById(oAuth2User.getId());
-		return ResponseEntity.status(HttpStatus.OK).body(MemberResponseDTO.from(member));
+		return ResponseEntity.status(HttpStatus.OK).body(MemberResponseDto.from(member));
 	}
 
 	/**

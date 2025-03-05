@@ -55,8 +55,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 		Long userId = oAuth2User.getId();
 
-		log.debug("OAuth2 사용자 정보 - userId: {}, email: {}", userId, oAuth2User.getEmail());
-
 		// Access Token 생성 및 쿠키에 설정 (30분)
 		String accessToken = jwtTokenProvider.createAccessToken(authentication);
 		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(accessToken);

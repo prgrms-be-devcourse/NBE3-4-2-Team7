@@ -2,8 +2,6 @@ package com.tripmarket.global.jwt;
 
 import java.io.IOException;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -12,7 +10,6 @@ import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.util.CookieUtil;
 
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,16 +32,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 
 		// SecurityConfig의 permitAll()과 일치하는 경로들
-		return path.startsWith("/h2-console") ||
-				path.startsWith("/swagger-ui") ||
-				path.startsWith("/api-docs") ||
-				path.startsWith("/chat-test.html") ||
-				path.startsWith("/chat") ||
-				path.equals("/") ||
-				path.startsWith("/auth") ||
-				path.startsWith("/oauth2") ||
-				path.startsWith("/login/auth") ||
-				path.startsWith("/login/oauth2");
+		return path.startsWith("/h2-console")
+			|| path.startsWith("/swagger-ui")
+			|| path.startsWith("/api-docs")
+			|| path.startsWith("/chat-test.html")
+			|| path.startsWith("/chat")
+			|| path.equals("/")
+			|| path.startsWith("/auth")
+			|| path.startsWith("/oauth2")
+			|| path.startsWith("/login/auth")
+			|| path.startsWith("/login/oauth2");
 	}
 
 	/**
@@ -55,8 +52,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	 * 4. 인증 정보 설정
 	 */
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-			FilterChain filterChain) throws IOException {
+	protected void doFilterInternal(
+		HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException {
 		try {
 			String accessToken = cookieUtil.extractAccessTokenFromCookie(request);
 

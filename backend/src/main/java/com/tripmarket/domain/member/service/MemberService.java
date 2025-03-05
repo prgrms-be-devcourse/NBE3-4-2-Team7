@@ -19,7 +19,6 @@ import com.tripmarket.domain.travel.repository.TravelRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,7 +89,7 @@ public class MemberService {
 		}
 
 		return guideRequestRepository.findByGuideId(member.getGuide().getId()).stream()
-			.map(guideRequest -> GuideRequestDto.response(guideRequest,email))
+			.map(guideRequest -> GuideRequestDto.response(guideRequest, email))
 			.toList();
 	}
 
@@ -103,7 +102,7 @@ public class MemberService {
 		}
 
 		return travelOfferRepository.findByGuideId(member.getGuide().getId()).stream()
-			.map(travelOffer -> TravelOfferDto.response(travelOffer,email))
+			.map(travelOffer -> TravelOfferDto.response(travelOffer, email))
 			.toList();
 	}
 

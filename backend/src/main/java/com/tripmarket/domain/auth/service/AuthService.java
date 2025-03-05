@@ -13,8 +13,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.tripmarket.domain.auth.dto.LoginRequestDTO;
-import com.tripmarket.domain.auth.dto.SignUpRequestDTO;
+import com.tripmarket.domain.auth.dto.LoginRequestDto;
+import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.JwtAuthenticationException;
@@ -40,15 +40,14 @@ public class AuthService {
 	private final CookieUtil cookieUtil;
 
 	public void logout(HttpServletRequest request, HttpServletResponse response) {
-		log.info("로그아웃 요청 수신");
+		log.debug("로그아웃 요청 수신");
 
 		String logoutRefreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 		String logoutAccessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
 		try {
-			// 1. RefreshToken에서 사용자 ID 추출
+			// 1. RefreshToken 에서 사용자 ID 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
-			log.debug("로그아웃 userId: {}" , userId);
 
 			// 2. AccessToken 이 유효하면 블랙리스트 추가
 			if (jwtTokenProvider.validateToken(logoutAccessToken)) {
@@ -69,7 +68,6 @@ public class AuthService {
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
 			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
 
-			log.debug("로그아웃 처리 완료 - userId: {}", userId);
 		} catch (Exception e) {
 			log.error("로그아웃 처리 중 오류 발생", e);
 			throw new JwtAuthenticationException("로그아웃 처리 중 오류가 발생했습니다.");
@@ -77,44 +75,39 @@ public class AuthService {
 	}
 
 	@Transactional
-	public void signUp(SignUpRequestDTO signUpRequestDTO) {
+	public void signUp(SignUpRequestDto signUpRequestDto) {
 		// 중복 검사
-		if (memberRepository.findByEmail(signUpRequestDTO.email()).isPresent()) {
+		if (memberRepository.findByEmail(signUpRequestDto.email()).isPresent()) {
 			throw new JwtAuthenticationException("이미 가입된 이메일입니다.");
 		}
 
-		Member member = new Member(
-				signUpRequestDTO.name(),
-				signUpRequestDTO.email(),
-				passwordEncoder.encode(signUpRequestDTO.password()),
-				signUpRequestDTO.imageUrl());
-
+		Member member = Member.createNormalMember(signUpRequestDto, passwordEncoder);
 		memberRepository.save(member);
 	}
 
 	@Transactional
-	public Map<String, String> login(LoginRequestDTO loginRequestDTO) {
-		log.info("로그인 요청 - email: {}", loginRequestDTO.email());
+	public Map<String, String> login(LoginRequestDto loginRequestDto) {
+		log.info("로그인 요청 - email: {}", loginRequestDto.email());
 
 		// 1. 회원 존재 여부 확인
-		Member member = memberRepository.findByEmail(loginRequestDTO.email())
-				.orElseThrow(() -> {
-					log.warn("로그인 실패 - 존재하지 않는 이메일: {}", loginRequestDTO.email());
-					return new JwtAuthenticationException("가입되지 않은 이메일입니다.");
-				});
+		Member member = memberRepository.findByEmail(loginRequestDto.email())
+			.orElseThrow(() -> {
+				log.warn("로그인 실패 - 존재하지 않는 이메일: {}", loginRequestDto.email());
+				return new JwtAuthenticationException("가입되지 않은 이메일입니다.");
+			});
 
 		// 2. 비밀번호 확인
-		if (!passwordEncoder.matches(loginRequestDTO.password(), member.getPassword())) {
-			log.warn("로그인 실패 - 잘못된 비밀번호: {}", loginRequestDTO.email());
+		if (!passwordEncoder.matches(loginRequestDto.password(), member.getPassword())) {
+			log.warn("로그인 실패 - 잘못된 비밀번호: {}", loginRequestDto.email());
 			throw new JwtAuthenticationException("잘못된 비밀번호입니다.");
 		}
 
 		// 3. CustomUserDetails를 사용한 인증 객체 생성
 		CustomUserDetails userDetails = new CustomUserDetails(member);
 		Authentication authentication = new UsernamePasswordAuthenticationToken(
-				userDetails, // principal을 CustomUserDetails로 변경
-				null, // credentials
-				userDetails.getAuthorities() // authorities도 CustomUserDetails에서 가져옴
+			userDetails, // principal을 CustomUserDetails로 변경
+			null, // credentials
+			userDetails.getAuthorities() // authorities도 CustomUserDetails에서 가져옴
 		);
 
 		// 4. JWT 토큰 생성
@@ -125,7 +118,6 @@ public class AuthService {
 		// 5. Refresh Token을 Redis에 저장
 		redisTemplate.opsForValue()
 			.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
-		log.debug("RefreshToken 저장 완료 - userId: {}", member.getId());
 
 		log.info("로그인 성공 - email: {}", member.getEmail());
 		return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
@@ -139,7 +131,6 @@ public class AuthService {
 
 			// 2. Refresh Token에서 userId 추출
 			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
-			log.debug("✅ Refresh Token 검증 완료 - userId: {}", userId);
 
 			// 3. Redis에 저장된 Refresh Token 확인
 			String storedRefreshToken = redisTemplate.opsForValue().get("RT:" + userId);
@@ -150,15 +141,14 @@ public class AuthService {
 
 			// 4. Member 정보 조회
 			Member member = memberRepository.findById(userId)
-					.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
 
 			// 5. 새로운 Access Token 생성
 			Authentication authentication = new UsernamePasswordAuthenticationToken(
-					new CustomUserDetails(member),
-					null,
-					Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
+				new CustomUserDetails(member),
+				null,
+				Collections.singleton(new SimpleGrantedAuthority(member.getRole().name())));
 
-			log.debug("Access token 발급 완료 - userId: {}", userId);
 			return jwtTokenProvider.createAccessToken(authentication);
 
 		} catch (Exception e) {

@@ -1,7 +1,12 @@
 package com.tripmarket.domain.member.entity;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
+import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -60,24 +65,53 @@ public class Member extends BaseEntity {
 	private Guide guide;
 
 	@Builder
-	public Member(String name, String email, String providerId, String imageUrl, Provider provider) {
-		this.name = name;
-		this.email = email;
-		this.provider = provider;
-		this.providerId = providerId;
-		this.imageUrl = imageUrl;
-		this.role = Role.ROLE_USER;
-	}
-
-	public Member(String name, String email, String password, String imageUrl) {
+	private Member(String name, String email, String password, String providerId, String imageUrl, Provider provider) {
 		this.name = name;
 		this.email = email;
 		this.password = password;
-		this.role = Role.ROLE_USER;
+		this.provider = provider;
+		this.providerId = providerId;
 		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-				? imageUrl
-				: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+			? imageUrl
+			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+		this.role = Role.ROLE_USER;
 	}
+
+	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
+		return Member.builder()
+			.name(signUpRequestDto.name())
+			.email(signUpRequestDto.email())
+			.password(passwordEncoder.encode(signUpRequestDto.password()))
+			.provider(Provider.LOCAL)
+			.providerId(null)
+			.imageUrl(signUpRequestDto.imageUrl())
+			.build();
+	}
+
+	public static Member createSocialMember(OAuth2UserInfo userInfo, Provider provider) {
+		return Member.builder()
+			.email(userInfo.getEmail())
+			.name(userInfo.getName())
+			.password(null)
+			.provider(provider)
+			.providerId(userInfo.getId())
+			.imageUrl(userInfo.getImageUrl())
+			.build();
+	}
+
+	// public Member(String name, String email, String password, String imageUrl) {
+	// 	this.name = name;
+	// 	this.email = email;
+	// 	this.password = password;
+	// 	this.provider = Provider.LOCAL;
+	// 	this.role = Role.ROLE_USER;
+	// 	this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
+	// 			? imageUrl
+	// 			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+	// }
+
+
+
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트

@@ -43,12 +43,11 @@ public class CookieUtil {
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
 				if (cookieName.equals(cookie.getName())) {
-					log.debug("쿠키에서 {} 추출: {}", cookieName, cookie.getValue());
+					log.info("쿠키에서 {} 추출 완료", cookieName);
 					return cookie.getValue();
 				}
 			}
 		}
-		log.debug("쿠키에서 {}을 찾을 수 없음", cookieName);
 		return null;
 	}
 
@@ -60,27 +59,27 @@ public class CookieUtil {
 	 */
 	public ResponseCookie createAccessTokenCookie(String token) {
 		ResponseCookie cookie = ResponseCookie.from("accessToken", token)
-				.httpOnly(false) // JavaScript에서 접근 불가
-				.secure(false) // HTTPS에서만 전송, localhost에서는 false로 설정해야 함
-				.sameSite("Lax") // CSRF 방지
-				.path("/") // 모든 경로에서 접근 가능
-				.maxAge(accessTokenValidityInSeconds)
-				.build();
+			.httpOnly(false) // JavaScript에서 접근 불가
+			.secure(false) // HTTPS에서만 전송, localhost에서는 false로 설정해야 함
+			.sameSite("Lax") // CSRF 방지
+			.path("/") // 모든 경로에서 접근 가능
+			.maxAge(accessTokenValidityInSeconds)
+			.build();
 
-		log.debug("Access Token 쿠키 생성: {}", cookie);
+		log.info("Access Token 쿠키 생성 완료");
 		return cookie;
 	}
 
 	public ResponseCookie createRefreshTokenCookie(String refreshToken) {
 		ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-				.httpOnly(false)
-				.secure(false)
-				.sameSite("Lax")
-				.path("/")
-				.maxAge(refreshTokenValidityInSeconds)
-				.build();
+			.httpOnly(false)
+			.secure(false)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(refreshTokenValidityInSeconds)
+			.build();
 
-		log.debug("Refresh Token 쿠키 생성: {}", cookie);
+		log.info("Refresh Token 쿠키 생성 완료");
 		return cookie;
 	}
 
@@ -91,21 +90,21 @@ public class CookieUtil {
 	 */
 	public ResponseCookie createLogoutAccessCookie() {
 		return ResponseCookie.from("accessToken", "")
-				.httpOnly(false)
-				.secure(false)
-				.sameSite("Lax")
-				.path("/")
-				.maxAge(0) // 즉시 만료
-				.build();
+			.httpOnly(false)
+			.secure(false)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(0) // 즉시 만료
+			.build();
 	}
 
 	public ResponseCookie createLogoutRefreshCookie() {
 		return ResponseCookie.from("refreshToken", "")
-				.httpOnly(false)
-				.secure(false)
-				.sameSite("Lax")
-				.path("/")
-				.maxAge(0) // 즉시 만료
-				.build();
+			.httpOnly(false)
+			.secure(false)
+			.sameSite("Lax")
+			.path("/")
+			.maxAge(0) // 즉시 만료
+			.build();
 	}
 }
