@@ -81,10 +81,10 @@ public class AuthController {
 	@Operation(summary = "Access Token 재발급")
 	public ResponseEntity<String> refreshToken(HttpServletRequest request, HttpServletResponse response) {
 		// 1. 전달받은 쿠키에서 JWT 추출
-		String refreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
+		String refreshTokenFromCookie = cookieUtil.extractRefreshTokenFromCookie(request);
 
 		// 2. 신규 AccessToken 발급
-		String newAccessToken = authService.refreshToken(refreshToken, request, response);
+		String newAccessToken = authService.refreshToken(refreshTokenFromCookie, request, response);
 
 		// 3. 발급한 AccessToken 을 쿠키에 저장 및 response
 		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(newAccessToken);

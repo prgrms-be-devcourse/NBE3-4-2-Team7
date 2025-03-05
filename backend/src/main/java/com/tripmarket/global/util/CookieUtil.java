@@ -20,6 +20,9 @@ public class CookieUtil {
 	@Value("${jwt.refresh-token-expire-time-seconds}")
 	private long refreshTokenValidityInSeconds;
 
+	private static final String ACCESS_TOKEN_KEY = "accessToken";
+	private static final String REFRESH_TOKEN_KEY = "refreshToken";
+
 	/**
 	 * HTTP 요청의 쿠키에서 JWT 토큰 추출
 	 *
@@ -29,12 +32,12 @@ public class CookieUtil {
 
 	// Access Token 추출을 위한 메서드
 	public String extractAccessTokenFromCookie(HttpServletRequest request) {
-		return extractCookieValue(request, "accessToken");
+		return extractCookieValue(request, ACCESS_TOKEN_KEY);
 	}
 
 	// Refresh Token 추출을 위한 메서드
 	public String extractRefreshTokenFromCookie(HttpServletRequest request) {
-		return extractCookieValue(request, "refreshToken");
+		return extractCookieValue(request, REFRESH_TOKEN_KEY);
 	}
 
 	// 공용 토큰 추출 메서드
@@ -58,7 +61,7 @@ public class CookieUtil {
 	 * @return 설정된 쿠키 객체
 	 */
 	public ResponseCookie createAccessTokenCookie(String token) {
-		ResponseCookie cookie = ResponseCookie.from("accessToken", token)
+		ResponseCookie cookie = ResponseCookie.from(ACCESS_TOKEN_KEY, token)
 			.httpOnly(false) // JavaScript에서 접근 불가
 			.secure(false) // HTTPS에서만 전송, localhost에서는 false로 설정해야 함
 			.sameSite("Lax") // CSRF 방지
@@ -71,7 +74,7 @@ public class CookieUtil {
 	}
 
 	public ResponseCookie createRefreshTokenCookie(String refreshToken) {
-		ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+		ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_KEY, refreshToken)
 			.httpOnly(false)
 			.secure(false)
 			.sameSite("Lax")
@@ -89,7 +92,7 @@ public class CookieUtil {
 	 * @return 만료된 쿠키 객체
 	 */
 	public ResponseCookie createLogoutAccessCookie() {
-		return ResponseCookie.from("accessToken", "")
+		return ResponseCookie.from(ACCESS_TOKEN_KEY, "")
 			.httpOnly(false)
 			.secure(false)
 			.sameSite("Lax")
@@ -99,7 +102,7 @@ public class CookieUtil {
 	}
 
 	public ResponseCookie createLogoutRefreshCookie() {
-		return ResponseCookie.from("refreshToken", "")
+		return ResponseCookie.from(REFRESH_TOKEN_KEY, "")
 			.httpOnly(false)
 			.secure(false)
 			.sameSite("Lax")

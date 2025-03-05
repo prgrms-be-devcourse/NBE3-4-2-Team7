@@ -20,7 +20,6 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
-import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.security.CustomUserDetails;
 import com.tripmarket.global.util.CookieUtil;
@@ -85,14 +84,8 @@ public class AuthService {
 		log.info("로그인 요청 - email: {}", loginRequestDto.email());
 
 		Authentication authentication;
-		try {
-			authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginRequestDto.email(), loginRequestDto.password())
-			);
-		} catch (Exception e) {
-			log.warn("로그인 실패 - 잘못된 이메일 또는 비밀번호: {}", loginRequestDto.email());
-			throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-		}
+		authentication = authenticationManager.authenticate(
+			new UsernamePasswordAuthenticationToken(loginRequestDto.email(), loginRequestDto.password()));
 
 		CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
 		Member member = userDetails.getMember();
@@ -131,7 +124,7 @@ public class AuthService {
 
 			// 4. Member 정보 조회
 			Member member = memberRepository.findById(userId)
-				.orElseThrow(() -> new JwtAuthenticationException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
 			// 5. 새로운 Access Token 생성
 			Authentication authentication = new UsernamePasswordAuthenticationToken(
