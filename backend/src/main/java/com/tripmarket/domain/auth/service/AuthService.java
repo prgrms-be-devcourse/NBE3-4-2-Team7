@@ -17,6 +17,8 @@ import com.tripmarket.domain.auth.dto.LoginRequestDto;
 import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.security.CustomUserDetails;
@@ -70,7 +72,7 @@ public class AuthService {
 
 		} catch (Exception e) {
 			log.error("로그아웃 처리 중 오류 발생", e);
-			throw new JwtAuthenticationException("로그아웃 처리 중 오류가 발생했습니다.");
+			throw new CustomException(ErrorCode.LOGOUT_FAILED);
 		}
 	}
 
@@ -78,7 +80,7 @@ public class AuthService {
 	public void signUp(SignUpRequestDto signUpRequestDto) {
 		// 중복 검사
 		if (memberRepository.findByEmail(signUpRequestDto.email()).isPresent()) {
-			throw new JwtAuthenticationException("이미 가입된 이메일입니다.");
+			throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
 		}
 
 		Member member = Member.createNormalMember(signUpRequestDto, passwordEncoder);
@@ -93,13 +95,13 @@ public class AuthService {
 		Member member = memberRepository.findByEmail(loginRequestDto.email())
 			.orElseThrow(() -> {
 				log.warn("로그인 실패 - 존재하지 않는 이메일: {}", loginRequestDto.email());
-				return new JwtAuthenticationException("가입되지 않은 이메일입니다.");
+				return new CustomException(ErrorCode.MEMBER_NOT_FOUND);
 			});
 
 		// 2. 비밀번호 확인
 		if (!passwordEncoder.matches(loginRequestDto.password(), member.getPassword())) {
 			log.warn("로그인 실패 - 잘못된 비밀번호: {}", loginRequestDto.email());
-			throw new JwtAuthenticationException("잘못된 비밀번호입니다.");
+			throw new CustomException(ErrorCode.INVALID_PASSWORD);
 		}
 
 		// 3. CustomUserDetails를 사용한 인증 객체 생성
@@ -136,7 +138,7 @@ public class AuthService {
 			String storedRefreshToken = redisTemplate.opsForValue().get("RT:" + userId);
 			if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
 				log.warn("🚨 저장된 Refresh Token과 일치하지 않음 - userId: {}", userId);
-				throw new JwtAuthenticationException("저장된 Refresh Token이 없거나 일치하지 않습니다.");
+				throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
 			}
 
 			// 4. Member 정보 조회
@@ -153,7 +155,7 @@ public class AuthService {
 
 		} catch (Exception e) {
 			log.error("AccessToken 재발급 실패: {}", e.getMessage());
-			throw new JwtAuthenticationException("토큰 갱신 실패: " + e.getMessage());
+			throw new CustomException(ErrorCode.TOKEN_REFRESH_FAILED);
 		}
 	}
 
@@ -164,7 +166,7 @@ public class AuthService {
 
 		if (storedRefreshToken == null) {
 			log.warn("Refresh Token 없음: userId={}", userId);
-			throw new JwtAuthenticationException("Refresh Token이 존재하지 않습니다.");
+			throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
 		}
 	}
 

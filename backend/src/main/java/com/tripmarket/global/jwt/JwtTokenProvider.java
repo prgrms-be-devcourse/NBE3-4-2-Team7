@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 import com.tripmarket.global.security.CustomUserDetails;
@@ -87,9 +89,13 @@ public class JwtTokenProvider {
 					.set("BL:" + token, "blacklisted", remainingTime, TimeUnit.SECONDS);
 				log.info("토큰 블랙리스트 추가 완료, 만료까지 {}초 남음", remainingTime);
 			}
+		} catch (ExpiredJwtException e) {
+			log.warn("만료된 토큰으로 블랙리스트 추가 시도됨: {}", token);
+			throw new CustomException(ErrorCode.EXPIRED_TOKEN);
+
 		} catch (Exception e) {
 			log.error("토큰 블랙리스트 추가 실패", e);
-			throw new JwtAuthenticationException("토큰 블랙리스트 등록 실패");
+			throw new CustomException(ErrorCode.TOKEN_REGISTRATION_FAILED);
 		}
 	}
 
@@ -211,7 +217,6 @@ public class JwtTokenProvider {
 	 *
 	 * @param token 검증할 토큰
 	 * @return 유효성 여부
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public boolean validateToken(String token) {
 		try {
@@ -222,7 +227,7 @@ public class JwtTokenProvider {
 			return true;
 		} catch (SecurityException | MalformedJwtException e) {
 			log.error("잘못된 JWT 서명: {}", e.getMessage());
-			throw new JwtAuthenticationException("잘못된 JWT 서명입니다.");
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
 
 		} catch (ExpiredJwtException e) {
 			log.error("만료된 JWT 토큰: {}", e.getMessage());
@@ -230,11 +235,11 @@ public class JwtTokenProvider {
 
 		} catch (UnsupportedJwtException e) {
 			log.error("지원하지 않는 JWT 토큰: {}", e.getMessage());
-			throw new JwtAuthenticationException("지원되지 않는 JWT 토큰입니다.");
+			throw new CustomException(ErrorCode.UNSUPPORTED_TOKEN);
 
 		} catch (IllegalArgumentException e) {
 			log.error("JWT 토큰이 비어 있음: {}", e.getMessage());
-			throw new JwtAuthenticationException("JWT 토큰이 잘못되었습니다.");
+			throw new CustomException(ErrorCode.EMPTY_TOKEN);
 		}
 	}
 
@@ -244,7 +249,6 @@ public class JwtTokenProvider {
 	 *
 	 * @param token JWT 토큰
 	 * @return Claims 객체
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	private Claims parseClaims(String token) {
 		try {
@@ -256,8 +260,10 @@ public class JwtTokenProvider {
 		} catch (ExpiredJwtException e) {
 			// 만료된 토큰이어도 Claims 반환
 			return e.getClaims();
+
 		} catch (Exception e) {
-			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
+			log.error("JWT Claims 파싱 실패: {}", e.getMessage());
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
 		}
 	}
 
@@ -267,14 +273,14 @@ public class JwtTokenProvider {
 	 *
 	 * @param refreshToken JWT 토큰
 	 * @return 사용자 ID
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
+	 * @throws CustomException 토큰이 유효하지 않을 경우
 	 */
 	public Long getUserIdFromRefreshToken(String refreshToken) {
 		try {
 			Claims claims = parseClaims(refreshToken);
 			return Long.valueOf(claims.getSubject());
 		} catch (Exception e) {
-			throw new JwtAuthenticationException("Refresh Token에서 사용자 ID를 추출할 수 없습니다.");
+			throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
 		}
 	}
 
