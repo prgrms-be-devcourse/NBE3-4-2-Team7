@@ -1,8 +1,12 @@
 package com.tripmarket.global.util;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+
+import com.tripmarket.domain.chatting.entity.Message;
 
 public class DateUtil {
 
@@ -28,5 +32,11 @@ public class DateUtil {
 	public static String convertTime(LocalDateTime dateTime) {
 		String formattedTime = dateTime.format(AM_PM_FORMATTER);
 		return formattedTime.replace("AM", "오전").replace("PM", "오후");
+	}
+
+	public static LocalDateTime getTime(Message message) {
+		return Instant.ofEpochMilli(message.getId().getTimestamp() * 1000L)
+			.atZone(ZoneId.systemDefault())
+			.toLocalDateTime();
 	}
 }
