@@ -18,11 +18,16 @@ public record MessageDto(
 ) {
 	public Message toMessageEntity() {
 		return Message.builder()
-			.roomId(roomId)
-			.sender(sender)
-			.receiver(receiver)
+			.chattingRoomInfo(createChattingRoomInfo())
 			.content(content)
-			.readStatus(false)
+			.build();
+	}
+
+	private Message.ChattingRoomInfo createChattingRoomInfo() {
+		return Message.ChattingRoomInfo.builder()
+			.roomId(roomId)
+			.senderEmail(sender)
+			.receiverEmail(receiver)
 			.build();
 	}
 }
