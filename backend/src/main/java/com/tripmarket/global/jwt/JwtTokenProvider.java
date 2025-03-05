@@ -279,8 +279,10 @@ public class JwtTokenProvider {
 		try {
 			Claims claims = parseClaims(refreshToken);
 			return Long.valueOf(claims.getSubject());
+
 		} catch (Exception e) {
-			throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+			log.warn("사용자 ID 추출 실패 - Refresh Token 오류(계속 진행): {}", e.getMessage());
+			return null;
 		}
 	}
 

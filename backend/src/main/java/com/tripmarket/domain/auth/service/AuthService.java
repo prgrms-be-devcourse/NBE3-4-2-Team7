@@ -47,30 +47,24 @@ public class AuthService {
 		String logoutRefreshToken = cookieUtil.extractRefreshTokenFromCookie(request);
 		String logoutAccessToken = cookieUtil.extractAccessTokenFromCookie(request);
 
-		try {
-			// 1. RefreshToken 에서 사용자 ID 추출
-			Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
+		// 1. RefreshToken 에서 사용자 ID 추출
+		Long userId = jwtTokenProvider.getUserIdFromRefreshToken(logoutRefreshToken);
 
-			// 2. AccessToken 이 유효하면 블랙리스트 추가
-			if (jwtTokenProvider.validateToken(logoutAccessToken)) {
-				jwtTokenProvider.addToBlacklist(logoutAccessToken);
-				log.info("AccessToken 블랙리스트에 추가 완료 - userId: {}", userId);
-			}
-
-			// 3. Redis에서 리프레시 토큰 삭제
-			deleteRefreshToken(userId);
-
-			// 4. 쿠키 삭제 및 빈 쿠키 반환
-			ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
-			ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
-
-			response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
-			response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
-
-		} catch (Exception e) {
-			log.error("로그아웃 처리 중 오류 발생", e);
-			throw new CustomException(ErrorCode.LOGOUT_FAILED);
+		// 2. AccessToken 이 유효하면 블랙리스트 추가
+		if (jwtTokenProvider.validateToken(logoutAccessToken)) {
+			jwtTokenProvider.addToBlacklist(logoutAccessToken);
+			log.info("AccessToken 블랙리스트에 추가 완료 - userId: {}", userId);
 		}
+
+		// 3. Redis에서 리프레시 토큰 삭제
+		deleteRefreshToken(userId);
+
+		// 4. 쿠키 삭제 및 빈 쿠키 반환
+		ResponseCookie emptyAccessCookie = cookieUtil.createLogoutAccessCookie();
+		ResponseCookie emptyRefreshCookie = cookieUtil.createLogoutRefreshCookie();
+
+		response.addHeader(HttpHeaders.SET_COOKIE, emptyAccessCookie.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, emptyRefreshCookie.toString());
 	}
 
 	@Transactional
