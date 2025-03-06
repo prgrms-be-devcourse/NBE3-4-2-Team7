@@ -256,4 +256,21 @@ public class JwtTokenProviderTest {
 		assertThat(isBlacklisted).isTrue();
 		verify(redisTemplate).hasKey("BL:" + token);
 	}
+
+	@Test
+	@DisplayName("만료된 리프레시 토큰 검증")
+	void getUserIdFromExpiredRefreshToken() {
+		// given
+		Long userId = 1L;
+		ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenValidityInSeconds", -604800L);
+		String expiredToken = jwtTokenProvider.createRefreshToken(userId);
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(expiredToken))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
+			});
+	}
 }
