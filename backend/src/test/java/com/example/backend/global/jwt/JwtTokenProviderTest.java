@@ -110,6 +110,9 @@ public class JwtTokenProviderTest {
 
 		assertThat(principal.getId()).isEqualTo(1L);
 		assertThat(principal.getEmail()).isEqualTo("social@test.com");
+		assertThat(resultAuth.getAuthorities())
+			.extracting("authority")
+			.containsExactlyInAnyOrder("ROLE_USER");
 	}
 
 	@Test
@@ -131,6 +134,9 @@ public class JwtTokenProviderTest {
 
 		assertThat(principal.getId()).isEqualTo(1L);
 		assertThat(principal.getEmail()).isEqualTo("local@test.com");
+		assertThat(resultAuth.getAuthorities())
+			.extracting("authority")
+			.containsExactlyInAnyOrder("ROLE_USER");
 	}
 
 	@Test
@@ -271,6 +277,46 @@ public class JwtTokenProviderTest {
 			.satisfies(exception -> {
 				CustomException customException = (CustomException)exception;
 				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
+			});
+	}
+
+	@Test
+	@DisplayName("잘못된 시크릿 키로 토큰 검증 - 소셜")
+	void validateToken_wrongSecretKey_social() {
+		// given
+		Authentication auth = createMockOAuth2Authentication();
+		String token = jwtTokenProvider.createAccessToken(auth);
+
+		// 다른 시크릿 키로 설정
+		ReflectionTestUtils.setField(jwtTokenProvider, "secretKey", "differentSecretKey1234567890ABCDEFGH");
+		jwtTokenProvider.init();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(token))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.INVALID_TOKEN);
+			});
+	}
+
+	@Test
+	@DisplayName("잘못된 시크릿 키로 토큰 검증 - 로컬")
+	void validateToken_wrongSecretKey_local() {
+		// given
+		Authentication auth = createMockUserDetailsAuthentication();
+		String token = jwtTokenProvider.createAccessToken(auth);
+
+		// 다른 시크릿 키로 설정
+		ReflectionTestUtils.setField(jwtTokenProvider, "secretKey", "differentSecretKey1234567890ABCDEFGH");
+		jwtTokenProvider.init();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(token))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.INVALID_TOKEN);
 			});
 	}
 }
