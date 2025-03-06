@@ -25,6 +25,8 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.auth.AuthenticatedUser;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 import com.tripmarket.global.security.CustomUserDetails;
@@ -55,14 +57,14 @@ public class JwtTokenProviderTest {
 
 		Map<String, Object> attributes = new HashMap<>();
 		attributes.put("id", "1");
-		attributes.put("email", "test@test.com");
+		attributes.put("email", "social@test.com");
 
 		CustomOAuth2User principal = new CustomOAuth2User(
 			authorities,
 			attributes,
 			"id",
 			1L,
-			"test@test.com"
+			"social@test.com"
 		);
 
 		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
@@ -73,7 +75,7 @@ public class JwtTokenProviderTest {
 			Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
 
 		Member member = Member.builder()
-			.email("test@test.com")
+			.email("local@test.com")
 			.name("테스트")
 			.provider(Provider.LOCAL)
 			.build();
@@ -86,7 +88,7 @@ public class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("정상 토큰 생성 - 소셜")
+	@DisplayName("엑세스 토큰 생성 및 검증 - 소셜")
 	void createAccessToken_social() {
 		// given
 		Authentication auth = createMockOAuth2Authentication();
@@ -103,11 +105,11 @@ public class JwtTokenProviderTest {
 		AuthenticatedUser principal = (AuthenticatedUser)resultAuth.getPrincipal();
 
 		assertThat(principal.getId()).isEqualTo(1L);
-		assertThat(principal.getEmail()).isEqualTo("test@test.com");
+		assertThat(principal.getEmail()).isEqualTo("social@test.com");
 	}
 
 	@Test
-	@DisplayName("정상 토큰 생성 - 로컬")
+	@DisplayName("엑세스 토큰 생성 및 검증 - 로컬")
 	void createAccessToken_local() {
 		// given
 		Authentication auth = createMockUserDetailsAuthentication();
@@ -118,5 +120,61 @@ public class JwtTokenProviderTest {
 		// then
 		assertThat(token).isNotNull();
 		assertThat(jwtTokenProvider.validateToken(token)).isTrue();
+
+		// 토큰에서 추출한 인증 정보 검증
+		Authentication resultAuth = jwtTokenProvider.getAuthentication(token);
+		AuthenticatedUser principal = (AuthenticatedUser)resultAuth.getPrincipal();
+
+		assertThat(principal.getId()).isEqualTo(1L);
+		assertThat(principal.getEmail()).isEqualTo("local@test.com");
+	}
+
+	@Test
+	@DisplayName("만료된 토큰으로 검증 - 소셜")
+	void validateToken_social() {
+		// given
+		Authentication auth = createMockOAuth2Authentication();
+		ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenValidityInSeconds", -3600L);
+		String expiredToken = jwtTokenProvider.createAccessToken(auth);
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(expiredToken))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
+			});
+	}
+
+	@Test
+	@DisplayName("만료된 토큰으로 검증 - 로컬")
+	void validateToken_local() {
+		// given
+		Authentication auth = createMockUserDetailsAuthentication();
+		ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenValidityInSeconds", -3600L);
+		String expiredToken = jwtTokenProvider.createAccessToken(auth);
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(expiredToken))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
+			});
+	}
+
+	@Test
+	@DisplayName("잘못된 형식의 토큰 검증")
+	void validateToken_malformedToken() {
+		// given
+		String token = "wrongToken";
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(token))
+			.isInstanceOf(CustomException.class)
+			.satisfies(exception -> {
+				CustomException customException = (CustomException)exception;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.INVALID_TOKEN);
+			});
 	}
 }
