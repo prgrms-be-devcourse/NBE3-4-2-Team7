@@ -177,4 +177,21 @@ public class JwtTokenProviderTest {
 				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.INVALID_TOKEN);
 			});
 	}
+
+	@Test
+	@DisplayName("리프레시 토큰 생성 및 검증")
+	void createRefreshToken() {
+		// given
+		Long userId = 1L;
+
+		// when
+		String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+		// then
+		assertThat(refreshToken).isNotNull();
+		assertThat(jwtTokenProvider.validateToken(refreshToken)).isTrue();
+
+		Long extractedUserId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
+		assertThat(extractedUserId).isEqualTo(1L);
+	}
 }
