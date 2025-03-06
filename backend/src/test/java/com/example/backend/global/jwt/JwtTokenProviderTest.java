@@ -1,11 +1,14 @@
 package com.example.backend.global.jwt;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -56,7 +60,7 @@ public class JwtTokenProviderTest {
 			Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
 
 		Map<String, Object> attributes = new HashMap<>();
-		attributes.put("id", "1");
+		attributes.put("id", 1L);
 		attributes.put("email", "social@test.com");
 
 		CustomOAuth2User principal = new CustomOAuth2User(
@@ -147,7 +151,7 @@ public class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("만료된 토큰으로 검증 - 로컬")
+	@DisplayName("만료된 엑세스 토큰으로 검증 - 로컬")
 	void validateToken_local() {
 		// given
 		Authentication auth = createMockUserDetailsAuthentication();
@@ -193,5 +197,63 @@ public class JwtTokenProviderTest {
 
 		Long extractedUserId = jwtTokenProvider.getUserIdFromRefreshToken(refreshToken);
 		assertThat(extractedUserId).isEqualTo(1L);
+	}
+
+	@Test
+	@DisplayName("블랙리스트에 엑세스 토큰 추가 - 소셜")
+	void addToBlackList_social() {
+		// given
+		Authentication auth = createMockOAuth2Authentication();
+		String token = jwtTokenProvider.createAccessToken(auth);
+		ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+
+		when(redisTemplate.opsForValue()).thenReturn(valueOps);
+		doNothing().when(valueOps).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
+
+		when(redisTemplate.hasKey("BL:" + token)).thenReturn(true);
+
+		// when
+		jwtTokenProvider.addToBlacklist(token);
+		boolean isBlacklisted = jwtTokenProvider.isBlacklisted(token);
+
+		// then
+		verify(redisTemplate.opsForValue()).set(
+			eq("BL:" + token),
+			eq("blacklisted"),
+			anyLong(),
+			eq(TimeUnit.SECONDS)
+		);
+
+		assertThat(isBlacklisted).isTrue();
+		verify(redisTemplate).hasKey("BL:" + token);
+	}
+
+	@Test
+	@DisplayName("블랙리스트에 엑세스 토큰 추가 - 로컬")
+	void addToBlackList_local() {
+		// given
+		Authentication auth = createMockUserDetailsAuthentication();
+		String token = jwtTokenProvider.createAccessToken(auth);
+		ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+
+		when(redisTemplate.opsForValue()).thenReturn(valueOps);
+		doNothing().when(valueOps).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
+
+		when(redisTemplate.hasKey("BL:" + token)).thenReturn(true);
+
+		// when
+		jwtTokenProvider.addToBlacklist(token);
+		boolean isBlacklisted = jwtTokenProvider.isBlacklisted(token);
+
+		// then
+		verify(redisTemplate.opsForValue()).set(
+			eq("BL:" + token),
+			eq("blacklisted"),
+			anyLong(),
+			eq(TimeUnit.SECONDS)
+		);
+
+		assertThat(isBlacklisted).isTrue();
+		verify(redisTemplate).hasKey("BL:" + token);
 	}
 }
