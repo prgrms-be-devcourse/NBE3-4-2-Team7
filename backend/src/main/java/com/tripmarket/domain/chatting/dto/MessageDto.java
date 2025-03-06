@@ -19,13 +19,13 @@ public record MessageDto(
 	public Message toMessageEntity() {
 		return Message.builder()
 			.chattingRoomInfo(createChattingRoomInfo())
+			.roomId(roomId)
 			.content(content)
 			.build();
 	}
 
 	private Message.ChattingRoomInfo createChattingRoomInfo() {
 		return Message.ChattingRoomInfo.builder()
-			.roomId(roomId)
 			.senderEmail(sender)
 			.receiverEmail(receiver)
 			.build();

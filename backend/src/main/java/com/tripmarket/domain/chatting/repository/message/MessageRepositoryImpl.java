@@ -23,7 +23,7 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 		return roomIds.stream()
 			.map(roomId -> {
 				Query query = new Query()
-					.addCriteria(Criteria.where("chattingRoomInfo.roomId").is(roomId))
+					.addCriteria(Criteria.where("roomId").is(roomId))
 					.with(Sort.by(Sort.Direction.DESC, "_id"))
 					.limit(1);
 				return mongoTemplate.findOne(query, Message.class);
@@ -35,20 +35,20 @@ public class MessageRepositoryImpl implements CustomMessageRepository {
 	@Override
 	public List<Message> findMessagesByRoom(String roomId) {
 		Query query = new Query()
-			.addCriteria(Criteria.where("chattingRoomInfo.roomId").is(roomId))
+			.addCriteria(Criteria.where("roomId").is(roomId))
 			.with(Sort.by(Sort.Direction.ASC, "_id"));
 		return mongoTemplate.find(query, Message.class);
 	}
 
 	@Override
 	public void deleteByRoomId(String roomId) {
-		Query query = new Query(Criteria.where("chattingRoomInfo.roomId").is(roomId));
+		Query query = new Query(Criteria.where("roomId").is(roomId));
 		mongoTemplate.remove(query, Message.class);
 	}
 
 	@Override
 	public void deleteMessage(String roomId, String sender) {
-		Query query = new Query(Criteria.where("chattingRoomInfo.roomId").is(roomId)
+		Query query = new Query(Criteria.where("roomId").is(roomId)
 			.and("chattingRoomInfo.senderEmail").is(sender));
 		mongoTemplate.remove(query, Message.class);
 	}

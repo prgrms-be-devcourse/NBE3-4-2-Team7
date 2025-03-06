@@ -61,7 +61,7 @@ public class MessageServiceImpl implements MessageService {
 
 	private void sendChatMessage(Message message) {
 		ChattingResponseDto responseDto = ChattingResponseDto.of(message, getMember(message));
-		String destination = "/topic/chat.room." + message.getChattingRoomInfo().roomId();
+		String destination = "/topic/chat.room." + message.getRoomId();
 
 		try {
 			simpMessagingTemplate.convertAndSend(destination, responseDto);

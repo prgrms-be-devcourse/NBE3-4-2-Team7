@@ -162,7 +162,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	//roomId를 키값으로하고 message를 value로하는 map
 	private Map<String, Message> getMessageMap(List<Message> latestMessages) {
 		return latestMessages.stream()
-			.collect(Collectors.toMap(message -> message.getChattingRoomInfo().roomId(), message -> message));
+			.collect(Collectors.toMap(Message::getRoomId, message -> message));
 	}
 
 	private List<String> getRoomIds(Page<ChattingRoom> chattingRoomsPage) {
