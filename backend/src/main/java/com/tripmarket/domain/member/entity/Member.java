@@ -2,11 +2,10 @@ package com.tripmarket.domain.member.entity;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.tripmarket.domain.auth.dto.SignUpRequestDto;
+import com.tripmarket.domain.auth.dto.SignupRequestDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
-import com.tripmarket.global.security.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -77,7 +76,7 @@ public class Member extends BaseEntity {
 		this.role = Role.ROLE_USER;
 	}
 
-	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
+	public static Member createNormalMember(SignupRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
 		return Member.builder()
 			.name(signUpRequestDto.name())
 			.email(signUpRequestDto.email())
@@ -109,9 +108,6 @@ public class Member extends BaseEntity {
 	// 			? imageUrl
 	// 			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 	// }
-
-
-
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트

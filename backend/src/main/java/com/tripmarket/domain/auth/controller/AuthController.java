@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripmarket.domain.auth.dto.LoginRequestDto;
-import com.tripmarket.domain.auth.dto.SignUpRequestDto;
+import com.tripmarket.domain.auth.dto.SignupRequestDto;
 import com.tripmarket.domain.auth.service.AuthService;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.util.CookieUtil;
@@ -41,7 +41,7 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	@Operation(summary = "일반 회원가입")
-	public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+	public ResponseEntity<String> signUp(@Valid @RequestBody SignupRequestDto signUpRequestDto) {
 		authService.signUp(signUpRequestDto);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}

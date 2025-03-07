@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.tripmarket.domain.auth.dto.LoginRequestDto;
-import com.tripmarket.domain.auth.dto.SignUpRequestDto;
+import com.tripmarket.domain.auth.dto.SignupRequestDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.CustomException;
@@ -69,10 +69,10 @@ public class AuthService {
 	}
 
 	@Transactional
-	public void signUp(SignUpRequestDto signUpRequestDto) {
+	public void signUp(SignupRequestDto signUpRequestDto) {
 		// 중복 검사
 		if (memberRepository.findByEmail(signUpRequestDto.email()).isPresent()) {
-			throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 
 		Member member = Member.createNormalMember(signUpRequestDto, passwordEncoder);
@@ -134,6 +134,8 @@ public class AuthService {
 
 			return jwtTokenProvider.createAccessToken(authentication);
 
+		} catch (CustomException e) {
+			throw e;
 		} catch (Exception e) {
 			log.error("AccessToken 재발급 실패: {}", e.getMessage());
 			throw new CustomException(ErrorCode.TOKEN_REFRESH_FAILED);

@@ -1,4 +1,4 @@
-package com.example.backend.global.jwt;
+package com.tripmarket.global.jwt;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -31,7 +31,6 @@ import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.auth.AuthenticatedUser;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
-import com.tripmarket.global.jwt.JwtTokenProvider;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 import com.tripmarket.global.security.CustomUserDetails;
 

@@ -1,21 +1,15 @@
-package com.example.backend.domain.guide;
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+package com.tripmarket.domain.guide;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tripmarket.domain.guide.controller.GuideController;
-import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.entity.LanguagesValidator;
 import com.tripmarket.domain.guide.service.GuideService;
 import com.tripmarket.domain.guide.service.GuideValidationService;

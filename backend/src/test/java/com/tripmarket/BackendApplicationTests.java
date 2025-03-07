@@ -1,4 +1,4 @@
-package com.example.backend;
+package com.tripmarket;
 
 import static org.junit.jupiter.api.Assertions.*;
 
