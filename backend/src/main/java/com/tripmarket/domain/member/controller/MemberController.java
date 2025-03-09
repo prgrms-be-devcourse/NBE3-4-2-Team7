@@ -17,7 +17,6 @@ import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.domain.member.service.MemberService;
 import com.tripmarket.domain.travel.dto.TravelDto;
 import com.tripmarket.global.auth.AuthenticatedUser;
-import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +46,7 @@ public class MemberController {
 	 */
 	@GetMapping("/me/guide")
 	@Operation(summary = "내 가이드 프로필이 존재하는지 검사")
-	public ResponseEntity<Boolean> hasGuideProfile(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+	public ResponseEntity<Boolean> hasGuideProfile(@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		boolean hasProfile = memberService.hasGuideProfile(oAuth2User.getId());
 		return ResponseEntity.ok(hasProfile);
 	}
@@ -55,7 +54,7 @@ public class MemberController {
 	@GetMapping("/me/matchings/requester")
 	@Operation(summary = "사용자 : 내가 요청한 가이드 요청 내역")
 	public ResponseEntity<List<GuideRequestDto>> getGuideRequestsByRequester(
-		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		List<GuideRequestDto> guideRequests = memberService.getGuideRequestsByRequester(oAuth2User.getEmail());
 		return ResponseEntity.ok(guideRequests);
 	}
@@ -63,7 +62,7 @@ public class MemberController {
 	@GetMapping("/me/matchings/travel-offers/received")
 	@Operation(summary = "사용자 : 나의 여행 요청 글에 대한 가이더의 여행 제안 요청 내역")
 	public ResponseEntity<List<TravelOfferDto>> getTravelOffersForMyTravel(
-		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		List<TravelOfferDto> travelOffers = memberService.getTravelOffersForUser(oAuth2User.getEmail());
 		return ResponseEntity.ok(travelOffers);
 	}
@@ -71,7 +70,7 @@ public class MemberController {
 	@GetMapping("/me/travels")
 	@Operation(summary = "사용자 : 나의 여행 요청 목록 조회")
 	public ResponseEntity<List<TravelDto>> getMyTravels(
-		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		List<TravelDto> myTravels = memberService.getMyTravels(oAuth2User.getEmail());
 		return ResponseEntity.ok(myTravels);
 	}
@@ -79,7 +78,7 @@ public class MemberController {
 	@GetMapping("/me/matchings/guide")
 	@Operation(summary = "가이드 : 사용자가 나에게 요청한 가이드 요청 내역\t")
 	public ResponseEntity<List<GuideRequestDto>> getGuideRequestsByGuide(
-		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		List<GuideRequestDto> guideRequestDto = memberService.getGuideRequestsByGuide(oAuth2User.getEmail());
 		return ResponseEntity.ok(guideRequestDto);
 	}
@@ -87,9 +86,8 @@ public class MemberController {
 	@GetMapping("/me/matchings/travel-offers")
 	@Operation(summary = "가이드 : 내가 사용자에게 보낸 여행 제안 요청 내역")
 	public ResponseEntity<List<TravelOfferDto>> getTravelOffersByGuide(
-		@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+		@AuthenticationPrincipal AuthenticatedUser oAuth2User) {
 		List<TravelOfferDto> travelOffers = memberService.getTravelOffersByGuide(oAuth2User.getEmail());
 		return ResponseEntity.ok(travelOffers);
 	}
-
 }

@@ -1,3 +1,2 @@
--- H2 문법에 맞게 수정
 ALTER TABLE IF EXISTS member ALTER COLUMN provider VARCHAR(10);
 ALTER TABLE IF EXISTS member ADD CONSTRAINT provider_check CHECK (provider IN ('KAKAO', 'GOOGLE', 'GITHUB', 'LOCAL'));

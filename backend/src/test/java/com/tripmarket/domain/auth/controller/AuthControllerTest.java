@@ -204,7 +204,7 @@ public class AuthControllerTest {
 
 	@Test
 	@DisplayName("로그인-토큰갱신-로그아웃 통합 시나리오")
-	void loginRefreshLogout_integrationScenario() throws Exception {
+	void login_refresh_logout() throws Exception {
 		// 1. 로그인
 		LoginRequestDto loginRequestDto = new LoginRequestDto(TEST_EMAIL, TEST_PASSWORD);
 

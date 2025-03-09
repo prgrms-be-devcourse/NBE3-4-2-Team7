@@ -204,7 +204,7 @@ public class AuthServiceTest {
 
 	@Test
 	@DisplayName("로그인 실패 - 잘못된 이메일")
-	void login_fail_invalid_email() {
+	void login_fail_invalidEmail() {
 		// given
 		String wrongEmail = "wrong@test.com";
 		String password = "password";
@@ -251,7 +251,7 @@ public class AuthServiceTest {
 
 	@Test
 	@DisplayName("토큰 갱신 실패 - 유효하지 않은 리프레시 토큰")
-	void refreshToken_invalidToken() {
+	void refresh_invalidToken() {
 		// given
 		String refreshToken = "RefreshTokenValue";
 
@@ -270,7 +270,7 @@ public class AuthServiceTest {
 
 	@Test
 	@DisplayName("토큰 갱신 실패 - Redis에 저장된 토큰과 불일치")
-	void refreshToken_tokenMismatch() {
+	void refresh_tokenMismatch() {
 		// given
 		String refreshToken = "wrongRefreshTokenValue";
 		String storedToken = "refreshTokenValue";
