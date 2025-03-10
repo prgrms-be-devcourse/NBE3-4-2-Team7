@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.22'
 }
 
 group = 'com.tripmarket'
@@ -24,6 +26,7 @@ repositories {
 }
 
 dependencies {
+    // 기존 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     compileOnly 'org.projectlombok:lombok'
@@ -34,40 +37,56 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // for validation
+    // Kotlin 의존성 추가
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+
+    // validation
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    //QueryDsl
+
+    // QueryDsl (기존 설정 유지)
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
-    //redis
+
+    // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // websocket
+    // WebSocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.webjars:sockjs-client:1.1.2'
     implementation 'org.springframework:spring-websocket:6.1.2'
 
-    // stomp
+    // STOMP
     implementation 'org.webjars:stomp-websocket:2.3.3-1'
+
     // Spring Security & OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
-    //rabbitmq
+    // RabbitMQ
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework:spring-messaging:6.1.2'
     implementation 'org.springframework.boot:spring-boot-starter-reactor-netty:3.0.0'
-//    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-x86_64'
 
-    //mongodb
+    // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+}
+
+// Kotlin 컴파일 설정
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += "-Xjsr305=strict"
+        jvmTarget = "17"
+    }
 }
 
 tasks.named('test') {
