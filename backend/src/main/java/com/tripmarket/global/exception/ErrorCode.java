@@ -12,6 +12,9 @@ public enum ErrorCode {
 	//Member
 	MEMBER_NOT_FOUND(NOT_FOUND, "사용자가 존재하지 않습니다"),
 
+	//signUp
+	DUPLICATE_EMAIL(BAD_REQUEST, "이미 가입되어있는 이메일입니다."),
+
 	//Login
 	INVALID_TOKEN(UNAUTHORIZED, "잘못된 JWT 토큰입니다"),
 	EXPIRED_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다."),
@@ -26,6 +29,12 @@ public enum ErrorCode {
 	INVALID_LOGOUT_REQUEST(BAD_REQUEST, "로그아웃 요청이 잘못되었습니다."),
 	INVALID_REFRESH_TOKEN(UNAUTHORIZED, "유효하지 않은 Refresh Token 입니다."),
 	TOKEN_REGISTRATION_FAILED(INTERNAL_SERVER_ERROR, "Access Token 을 블랙리스트에 등록하는 중 서버 오류가 발생했습니다."),
+
+	// LinkId
+	ALREADY_LINKED_ACCOUNT(HttpStatus.BAD_REQUEST, "이미 연동된 소셜 계정입니다."),
+	SOCIAL_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "연동된 소셜 계정이 없습니다."),
+	UNSUPPORTED_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인 유형입니다."),
+	INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 소셜 토큰입니다."),
 
 	//Category
 	CATEGORY_NOT_FOUND(NOT_FOUND, "카테고리가 존재하지 않습니다."),

@@ -1,6 +1,7 @@
 package com.tripmarket.domain.auth.service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.tripmarket.domain.auth.dto.LoginRequestDto;
 import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.exception.CustomException;
 import com.tripmarket.global.exception.ErrorCode;
@@ -72,7 +74,7 @@ public class AuthService {
 	public void signUp(SignUpRequestDto signUpRequestDto) {
 		// 중복 검사
 		if (memberRepository.findByEmail(signUpRequestDto.email()).isPresent()) {
-			throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 
 		Member member = Member.createNormalMember(signUpRequestDto, passwordEncoder);
@@ -80,7 +82,7 @@ public class AuthService {
 	}
 
 	@Transactional
-	public Map<String, String> login(LoginRequestDto loginRequestDto) {
+	public Map<String, Object> login(LoginRequestDto loginRequestDto) {
 		log.info("로그인 요청 - email: {}", loginRequestDto.email());
 
 		Authentication authentication;
@@ -100,7 +102,21 @@ public class AuthService {
 			.set("RT:" + member.getId(), refreshToken, 7, TimeUnit.DAYS);
 
 		log.info("로그인 성공 - email: {}", member.getEmail());
-		return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
+
+		// 최초 로그인 체크
+		boolean showSocialLinkPrompt = false;
+		if (member.isFirstLogin() && member.getProvider() == Provider.LOCAL) {
+			showSocialLinkPrompt = true;
+			member.completeFirstLogin();
+			memberRepository.save(member);
+		}
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("accessToken", accessToken);
+		response.put("refreshToken", refreshToken);
+		response.put("showSocialLinkPrompt", showSocialLinkPrompt);
+
+		return response;
 	}
 
 	@Transactional
@@ -162,4 +178,6 @@ public class AuthService {
 			log.warn("리프레시 토큰 삭제 실패: userId={}", userId);
 		}
 	}
+
+
 }

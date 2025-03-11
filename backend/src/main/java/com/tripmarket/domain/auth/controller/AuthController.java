@@ -54,11 +54,11 @@ public class AuthController {
 		log.debug("로그인 시도 - email: {}", loginRequestDto.email());
 
 		// 로그인 처리 및 토큰 발급
-		Map<String, String> tokens = authService.login(loginRequestDto);
+		Map<String, Object> tokens = authService.login(loginRequestDto);
 
 		// Access Token 쿠키 설정
-		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(tokens.get("accessToken"));
-		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(tokens.get("refreshToken"));
+		ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie((String)tokens.get("accessToken"));
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie((String)tokens.get("refreshToken"));
 
 		response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());

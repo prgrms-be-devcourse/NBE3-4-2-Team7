@@ -1,14 +1,17 @@
 package com.tripmarket.domain.member.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.tripmarket.domain.auth.dto.SignUpRequestDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
-import com.tripmarket.global.security.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,6 +20,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -72,46 +76,69 @@ public class Member extends BaseEntity {
 		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-			? imageUrl
-			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+				? imageUrl
+				: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 		this.role = Role.ROLE_USER;
 	}
 
 	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
 		return Member.builder()
-			.name(signUpRequestDto.name())
-			.email(signUpRequestDto.email())
-			.password(passwordEncoder.encode(signUpRequestDto.password()))
-			.provider(Provider.LOCAL)
-			.providerId(null)
-			.imageUrl(signUpRequestDto.imageUrl())
-			.build();
+				.name(signUpRequestDto.name())
+				.email(signUpRequestDto.email())
+				.password(passwordEncoder.encode(signUpRequestDto.password()))
+				.provider(Provider.LOCAL)
+				.providerId(null)
+				.imageUrl(signUpRequestDto.imageUrl())
+				.build();
 	}
 
 	public static Member createSocialMember(OAuth2UserInfo userInfo, Provider provider) {
 		return Member.builder()
-			.email(userInfo.getEmail())
-			.name(userInfo.getName())
-			.password(null)
-			.provider(provider)
-			.providerId(userInfo.getId())
-			.imageUrl(userInfo.getImageUrl())
-			.build();
+				.email(userInfo.getEmail())
+				.name(userInfo.getName())
+				.password(null)
+				.provider(provider)
+				.providerId(userInfo.getId())
+				.imageUrl(userInfo.getImageUrl())
+				.build();
 	}
 
-	// public Member(String name, String email, String password, String imageUrl) {
-	// 	this.name = name;
-	// 	this.email = email;
-	// 	this.password = password;
-	// 	this.provider = Provider.LOCAL;
-	// 	this.role = Role.ROLE_USER;
-	// 	this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-	// 			? imageUrl
-	// 			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
-	// }
+	@Column(name = "is_first_login")
+	private Boolean isFirstLogin = true; // 최초 로그인 여부
 
+	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<SocialAccountLink> linkedAccounts = new HashSet<>();
 
+	public void addSocialLink(SocialAccountLink socialLink) {
+		if (this.linkedAccounts == null) {
+			this.linkedAccounts = new HashSet<>();
+		}
+		this.linkedAccounts.add(socialLink);
+		socialLink.setMember(this);
+	}
 
+	public void removeSocialLink(Provider provider) {
+		if (this.linkedAccounts != null) {
+			this.linkedAccounts.removeIf(link -> link.getProvider() == provider);
+		}
+	}
+
+	public boolean hasSocialLink(Provider provider) {
+		if (this.linkedAccounts == null || this.linkedAccounts.isEmpty()) {
+			return false;
+		}
+		return this.linkedAccounts.stream()
+				.anyMatch(link -> link.getProvider() == provider);
+	}
+
+	// 계정 상태 확인
+	public boolean isFirstLogin() {
+		return isFirstLogin != null && isFirstLogin;
+	}
+
+	public void completeFirstLogin() {
+		this.isFirstLogin = false;
+	}
 
 	/**
 	 * OAuth2 프로필 정보 변경 시 회원 정보 업데이트
