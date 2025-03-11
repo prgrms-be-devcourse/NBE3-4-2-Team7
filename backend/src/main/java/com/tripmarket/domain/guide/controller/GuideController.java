@@ -20,7 +20,7 @@ import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.dto.GuideProfileDto;
 import com.tripmarket.domain.guide.service.GuideService;
-import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.auth.AuthenticatedUser;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,7 +60,7 @@ public class GuideController {
 	@Operation(summary = "유저가 자신의 가이드 정보 조회할 때")
 	@GetMapping("/me")
 	@ResponseStatus(HttpStatus.OK)
-	public GuideProfileDto getMyGuideProfile(@AuthenticationPrincipal CustomOAuth2User user) {
+	public GuideProfileDto getMyGuideProfile(@AuthenticationPrincipal AuthenticatedUser user) {
 		return guideService.getMyGuideProfile(user.getId());
 	}
 	// TODO : DTO 변경됨에 따라 해당 api 요청되는 프론트 코드도 수정 필요함.
@@ -73,9 +73,9 @@ public class GuideController {
 	@PostMapping
 	public ResponseEntity<String> createGuide(
 		@Valid @RequestBody GuideCreateRequest guideDto,
-		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+		@AuthenticationPrincipal AuthenticatedUser user
 	) {
-		guideService.create(guideDto, customOAuth2User.getEmail());
+		guideService.create(guideDto, user.getEmail());
 		return ResponseEntity.status(HttpStatus.CREATED).body("가이드가 성공적으로 생성되었습니다.");
 	}
 
@@ -90,9 +90,9 @@ public class GuideController {
 	@PatchMapping
 	public ResponseEntity<String> updateGuide(
 		@Valid @RequestBody GuideDto guideDto,
-		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+		@AuthenticationPrincipal AuthenticatedUser user
 	) {
-		guideService.update(customOAuth2User.getId(), guideDto);
+		guideService.update(user.getId(), guideDto);
 		return ResponseEntity.ok("가이드 정보가 성공적으로 수정되었습니다.");
 	}
 
@@ -118,9 +118,9 @@ public class GuideController {
 	@GetMapping("/{id}/verify")
 	public ResponseEntity<Boolean> isMyGuideProfile(
 		@PathVariable(name = "id") Long id,
-		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+		@AuthenticationPrincipal AuthenticatedUser user
 	) {
-		boolean isMyProfile = guideService.validateMyGuide(customOAuth2User.getId(), id);
+		boolean isMyProfile = guideService.validateMyGuide(user.getId(), id);
 		return ResponseEntity.ok(isMyProfile);
 	}
 }

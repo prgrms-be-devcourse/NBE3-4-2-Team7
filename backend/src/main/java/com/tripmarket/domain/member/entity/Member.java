@@ -38,7 +38,6 @@ import lombok.Setter;
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
@@ -81,31 +80,31 @@ public class Member extends BaseEntity {
 		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-				? imageUrl
-				: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+			? imageUrl
+			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 		this.role = Role.ROLE_USER;
 	}
 
 	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
 		return Member.builder()
-				.name(signUpRequestDto.name())
-				.email(signUpRequestDto.email())
-				.password(passwordEncoder.encode(signUpRequestDto.password()))
-				.provider(Provider.LOCAL)
-				.providerId(null)
-				.imageUrl(signUpRequestDto.imageUrl())
-				.build();
+			.name(signUpRequestDto.name())
+			.email(signUpRequestDto.email())
+			.password(passwordEncoder.encode(signUpRequestDto.password()))
+			.provider(Provider.LOCAL)
+			.providerId(null)
+			.imageUrl(signUpRequestDto.imageUrl())
+			.build();
 	}
 
 	public static Member createSocialMember(OAuth2UserInfo userInfo, Provider provider) {
 		return Member.builder()
-				.email(userInfo.getEmail())
-				.name(userInfo.getName())
-				.password(null)
-				.provider(provider)
-				.providerId(userInfo.getId())
-				.imageUrl(userInfo.getImageUrl())
-				.build();
+			.email(userInfo.getEmail())
+			.name(userInfo.getName())
+			.password(null)
+			.provider(provider)
+			.providerId(userInfo.getId())
+			.imageUrl(userInfo.getImageUrl())
+			.build();
 	}
 
 	@Column(name = "is_first_login")
@@ -133,7 +132,7 @@ public class Member extends BaseEntity {
 			return false;
 		}
 		return this.linkedAccounts.stream()
-				.anyMatch(link -> link.getProvider() == provider);
+			.anyMatch(link -> link.getProvider() == provider);
 	}
 
 	// 계정 상태 확인
