@@ -1,7 +1,5 @@
 package com.tripmarket.domain.guide.entity;
 
-
-
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.global.jpa.entity.BaseEntity;
@@ -22,9 +20,9 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Builder
-@Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class Guide extends BaseEntity {
 
 	@Id
@@ -69,5 +67,17 @@ public class Guide extends BaseEntity {
 
 	public void setDeleted(boolean isDeleted) {
 		this.isDeleted = isDeleted;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public Member getMember() {
+		return member;
 	}
 }

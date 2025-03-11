@@ -102,4 +102,10 @@ public class Member extends BaseEntity {
 		return this.role == Role.ROLE_ADMIN;
 	}
 
+	/**
+	 * 코틀린에서 롬복 인식못해서 Getter 함수 명시적으로 설정
+	 * */
+	public Guide getGuide() {
+		return guide;
+	}
 }
