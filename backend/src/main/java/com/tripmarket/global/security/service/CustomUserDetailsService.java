@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.entity.Provider;
 import com.tripmarket.domain.member.repository.MemberRepository;
 import com.tripmarket.global.security.CustomUserDetails;
 
@@ -19,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		Member member = memberRepository.findByEmail(email)
+		Member member = memberRepository.findByEmailAndProvider(email, Provider.LOCAL)
 				.orElseThrow(() -> new UsernameNotFoundException("가입되지 않은 이메일입니다."));
 
 		return new CustomUserDetails(member); // UserDetails 객체 반환
