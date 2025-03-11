@@ -15,7 +15,7 @@ import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
 @Service
-open class GuideService(
+class GuideService(
     private val guideRepository: GuideRepository,
     private val memberRepository: MemberRepository,
     private val reviewStatsRepository: ReviewStatsRepository,
@@ -28,7 +28,7 @@ open class GuideService(
     }
 
     @Transactional
-    open fun create(createRequest: GuideCreateRequest, email: String) {
+    fun create(createRequest: GuideCreateRequest, email: String) {
         val member = memberRepository.findByEmail(email)
             .orElseThrow { CustomException(ErrorCode.MEMBER_NOT_FOUND) }
 
@@ -68,7 +68,7 @@ open class GuideService(
     }
 
     @Transactional
-    open fun update(memberId: Long, guideDto: GuideDto) {
+    fun update(memberId: Long, guideDto: GuideDto) {
         val guide = memberRepository.findById(memberId)
             .orElseThrow { CustomException(ErrorCode.MEMBER_NOT_FOUND) }
             .guide ?: throw CustomException(ErrorCode.GUIDE_PROFILE_NOT_FOUND)
