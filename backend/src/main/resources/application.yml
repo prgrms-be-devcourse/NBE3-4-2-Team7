@@ -9,6 +9,10 @@ server:
 spring:
   profiles:
     include: secret
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   security:
     oauth2:
       client:
@@ -64,7 +68,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-#      ddl-auto: create
+    #      ddl-auto: create
     properties:
       hibernate:
         default_batch_fetch_size: 100

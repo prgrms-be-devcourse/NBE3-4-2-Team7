@@ -79,6 +79,10 @@ dependencies {
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    // Cloudinary
+    implementation 'com.cloudinary:cloudinary-http44:1.33.0'
+    implementation 'com.cloudinary:cloudinary-taglib:1.33.0'
 }
 
 // Kotlin 컴파일 설정
