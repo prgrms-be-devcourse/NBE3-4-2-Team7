@@ -11,6 +11,7 @@ public enum ErrorCode {
 
 	//Member
 	MEMBER_NOT_FOUND(NOT_FOUND, "사용자가 존재하지 않습니다"),
+	DUPLICATE_EMAIL(CONFLICT, "해당 이메일로 가입한 계정이 이미 존재합니다."),
 
 	//signUp
 	DUPLICATE_EMAIL(BAD_REQUEST, "이미 가입되어있는 이메일입니다."),
@@ -23,7 +24,7 @@ public enum ErrorCode {
 	REFRESH_TOKEN_NOT_FOUND(UNAUTHORIZED, "Refresh Token 이 존재하지 않습니다."),
 	TOKEN_REFRESH_FAILED(INTERNAL_SERVER_ERROR, "토큰 갱신 실패"),
 	INVALID_PASSWORD(BAD_REQUEST, "잘못된 비밀번호입니다."),
-	
+
 	// Logout
 	LOGOUT_FAILED(INTERNAL_SERVER_ERROR, "로그아웃 처리 중 서버 오류가 발생했습니다."),
 	INVALID_LOGOUT_REQUEST(BAD_REQUEST, "로그아웃 요청이 잘못되었습니다."),

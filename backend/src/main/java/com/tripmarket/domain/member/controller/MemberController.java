@@ -90,5 +90,4 @@ public class MemberController {
 		List<TravelOfferDto> travelOffers = memberService.getTravelOffersByGuide(user.getEmail());
 		return ResponseEntity.ok(travelOffers);
 	}
-
 }

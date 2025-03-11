@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.tripmarket.domain.auth.dto.SignUpRequestDto;
+import com.tripmarket.domain.auth.dto.SignupRequestDto;
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.global.jpa.entity.BaseEntity;
 import com.tripmarket.global.oauth2.userinfo.OAuth2UserInfo;
@@ -26,12 +26,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity(name = "member")
 @Table(name = "member", uniqueConstraints = {
 	@UniqueConstraint(name = "UK_local_member_email", columnNames = {"email", "provider"})
@@ -72,6 +68,94 @@ public class Member extends BaseEntity {
 	@JoinColumn(name = "guide_id")
 	private Guide guide;
 
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
+	}
+
+	public Provider getProvider() {
+		return provider;
+	}
+
+	public void setProvider(Provider provider) {
+		this.provider = provider;
+	}
+
+	public Boolean getHasGuideProfile() {
+		return hasGuideProfile;
+	}
+
+	public void setHasGuideProfile(Boolean hasGuideProfile) {
+		this.hasGuideProfile = hasGuideProfile;
+	}
+
+	public String getProviderId() {
+		return providerId;
+	}
+
+	public void setProviderId(String providerId) {
+		this.providerId = providerId;
+	}
+
+	public String getImageUrl() {
+		return imageUrl;
+	}
+
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+
+	public String getMatchingList() {
+		return matchingList;
+	}
+
+	public void setMatchingList(String matchingList) {
+		this.matchingList = matchingList;
+	}
+
+	public Guide getGuide() {
+		return guide;
+	}
+
+	public void setGuide(Guide guide) {
+		this.guide = guide;
+	}
+
 	@Builder
 	private Member(String name, String email, String password, String providerId, String imageUrl, Provider provider) {
 		this.name = name;
@@ -85,7 +169,7 @@ public class Member extends BaseEntity {
 		this.role = Role.ROLE_USER;
 	}
 
-	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
+	public static Member createNormalMember(SignupRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
 		return Member.builder()
 			.name(signUpRequestDto.name())
 			.email(signUpRequestDto.email())
