@@ -99,6 +99,6 @@ class GuideService(
         val member = memberRepository.findById(memberId)
             .orElseThrow { CustomException(ErrorCode.MEMBER_NOT_FOUND) }
 
-        return member.guide?.id == guideId
+        return member.guide.id == guideId
     }
 }
