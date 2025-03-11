@@ -19,12 +19,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity(name = "member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
@@ -62,6 +58,94 @@ public class Member extends BaseEntity {
 	@OneToOne
 	@JoinColumn(name = "guide_id")
 	private Guide guide;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
+	}
+
+	public Provider getProvider() {
+		return provider;
+	}
+
+	public void setProvider(Provider provider) {
+		this.provider = provider;
+	}
+
+	public Boolean getHasGuideProfile() {
+		return hasGuideProfile;
+	}
+
+	public void setHasGuideProfile(Boolean hasGuideProfile) {
+		this.hasGuideProfile = hasGuideProfile;
+	}
+
+	public String getProviderId() {
+		return providerId;
+	}
+
+	public void setProviderId(String providerId) {
+		this.providerId = providerId;
+	}
+
+	public String getImageUrl() {
+		return imageUrl;
+	}
+
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+
+	public String getMatchingList() {
+		return matchingList;
+	}
+
+	public void setMatchingList(String matchingList) {
+		this.matchingList = matchingList;
+	}
+
+	public Guide getGuide() {
+		return guide;
+	}
+
+	public void setGuide(Guide guide) {
+		this.guide = guide;
+	}
 
 	@Builder
 	private Member(String name, String email, String password, String providerId, String imageUrl, Provider provider) {

@@ -216,27 +216,31 @@ public class AuthControllerTest {
 			.andExpect(cookie().exists("refreshToken"))
 			.andReturn();
 
-		Cookie[] loginCookies = loginResult.getResponse().getCookies();
+		Cookie accessToken = loginResult.getResponse().getCookie("accessToken");
+		Cookie refreshToken = loginResult.getResponse().getCookie("refreshToken");
+		assertThat(accessToken).isNotNull();
+		assertThat(refreshToken).isNotNull();
 
 		// 2. 토큰 갱신
 		MvcResult refreshResult = mockMvc.perform(post("/auth/refresh")
-				.cookie(loginCookies))
+				.cookie(accessToken, refreshToken))
 			.andExpect(status().isOk())
 			.andExpect(cookie().exists("accessToken"))
 			.andReturn();
 
-		Cookie[] refreshedCookies = refreshResult.getResponse().getCookies();
+		Cookie newAccessToken = refreshResult.getResponse().getCookie("accessToken");
+		assertThat(newAccessToken).isNotNull();
 
 		// 3. 로그아웃
 		mockMvc.perform(post("/auth/logout")
-				.cookie(refreshedCookies))
+				.cookie(newAccessToken, refreshToken))
 			.andExpect(status().isOk())
 			.andExpect(cookie().maxAge("accessToken", 0))
 			.andExpect(cookie().maxAge("refreshToken", 0));
 
 		// 4. 로그아웃 후 토큰 갱신 시도 (실패해야 함)
 		mockMvc.perform(post("/auth/refresh")
-				.cookie(refreshedCookies))
+				.cookie(newAccessToken, refreshToken))
 			.andExpect(status().isUnauthorized());
 	}
 }
