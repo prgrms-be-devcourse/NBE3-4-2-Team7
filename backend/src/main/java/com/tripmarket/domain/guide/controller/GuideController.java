@@ -20,6 +20,7 @@ import com.tripmarket.domain.guide.dto.GuideCreateRequest;
 import com.tripmarket.domain.guide.dto.GuideDto;
 import com.tripmarket.domain.guide.dto.GuideProfileDto;
 import com.tripmarket.domain.guide.service.GuideService;
+import com.tripmarket.global.auth.AuthenticatedUser;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,9 +74,9 @@ public class GuideController {
 	@PostMapping
 	public ResponseEntity<String> createGuide(
 		@Valid @RequestBody GuideCreateRequest guideDto,
-		@AuthenticationPrincipal CustomOAuth2User customOAuth2User
+		@AuthenticationPrincipal AuthenticatedUser user
 	) {
-		guideService.create(guideDto, customOAuth2User.getEmail());
+		guideService.create(guideDto, user.getEmail());
 		return ResponseEntity.status(HttpStatus.CREATED).body("가이드가 성공적으로 생성되었습니다.");
 	}
 
