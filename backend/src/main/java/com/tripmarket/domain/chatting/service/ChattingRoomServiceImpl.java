@@ -3,9 +3,9 @@ package com.tripmarket.domain.chatting.service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -62,8 +62,12 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 	//채팅내역 받기
 	@Override
 	public List<ChattingResponseDto> getChattingMessages(String roomId) {
-		return messageRepository.findMessagesByRoom(roomId).stream()
-			.map(message -> ChattingResponseDto.of(message, findMember(message.getChattingRoomInfo().senderEmail())))
+		List<Message> messages = messageRepository.findMessagesByRoom(roomId);
+		Map<String, Member> senderCache = getSenders(messages);
+
+		return messages.stream()
+			.map(message -> ChattingResponseDto.of(message,
+				senderCache.get(message.getChattingRoomInfo().senderEmail())))
 			.collect(Collectors.toList());
 	}
 
@@ -139,8 +143,10 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 				Member receiver = getReceiver(userEmail, chattingRoom);
 				return ChattingRoomsResponseDto.of(roomId, receiver, lastMessage);
 			})
-			.sorted(Comparator.comparing(ChattingRoomsResponseDto::lastMessageTime,
-				Comparator.nullsFirst(Comparator.reverseOrder())))
+			.sorted(Comparator.comparing(dto -> {
+				Message lastMessage = messageMap.get(dto.roomId());
+				return lastMessage != null ? lastMessage.getId().toHexString() : "";
+			}, Comparator.reverseOrder()))
 			.toList();
 	}
 
@@ -165,6 +171,13 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 			.collect(Collectors.toMap(Message::getRoomId, message -> message));
 	}
 
+	private Map<String, Member> getSenders(List<Message> messages) {
+		return messages.stream()
+			.map(message -> message.getChattingRoomInfo().senderEmail())
+			.distinct()
+			.collect(Collectors.toMap(email -> email, this::findMember));
+	}
+
 	private List<String> getRoomIds(Page<ChattingRoom> chattingRoomsPage) {
 		return chattingRoomsPage.getContent().stream()
 			.map(ChattingRoom::getId)
@@ -173,7 +186,7 @@ public class ChattingRoomServiceImpl implements ChattingRoomService {
 
 	private ChattingRoom addParticipants(Member sender, Member receiver) {
 		ChattingRoom chattingRoom = ChattingRoom.create();
-		chattingRoom.getParticipants().addAll(Set.of(
+		chattingRoom.getParticipants().addAll(List.of(
 			ChattingRoomParticipant.create(chattingRoom, sender),
 			ChattingRoomParticipant.create(chattingRoom, receiver)
 		));
