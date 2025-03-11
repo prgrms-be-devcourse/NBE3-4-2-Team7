@@ -1,8 +1,11 @@
 package com.tripmarket.domain.guideColumn.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +34,16 @@ public class CloudinaryImageService {
 			log.error("이미지 업로드 실패:", e);
 			throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
 		}
+	}
+
+	// 여러 이미지 업로드를 위한 메서드 추가
+	public List<String> uploadImages(List<MultipartFile> files) {
+		if (files == null || files.isEmpty()) {
+			return new ArrayList<>();
+		}
+		return files.stream()
+			.map(this::uploadImage)
+			.collect(Collectors.toList());
 	}
 
 	public void deleteImage(String imageUrl) {

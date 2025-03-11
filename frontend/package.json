@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@stomp/stompjs": "^7.0.0",
+    "@tiptap/extension-image": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
     "axios": "^1.7.9",
     "next": "15.1.6",
     "react": "^19.0.0",

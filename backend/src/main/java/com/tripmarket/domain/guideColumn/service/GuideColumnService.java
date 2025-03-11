@@ -120,4 +120,11 @@ public class GuideColumnService {
 
 		guideColumnRepository.delete(column);
 	}
+
+	public GuideColumnResponseDTO getColumn(Long columnId) {
+		GuideColumn column = guideColumnRepository.findById(columnId)
+			.orElseThrow(() -> new CustomException(ErrorCode.GUIDE_COLUMN_NOT_FOUND));
+
+		return GuideColumnResponseDTO.from(column);
+	}
 }

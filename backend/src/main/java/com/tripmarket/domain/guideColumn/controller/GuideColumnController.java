@@ -1,4 +1,4 @@
-package com.tripmarket.domain.guideColumn;
+package com.tripmarket.domain.guideColumn.controller;
 
 import java.util.List;
 
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tripmarket.domain.guideColumn.dto.GuideColumnRequestDTO;
 import com.tripmarket.domain.guideColumn.dto.GuideColumnResponseDTO;
+import com.tripmarket.domain.guideColumn.service.CloudinaryImageService;
 import com.tripmarket.domain.guideColumn.service.GuideColumnService;
 import com.tripmarket.global.auth.AuthenticatedUser;
 
@@ -38,17 +39,32 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "GuideColumnController", description = "가이드 칼럼 컨트롤러")
 public class GuideColumnController {
 	private final GuideColumnService guideColumnService;
+	private final CloudinaryImageService cloudinaryImageService;
 
 	@PostMapping
 	@Operation(summary = "가이드 칼럼 작성")
 	public ResponseEntity<GuideColumnResponseDTO> createColumn(
-		@RequestPart(value = "data") String dataJson,  // Multipart 요청에서 JSON 파싱 과정에 문제가 발생하는거 같아서 임시 방편으로 String으로 받음
+		@RequestPart(value = "data") String dataJson,
 		@RequestPart(value = "images", required = false) List<MultipartFile> images,
 		@AuthenticationPrincipal AuthenticatedUser user
 	) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		GuideColumnRequestDTO requestDTO = mapper.readValue(dataJson, GuideColumnRequestDTO.class);
 
+		// 이미지 업로드만을 위한 요청인 경우 (제목과 내용이 비어있음)
+		if (requestDTO.title().isEmpty() && requestDTO.content().isEmpty()) {
+			List<String> imageUrls = cloudinaryImageService.uploadImages(images);
+			return ResponseEntity.ok(new GuideColumnResponseDTO(
+				null,   // id
+				null,   // guideName
+				"",     // title
+				"",     // content
+				imageUrls, // imageUrls
+				null    // guideId
+			));
+		}
+
+		// 실제 칼럼 작성 요청인 경우
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(guideColumnService.createColumn(requestDTO, images, user));
 	}
@@ -60,6 +76,14 @@ public class GuideColumnController {
 		Pageable pageable
 	) {
 		return ResponseEntity.ok(guideColumnService.getColumns(pageable));
+	}
+
+	@GetMapping("/{columnId}")
+	@Operation(summary = "가이드 칼럼 상세 조회")
+	public ResponseEntity<GuideColumnResponseDTO> getColumn(
+		@PathVariable Long columnId
+	) {
+		return ResponseEntity.ok(guideColumnService.getColumn(columnId));
 	}
 
 	@GetMapping("/guide/{guideId}")

@@ -9,7 +9,8 @@ public record GuideColumnResponseDTO(
 	String guideName,
 	String title,
 	String content,
-	List<String> imageUrls
+	List<String> imageUrls,
+	Long guideId
 ) {
 	public static GuideColumnResponseDTO from(GuideColumn guideColumn) {
 		return new GuideColumnResponseDTO(
@@ -17,7 +18,8 @@ public record GuideColumnResponseDTO(
 			guideColumn.getGuide().getName(),
 			guideColumn.getTitle(),
 			guideColumn.getContent(),
-			guideColumn.getImageUrls()
+			guideColumn.getImageUrls(),
+			guideColumn.getGuide().getId()
 		);
 	}
 }

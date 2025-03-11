@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: '**',
+                hostname: 'res.cloudinary.com',
             },
         ],
     },
@@ -26,6 +25,14 @@ const nextConfig = {
             {
                 source: '/members/:path*',
                 destination: 'http://localhost:8080/members/:path*',
+            },
+            {
+                source: '/api/members/:path*',
+                destination: 'http://localhost:8080/members/:path*'
+            },
+            {
+                source: '/api/images/:path*',
+                destination: 'http://localhost:8080/images/:path*'
             }
         ];
     },
