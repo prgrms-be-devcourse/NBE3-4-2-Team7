@@ -56,6 +56,7 @@ class GuideControllerTest {
 
 	private static Stream<Arguments> provideGuideCreationTestCases() {
 		return Stream.of(
+			Arguments.of(null, DEFAULT_GLOBAL_ERROR_CODE),  // 언어가 null
 			Arguments.of("", DEFAULT_GLOBAL_ERROR_CODE),  // 언어가 비어있을 때 오류 반환
 			Arguments.of("지원하지않는언어", DEFAULT_GLOBAL_ERROR_CODE), // 지원하지 않는 언어 오류
 			Arguments.of("한국어, 지원하지않는언어", DEFAULT_GLOBAL_ERROR_CODE), // 일부 언어만 지원할 경우 오류
