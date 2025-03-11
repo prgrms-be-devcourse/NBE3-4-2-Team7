@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 
+import com.tripmarket.global.auth.AuthenticatedUser;
+
 import lombok.Getter;
 
 /**
@@ -13,7 +15,7 @@ import lombok.Getter;
  * 기본 OAuth2User 정보 외에 우리 서비스의 사용자 ID를 추가로 보관
  */
 @Getter
-public class CustomOAuth2User extends DefaultOAuth2User {
+public class CustomOAuth2User extends DefaultOAuth2User implements AuthenticatedUser {
 
 	private final Long id; // 사용자 식별용 id (DB 사용자 id)
 
@@ -28,13 +30,24 @@ public class CustomOAuth2User extends DefaultOAuth2User {
 	 * @param id               사용자 식별용 id
 	 */
 	public CustomOAuth2User(
-			Collection<? extends GrantedAuthority> authorities,
-			Map<String, Object> attributes,
-			String nameAttributeKey,
-			Long id,
-			String email) {
+		Collection<? extends GrantedAuthority> authorities,
+		Map<String, Object> attributes,
+		String nameAttributeKey,
+		Long id,
+		String email) {
 		super(authorities, attributes, nameAttributeKey);
 		this.id = id;
 		this.email = email;
+	}
+
+	/**
+	 * 코틀린에서 롬복 인식못해서 명시적으로 설정
+	 * */
+	public Long getId() {
+		return id;
+	}
+
+	public String getEmail() {
+		return email;
 	}
 }

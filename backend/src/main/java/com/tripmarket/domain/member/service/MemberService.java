@@ -89,7 +89,7 @@ public class MemberService {
 		}
 
 		return guideRequestRepository.findByGuideId(member.getGuide().getId()).stream()
-			.map(guideRequest -> GuideRequestDto.response(guideRequest,email))
+			.map(guideRequest -> GuideRequestDto.response(guideRequest, email))
 			.toList();
 	}
 
@@ -102,7 +102,7 @@ public class MemberService {
 		}
 
 		return travelOfferRepository.findByGuideId(member.getGuide().getId()).stream()
-			.map(travelOffer -> TravelOfferDto.response(travelOffer,email))
+			.map(travelOffer -> TravelOfferDto.response(travelOffer, email))
 			.toList();
 	}
 

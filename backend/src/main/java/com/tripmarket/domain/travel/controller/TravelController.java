@@ -1,9 +1,12 @@
 package com.tripmarket.domain.travel.controller;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -60,8 +63,18 @@ public class TravelController {
 	@GetMapping
 	public ResponseEntity<Page<TravelDto>> getTravels(
 		@RequestParam(required = false) Long categoryId,
-		@PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+		@PageableDefault(size = 20) Pageable pageable) {
 		Page<TravelDto> travelList = travelService.getTravels(categoryId, pageable);
+		return ResponseEntity.ok(travelList);
+	}
+
+	@Operation(summary = "No OFFSET 방식으로 여행 요청 조회")
+	@GetMapping("/no-offset")
+	public ResponseEntity<List<TravelDto>> getTravelsNoOffset(
+		@RequestParam(required = false) Long categoryId,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
+		@RequestParam(defaultValue = "20") int size) {
+		List<TravelDto> travelList = travelService.getTravelsNoOffset(categoryId, lastCreatedAt, size);
 		return ResponseEntity.ok(travelList);
 	}
 

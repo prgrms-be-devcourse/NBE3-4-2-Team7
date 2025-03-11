@@ -3,7 +3,6 @@ package com.tripmarket.global.jwt;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -17,8 +16,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import com.tripmarket.domain.member.entity.Member;
+import com.tripmarket.domain.member.repository.MemberRepository;
+import com.tripmarket.global.auth.AuthenticatedUser;
+import com.tripmarket.global.auth.TokenAuthentication;
+import com.tripmarket.global.exception.CustomException;
+import com.tripmarket.global.exception.ErrorCode;
 import com.tripmarket.global.exception.JwtAuthenticationException;
 import com.tripmarket.global.oauth2.CustomOAuth2User;
+import com.tripmarket.global.security.CustomUserDetails;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -42,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtTokenProvider {
 
 	private final RedisTemplate<String, String> redisTemplate;
+	private final MemberRepository memberRepository;
 
 	@Value("${jwt.secret}")
 	private String secretKey;
@@ -64,36 +71,13 @@ public class JwtTokenProvider {
 	}
 
 	/**
-	 * 토큰 갱신 메서드
-	 * 만료된 토큰으로부터 새로운 토큰 생성
-	 *
-	 * @param expiredToken 만료된 JWT 토큰
-	 * @return 새로 생성된 access token
-	 */
-	public String refreshAccessToken(String expiredToken) {
-		Claims claims = parseClaims(expiredToken);
-
-		Date now = new Date();
-		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
-
-		return Jwts.builder()
-			.subject(claims.getSubject())
-			.claim("auth", claims.get("auth"))
-			.claim("email", claims.get("email"))
-			.issuedAt(now)
-			.expiration(validity)
-			.signWith(key)
-			.compact();
-	}
-
-	/**
 	 * 토큰을 블랙리스트에 추가
 	 * Redis에 토큰을 저장하고 남은 유효 시간만큼 유지
 	 *
 	 * @param token 블랙리스트에 추가할 토큰
 	 * @throws JwtAuthenticationException 블랙리스트 추가 실패 시
 	 */
-	public void addToBlacklist(String token) {
+	public void addToBlacklist(String token) throws ExpiredJwtException {
 		try {
 			Claims claims = parseClaims(token);
 			long expiration = claims.getExpiration().getTime(); // 토큰 만료 시간
@@ -103,15 +87,15 @@ public class JwtTokenProvider {
 			if (remainingTime > 0) {
 				redisTemplate.opsForValue()
 					.set("BL:" + token, "blacklisted", remainingTime, TimeUnit.SECONDS);
-				log.debug("Token added to blacklist, expires in {} seconds", remainingTime);
-			} else {
-				log.debug("Token is already expired, skipping blacklist");
+				log.info("토큰 블랙리스트 추가 완료, 만료까지 {}초 남음", remainingTime);
 			}
 		} catch (ExpiredJwtException e) {
-			log.debug("Token is expired, skipping blacklist");
+			log.warn("만료된 토큰으로 블랙리스트 추가 시도됨: {}", token);
+			throw new CustomException(ErrorCode.EXPIRED_TOKEN);
+
 		} catch (Exception e) {
-			log.error("Failed to add token to blacklist", e);
-			throw new JwtAuthenticationException("토큰 블랙리스트 등록 실패");
+			log.error("토큰 블랙리스트 추가 실패", e);
+			throw new CustomException(ErrorCode.TOKEN_REGISTRATION_FAILED);
 		}
 	}
 
@@ -127,35 +111,62 @@ public class JwtTokenProvider {
 
 	/**
 	 * 사용자 인증 정보를 기반으로 Access Token을 생성
+	 *
 	 * @param authentication 인증 정보
 	 * @return 생성된 access token
 	 */
 	public String createAccessToken(Authentication authentication) {
+		String authorities = authentication.getAuthorities().stream()
+			.map(GrantedAuthority::getAuthority)
+			.collect(Collectors.joining(","));
+
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
 
-		CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
+		// OAuth2 로그인과 일반 로그인 구분
+		if (authentication.getPrincipal() instanceof CustomOAuth2User) {
+			CustomOAuth2User user = (CustomOAuth2User)authentication.getPrincipal();
 
-		return Jwts.builder()
-			.subject(String.valueOf(user.getId())) // 식별자로 id만 사용
-			.claim("auth", getAuthorities(authentication)) // 권한 정보
-			.claim("email", user.getEmail()) // email claim 추가
-			.issuedAt(now)
-			.expiration(validity)
-			.signWith(key)
-			.compact();
+			return Jwts.builder()
+				.subject(String.valueOf(user.getId()))
+				.claim("auth", authorities)
+				.claim("email", user.getEmail())
+				.issuedAt(now)
+				.expiration(validity)
+				.signWith(key)
+				.compact();
+
+			// 일반 로그인 - CustomUserDetails 사용
+		} else if (authentication.getPrincipal() instanceof CustomUserDetails) {
+			CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
+			Member member = userDetails.getMember();
+
+			return Jwts.builder()
+				.subject(String.valueOf(member.getId()))
+				.claim("auth", authorities)
+				.claim("email", member.getEmail())
+				.issuedAt(now)
+				.expiration(validity)
+				.signWith(key)
+				.compact();
+
+		} else {
+			throw new JwtAuthenticationException("지원하지 않는 인증 방식입니다.");
+		}
 	}
 
 	/**
 	 * Refresh Token 생성
-	 * 인증 정보 없이 만료 시간만 포함하여 생성
+	 *
+	 * @Param userId 사용자 ID
 	 * @return 생성된 refresh token
 	 */
-	public String createRefreshToken() {
+	public String createRefreshToken(Long userId) {
 		Date now = new Date();
 		Date validity = new Date(now.getTime() + refreshTokenValidityInSeconds * 1000);
 
 		return Jwts.builder()
+			.subject(String.valueOf(userId))
 			.issuedAt(now)
 			.expiration(validity)
 			.signWith(key)
@@ -180,25 +191,16 @@ public class JwtTokenProvider {
 				.map(SimpleGrantedAuthority::new)
 				.toList();
 
-		CustomOAuth2User principal = new CustomOAuth2User(
-			authorities, // 권한 정보
-			Map.of(
-				"id", userId,
-				"email", email
-			), // OAuth2 속성
-			"id", // nameAttributeKey
-			userId, // id
-			email // email
-		);
+		AuthenticatedUser principal = new TokenAuthentication(userId, email, authorities);
 		return new UsernamePasswordAuthenticationToken(principal, "", authorities);
 	}
 
 	/**
 	 * 토큰의 유효성 검증
 	 * 서명 검증, 만료 여부 등 확인
+	 *
 	 * @param token 검증할 토큰
 	 * @return 유효성 여부
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	public boolean validateToken(String token) {
 		try {
@@ -208,17 +210,20 @@ public class JwtTokenProvider {
 				.parseSignedClaims(token);
 			return true;
 		} catch (SecurityException | MalformedJwtException e) {
-			log.error("Invalid JWT signature: {}", e.getMessage());
-			throw new JwtAuthenticationException("잘못된 JWT 서명입니다.");
+			log.error("잘못된 JWT 서명: {}", e.getMessage());
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
+
 		} catch (ExpiredJwtException e) {
-			log.error("Expired JWT token: {}", e.getMessage());
-			throw new JwtAuthenticationException("만료된 JWT 토큰입니다.");
+			log.error("만료된 JWT 토큰: {}", e.getMessage());
+			throw new CustomException(ErrorCode.EXPIRED_TOKEN);
+
 		} catch (UnsupportedJwtException e) {
-			log.error("Unsupported JWT token: {}", e.getMessage());
-			throw new JwtAuthenticationException("지원되지 않는 JWT 토큰입니다.");
+			log.error("지원하지 않는 JWT 토큰: {}", e.getMessage());
+			throw new CustomException(ErrorCode.UNSUPPORTED_TOKEN);
+
 		} catch (IllegalArgumentException e) {
-			log.error("JWT claims string is empty: {}", e.getMessage());
-			throw new JwtAuthenticationException("JWT 토큰이 잘못되었습니다.");
+			log.error("JWT 토큰이 비어 있음: {}", e.getMessage());
+			throw new CustomException(ErrorCode.EMPTY_TOKEN);
 		}
 	}
 
@@ -228,7 +233,6 @@ public class JwtTokenProvider {
 	 *
 	 * @param token JWT 토큰
 	 * @return Claims 객체
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
 	 */
 	private Claims parseClaims(String token) {
 		try {
@@ -240,8 +244,10 @@ public class JwtTokenProvider {
 		} catch (ExpiredJwtException e) {
 			// 만료된 토큰이어도 Claims 반환
 			return e.getClaims();
+
 		} catch (Exception e) {
-			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
+			log.error("JWT Claims 파싱 실패: {}", e.getMessage());
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
 		}
 	}
 
@@ -249,23 +255,24 @@ public class JwtTokenProvider {
 	 * 만료된 토큰을 포함하여 사용자 ID를 추출
 	 * 토큰의 서명이 유효한 경우에만 ID 반환
 	 *
-	 * @param token JWT 토큰
+	 * @param refreshToken JWT 토큰
 	 * @return 사용자 ID
-	 * @throws JwtAuthenticationException 토큰이 유효하지 않을 경우
+	 * @throws CustomException 토큰이 유효하지 않을 경우
 	 */
-	public Long getUserIdFromExpiredToken(String token) {
+	public Long getUserIdFromRefreshToken(String refreshToken) {
 		try {
-			return Long.valueOf(parseClaims(token).getSubject());
-		} catch (ExpiredJwtException e) {
-			// 만료된 토큰이어도 서명이 유효하면 ID 반환
-			return Long.valueOf(e.getClaims().getSubject());
+			Claims claims = parseClaims(refreshToken);
+			return Long.valueOf(claims.getSubject());
+
 		} catch (Exception e) {
-			throw new JwtAuthenticationException("유효하지 않은 토큰입니다.");
+			log.warn("사용자 ID 추출 실패 - Refresh Token 오류(계속 진행): {}", e.getMessage());
+			return null;
 		}
 	}
 
 	/**
 	 * Authentication 객체에서 권한 정보 추출
+	 *
 	 * @param authentication 인증 객체
 	 * @return 쉼표로 구분된 권한 문자열
 	 */

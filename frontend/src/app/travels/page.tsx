@@ -90,14 +90,24 @@ const TravelListPage: React.FC = () => {
                             <p className="text-xl text-gray-700 mb-8">
                                 전문 가이드와 함께하는 맞춤형 여행 서비스
                             </p>
-                            <button
-                                onClick={handleTravelRequest}
-                                className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold
-                                         hover:bg-blue-700 transform hover:-translate-y-1 transition-all duration-200
-                                         shadow-md hover:shadow-lg"
-                            >
-                                여행 요청하기
-                            </button>
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={handleTravelRequest}
+                                    className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold
+                                             hover:bg-blue-700 transform hover:-translate-y-1 transition-all duration-200
+                                             shadow-md hover:shadow-lg"
+                                >
+                                    여행 요청하기
+                                </button>
+                                <button
+                                    onClick={() => router.push('/guide-columns')}
+                                    className="bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-semibold
+                                             hover:bg-green-700 transform hover:-translate-y-1 transition-all duration-200
+                                             shadow-md hover:shadow-lg ml-4"
+                                >
+                                    가이드 칼럼
+                                </button>
+                            </div>
                         </div>
                     </div>
 

@@ -104,7 +104,10 @@ axiosInstance.interceptors.response.use(
                         // 보호된 경로에서만 리다이렉트
                         const protectedRoutes = ['/travels/create', '/mypage'];
                         if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
-                            window.location.replace('/login');
+                            // 로그인 모달을 표시하기 위해 상태 업데이트
+                            window.dispatchEvent(new CustomEvent('showLoginModal'));
+                            // 안전한 페이지로 리다이렉트
+                            window.location.replace('/travels');
                         }
                     }
                     return Promise.reject(refreshError);

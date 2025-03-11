@@ -11,6 +11,31 @@ public enum ErrorCode {
 
 	//Member
 	MEMBER_NOT_FOUND(NOT_FOUND, "사용자가 존재하지 않습니다"),
+	DUPLICATE_EMAIL(CONFLICT, "해당 이메일로 가입한 계정이 이미 존재합니다."),
+
+	//signUp
+	DUPLICATE_EMAIL(BAD_REQUEST, "이미 가입되어있는 이메일입니다."),
+
+	//Login
+	INVALID_TOKEN(UNAUTHORIZED, "잘못된 JWT 토큰입니다"),
+	EXPIRED_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다."),
+	UNSUPPORTED_TOKEN(UNAUTHORIZED, "지원하지 않는 토큰입니다."),
+	EMPTY_TOKEN(UNAUTHORIZED, "비어있는 토큰 입니다."),
+	REFRESH_TOKEN_NOT_FOUND(UNAUTHORIZED, "Refresh Token 이 존재하지 않습니다."),
+	TOKEN_REFRESH_FAILED(INTERNAL_SERVER_ERROR, "토큰 갱신 실패"),
+	INVALID_PASSWORD(BAD_REQUEST, "잘못된 비밀번호입니다."),
+
+	// Logout
+	LOGOUT_FAILED(INTERNAL_SERVER_ERROR, "로그아웃 처리 중 서버 오류가 발생했습니다."),
+	INVALID_LOGOUT_REQUEST(BAD_REQUEST, "로그아웃 요청이 잘못되었습니다."),
+	INVALID_REFRESH_TOKEN(UNAUTHORIZED, "유효하지 않은 Refresh Token 입니다."),
+	TOKEN_REGISTRATION_FAILED(INTERNAL_SERVER_ERROR, "Access Token 을 블랙리스트에 등록하는 중 서버 오류가 발생했습니다."),
+
+	// LinkId
+	ALREADY_LINKED_ACCOUNT(HttpStatus.BAD_REQUEST, "이미 연동된 소셜 계정입니다."),
+	SOCIAL_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "연동된 소셜 계정이 없습니다."),
+	UNSUPPORTED_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인 유형입니다."),
+	INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 소셜 토큰입니다."),
 
 	//Category
 	CATEGORY_NOT_FOUND(NOT_FOUND, "카테고리가 존재하지 않습니다."),
@@ -63,8 +88,14 @@ public enum ErrorCode {
 	NOT_FOUND_CHAT_ROOM(NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 	STOMP_INVALID_HEADER(BAD_REQUEST, "Stomp 헤더값이 누락되었습니다."),
 	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다."),
-	SESSION_ERROR(NOT_FOUND,"세션이 존재하지 않습니다."),
-	INVALID_TOKEN(BAD_REQUEST,"잘못된 토큰입니다.");
+	SESSION_ERROR(NOT_FOUND, "세션이 존재하지 않습니다."),
+
+	// GuideColumn
+	IMAGE_UPLOAD_FAILED(INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
+	GUIDE_COLUMN_NOT_FOUND(NOT_FOUND, "가이드 칼럼을 찾을 수 없습니다."),
+	UNAUTHORIZED_ACCESS(UNAUTHORIZED, "접근 권한이 없습니다."),
+	IMAGE_DELETE_FAILED(INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
+	INVALID_IMAGE_URL(BAD_REQUEST, "잘못된 이미지 URL 형식입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
