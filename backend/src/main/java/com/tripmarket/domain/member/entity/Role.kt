@@ -1,6 +1,6 @@
-package com.tripmarket.domain.member.entity;
+package com.tripmarket.domain.member.entity
 
-public enum Role {
-	ROLE_ADMIN,
-	ROLE_USER
+enum class Role {
+    ROLE_ADMIN,
+    ROLE_USER
 }
