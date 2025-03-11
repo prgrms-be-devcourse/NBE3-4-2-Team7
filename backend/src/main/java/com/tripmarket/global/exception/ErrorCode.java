@@ -88,7 +88,14 @@ public enum ErrorCode {
 	NOT_FOUND_CHAT_ROOM(NOT_FOUND, "채팅방을 찾을 수 없습니다."),
 	STOMP_INVALID_HEADER(BAD_REQUEST, "Stomp 헤더값이 누락되었습니다."),
 	STOMP_DISCONNECT_ERROR(INTERNAL_SERVER_ERROR, "Stomp DISCONNECT가 실패했습니다."),
-	SESSION_ERROR(NOT_FOUND, "세션이 존재하지 않습니다.");
+	SESSION_ERROR(NOT_FOUND, "세션이 존재하지 않습니다."),
+
+	// GuideColumn
+	IMAGE_UPLOAD_FAILED(INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
+	GUIDE_COLUMN_NOT_FOUND(NOT_FOUND, "가이드 칼럼을 찾을 수 없습니다."),
+	UNAUTHORIZED_ACCESS(UNAUTHORIZED, "접근 권한이 없습니다."),
+	IMAGE_DELETE_FAILED(INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
+	INVALID_IMAGE_URL(BAD_REQUEST, "잘못된 이미지 URL 형식입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
