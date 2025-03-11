@@ -18,7 +18,7 @@ class LanguagesValidator : ConstraintValidator<ValidLanguages, String> {
     fun init() {
         // Locale 데이터 초기화
         Locale.getISOLanguages().forEach { language ->
-            val locale = Locale(language)
+            val locale = Locale.forLanguageTag(language)
             ISO_DISPLAY_LANGUAGE_SET.add(locale.displayLanguage)
         }
     }
