@@ -86,6 +86,11 @@ public class Member extends BaseEntity {
 		this.hasGuideProfile = true;
 	}
 
+	public void deleteGuideProfile() {
+		this.guide = null;
+		this.hasGuideProfile = false;
+	}
+
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
@@ -108,4 +113,5 @@ public class Member extends BaseEntity {
 	public Guide getGuide() {
 		return guide;
 	}
+
 }

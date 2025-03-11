@@ -64,9 +64,11 @@ class GuideController(
     }
 
     @Operation(summary = "가이드 탈퇴")
-    @DeleteMapping("/{id}")
-    fun deleteGuide(@PathVariable id: Long): ResponseEntity<Void> {
-        guideService.delete(id)
+    @DeleteMapping
+    fun deleteGuide(
+        @AuthenticationPrincipal customOAuth2User: CustomOAuth2User
+    ): ResponseEntity<Void> {
+        guideService.delete(customOAuth2User.id)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 

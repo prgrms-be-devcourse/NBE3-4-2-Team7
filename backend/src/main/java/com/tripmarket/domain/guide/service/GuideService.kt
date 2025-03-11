@@ -1,4 +1,4 @@
-package com.tripmarket.domain.guide.service;
+package com.tripmarket.domain.guide.service
 
 import com.tripmarket.domain.guide.dto.GuideCreateRequest
 import com.tripmarket.domain.guide.dto.GuideDto
@@ -84,9 +84,14 @@ class GuideService(
     }
 
 
-    fun delete(id: Long) {
-        val guide = getGuide(id)
+    fun delete(memberId: Long) {
+        val member = memberRepository.findById(memberId)
+            .orElseThrow { CustomException(ErrorCode.MEMBER_NOT_FOUND) }
+        val guide = member.guide
+
         guide.isDeleted = true
+        member.deleteGuideProfile()
+
         guideRepository.save(guide)
     }
 
