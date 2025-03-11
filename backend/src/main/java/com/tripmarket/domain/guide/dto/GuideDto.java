@@ -8,8 +8,6 @@ import lombok.Builder;
 
 @Builder
 public record GuideDto(
-	Long id,
-	@NotBlank String name,
 	@NotBlank @ValidLanguages String languages,
 	@NotBlank String activityRegion,
 	Integer experienceYears,
@@ -19,8 +17,6 @@ public record GuideDto(
 	// Entity -> Record 변환
 	public static GuideDto fromEntity(Guide guide) {
 		return new GuideDto(
-			guide.getId(),
-			guide.getName(),
 			guide.getLanguages(),
 			guide.getActivityRegion(),
 			guide.getExperienceYears(),
@@ -32,7 +28,6 @@ public record GuideDto(
 	// Record -> Entity 변환
 	public static Guide toEntity(GuideDto guideDto) {
 		return Guide.builder()
-			.name(guideDto.name)
 			.introduction(guideDto.introduction)
 			.activityRegion(guideDto.activityRegion)
 			.experienceYears(guideDto.experienceYears)
