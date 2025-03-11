@@ -1,6 +1,9 @@
 package com.tripmarket.domain.travel.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,6 +58,12 @@ public class TravelService {
 	public Page<TravelDto> getTravels(Long categoryId, Pageable pageable) {
 		Page<Travel> travelPage = travelRepository.searchTravels(categoryId, pageable);
 		return travelPage.map(TravelDto::of);
+	}
+
+	@Transactional(readOnly = true)
+	public List<TravelDto> getTravelsNoOffset(Long categoryId, LocalDateTime lastCreatedAt, int size) {
+		List<Travel> travelList = travelRepository.searchTravelsNoOffset(categoryId, lastCreatedAt, size);
+		return travelList.stream().map(TravelDto::of).collect(Collectors.toList());
 	}
 
 	@Transactional(readOnly = true)

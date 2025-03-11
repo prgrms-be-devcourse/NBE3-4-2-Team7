@@ -2,6 +2,7 @@ package com.tripmarket.domain.travel.repository;
 
 import static com.tripmarket.domain.travel.entity.QTravel.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class TravelRepositoryImpl implements TravelRepositoryCustom {
 		List<Travel> travels = queryFactory
 			.selectFrom(travel)
 			.where(categoryId != null ? travel.category.id.eq(categoryId) : null)
+			.orderBy(travel.createdAt.asc())
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch();
@@ -35,5 +37,18 @@ public class TravelRepositoryImpl implements TravelRepositoryCustom {
 			.fetchCount();
 
 		return new PageImpl<>(travels, pageable, total);
+	}
+
+	@Override
+	public List<Travel> searchTravelsNoOffset(Long categoryId, LocalDateTime lastCreatedAt, int limit) {
+		return queryFactory
+			.selectFrom(travel)
+			.where(
+				categoryId != null ? travel.category.id.eq(categoryId) : null,
+				lastCreatedAt != null ? travel.createdAt.gt(lastCreatedAt) : null
+			)
+			.orderBy(travel.createdAt.asc())
+			.limit(limit)
+			.fetch();
 	}
 }
