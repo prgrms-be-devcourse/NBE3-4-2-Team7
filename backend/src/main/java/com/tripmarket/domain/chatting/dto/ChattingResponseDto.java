@@ -1,5 +1,9 @@
 package com.tripmarket.domain.chatting.dto;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 import com.tripmarket.domain.chatting.entity.Message;
 import com.tripmarket.domain.member.entity.Member;
 import com.tripmarket.global.util.DateUtil;
@@ -21,10 +25,10 @@ public record ChattingResponseDto(
 		return ChattingResponseDto.builder()
 			.content(message.getContent())
 			.senderName(sender.getName())
-			.senderEmail(message.getSender())
+			.senderEmail(message.getChattingRoomInfo().senderEmail())
 			.senderProfile(sender.getImageUrl())
-			.time(DateUtil.convertTime(message.getCreatedAt()))
-			.readStatus(message.isReadStatus())
+			.time(DateUtil.convertTime(DateUtil.getTime(message)))
 			.build();
 	}
+
 }

@@ -1,8 +1,8 @@
 package com.tripmarket.domain.chatting.entity;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.UuidGenerator;
 
@@ -19,6 +19,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @Getter
 @AllArgsConstructor
+@Table(name = "chatting_room", indexes = {
+	@Index(name = "idx_chattingRoom_isDelete", columnList = "isDelete")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChattingRoom extends BaseEntity {
 
@@ -31,7 +34,7 @@ public class ChattingRoom extends BaseEntity {
 	private LocalDateTime deleteDate;
 
 	@OneToMany(mappedBy = "chattingRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<ChattingRoomParticipant> participants = new HashSet<>();
+	private List<ChattingRoomParticipant> participants = new ArrayList<>();
 
 	public void deleteRoom() {
 		this.isDelete = true;
@@ -40,15 +43,15 @@ public class ChattingRoom extends BaseEntity {
 
 	public static ChattingRoom create(){
 		return ChattingRoom.builder()
-			.participants(new HashSet<>())
+			.participants(new ArrayList<>())
 			.isDelete(false)
 			.deleteDate(null)
 			.build();
 	}
 
 	// 참여자 이메일
-	public Set<String> getParticipantEmails() {
-		Set<String> emails = new HashSet<>();
+	public List<String> getParticipantEmails() {
+		List<String> emails = new ArrayList<>();
 		for (ChattingRoomParticipant participant : participants) {
 			emails.add(participant.getMember().getEmail());
 		}

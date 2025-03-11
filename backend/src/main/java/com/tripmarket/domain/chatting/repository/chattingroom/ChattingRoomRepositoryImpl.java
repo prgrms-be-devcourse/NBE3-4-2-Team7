@@ -51,7 +51,7 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 		condition.and(participant.isActive.isTrue());
 
 		if (search != null && !search.isEmpty()) {
-			condition.and(chattingRoom.participants.any().member.name.containsIgnoreCase(search));
+			condition.and(participant.member.name.containsIgnoreCase(search));
 		}
 
 		List<ChattingRoom> chattingRooms = queryFactory.selectFrom(chattingRoom)
@@ -63,6 +63,7 @@ public class ChattingRoomRepositoryImpl implements CustomChattingRoomRepository 
 
 		long total = Optional.ofNullable(
 			queryFactory.select(chattingRoom.count())
+				.distinct()
 				.from(chattingRoom)
 				.join(chattingRoom.participants, participant)
 				.where(condition)

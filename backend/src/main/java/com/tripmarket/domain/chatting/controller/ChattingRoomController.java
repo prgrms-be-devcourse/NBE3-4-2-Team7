@@ -85,7 +85,6 @@ public class ChattingRoomController {
 		@PathVariable String roomId,
 		@AuthenticationPrincipal CustomOAuth2User user) {
 		String userEmail = user.getEmail();
-		chattingRoomService.markMessagesAsRead(roomId, userEmail);
 		List<ChattingResponseDto> messages = chattingRoomService.getChattingMessages(roomId);
 		return ResponseEntity.ok(messages);
 	}
