@@ -6,11 +6,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,9 +49,8 @@ public class GuideColumnController {
 		ObjectMapper mapper = new ObjectMapper();
 		GuideColumnRequestDTO requestDTO = mapper.readValue(dataJson, GuideColumnRequestDTO.class);
 
-		return ResponseEntity.ok(
-			guideColumnService.createColumn(requestDTO, images, user.getId())
-		);
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(guideColumnService.createColumn(requestDTO, images, user));
 	}
 
 	@GetMapping
@@ -66,5 +68,30 @@ public class GuideColumnController {
 		@PathVariable Long guideId
 	) {
 		return ResponseEntity.ok(guideColumnService.getColumnsByGuide(guideId));
+	}
+
+	@PutMapping("/{columnId}")
+	@Operation(summary = "가이드 칼럼 수정")
+	public ResponseEntity<GuideColumnResponseDTO> updateColumn(
+		@PathVariable Long columnId,
+		@RequestPart(value = "data") String dataJson,
+		@RequestPart(value = "images", required = false) List<MultipartFile> images,
+		@AuthenticationPrincipal AuthenticatedUser user
+	) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		GuideColumnRequestDTO requestDTO = mapper.readValue(dataJson, GuideColumnRequestDTO.class);
+		return ResponseEntity
+			.ok()
+			.body(guideColumnService.updateColumn(columnId, requestDTO, images, user));
+	}
+
+	@DeleteMapping("/{columnId}")
+	@Operation(summary = "가이드 칼럼 삭제")
+	public ResponseEntity<Void> deleteColumn(
+		@PathVariable Long columnId,
+		@AuthenticationPrincipal AuthenticatedUser user
+	) {
+		guideColumnService.deleteColumn(columnId, user);
+		return ResponseEntity.noContent().build();
 	}
 }

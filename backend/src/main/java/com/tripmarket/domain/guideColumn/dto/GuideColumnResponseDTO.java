@@ -1,6 +1,5 @@
 package com.tripmarket.domain.guideColumn.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.tripmarket.domain.guideColumn.entity.GuideColumn;
@@ -10,8 +9,7 @@ public record GuideColumnResponseDTO(
 	String guideName,
 	String title,
 	String content,
-	List<String> imageUrls,
-	LocalDateTime createdAt
+	List<String> imageUrls
 ) {
 	public static GuideColumnResponseDTO from(GuideColumn guideColumn) {
 		return new GuideColumnResponseDTO(
@@ -19,8 +17,7 @@ public record GuideColumnResponseDTO(
 			guideColumn.getGuide().getName(),
 			guideColumn.getTitle(),
 			guideColumn.getContent(),
-			guideColumn.getImageUrls(),
-			guideColumn.getCreatedAt()
+			guideColumn.getImageUrls()
 		);
 	}
 }

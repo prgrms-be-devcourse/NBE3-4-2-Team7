@@ -50,4 +50,12 @@ public class GuideColumn extends BaseEntity {
 		this.content = content;
 		this.imageUrls = imageUrls;
 	}
+
+	public GuideColumn update(String title, String content, List<String> imageUrls) {
+		this.title = title;
+		this.content = content;
+		this.imageUrls = imageUrls;
+
+		return this;
+	}
 }

@@ -83,7 +83,10 @@ public enum ErrorCode {
 
 	// GuideColumn
 	IMAGE_UPLOAD_FAILED(INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
-	GUIDE_COLUMN_NOT_FOUND(NOT_FOUND, "가이드 칼럼을 찾을 수 없습니다.");
+	GUIDE_COLUMN_NOT_FOUND(NOT_FOUND, "가이드 칼럼을 찾을 수 없습니다."),
+	UNAUTHORIZED_ACCESS(UNAUTHORIZED, "접근 권한이 없습니다."),
+	IMAGE_DELETE_FAILED(INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
+	INVALID_IMAGE_URL(BAD_REQUEST, "잘못된 이미지 URL 형식입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

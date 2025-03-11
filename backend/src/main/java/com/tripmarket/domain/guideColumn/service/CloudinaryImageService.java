@@ -32,4 +32,33 @@ public class CloudinaryImageService {
 			throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
 		}
 	}
+
+	public void deleteImage(String imageUrl) {
+		try {
+			// URL에서 public_id 추출
+			String publicId = extractPublicIdFromUrl(imageUrl);
+
+			// 이미지 삭제
+			Map<String, String> options = new HashMap<>();
+			options.put("resource_type", "image");
+
+			cloudinary.uploader().destroy(publicId, options);
+		} catch (IOException e) {
+			log.error("이미지 삭제 실패: {}", imageUrl, e);
+			throw new CustomException(ErrorCode.IMAGE_DELETE_FAILED);
+		}
+	}
+
+	private String extractPublicIdFromUrl(String imageUrl) {
+		// URL 예시: https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/folder/image.jpg
+		try {
+			String[] urlParts = imageUrl.split("/");
+			String fileName = urlParts[urlParts.length - 1];
+			// 확장자 제거
+			return fileName.substring(0, fileName.lastIndexOf('.'));
+		} catch (Exception e) {
+			log.error("Public ID 추출 실패: {}", imageUrl, e);
+			throw new CustomException(ErrorCode.INVALID_IMAGE_URL);
+		}
+	}
 }
