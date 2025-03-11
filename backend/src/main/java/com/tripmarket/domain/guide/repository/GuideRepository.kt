@@ -1,14 +1,12 @@
 package com.tripmarket.domain.guide.repository;
 
-import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import com.tripmarket.domain.guide.entity.Guide;
+import com.tripmarket.domain.guide.entity.Guide
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.util.*
 
 @Repository
-public interface GuideRepository extends JpaRepository<Guide, Long> {
-	Optional<Guide> findByMemberId(Long memberId);
+interface GuideRepository : JpaRepository<Guide, Long> {
+    fun findByMemberId(memberId: Long): Optional<Guide>
 
 }
