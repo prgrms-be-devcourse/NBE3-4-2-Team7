@@ -22,6 +22,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,9 +33,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity(name = "member")
+@Table(name = "member", uniqueConstraints = {
+	@UniqueConstraint(name = "UK_local_member_email", columnNames = {"email", "provider"})
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "고유 ID")
@@ -42,7 +46,7 @@ public class Member extends BaseEntity {
 	@Column(nullable = false, length = 50)
 	private String name; // 회원 이름
 
-	@Column(nullable = false, unique = true, length = 100)
+	@Column(nullable = false, length = 100)
 	private String email; // 회원 이메일 (고유값)
 
 	private String password; // 회원 비밀번호, 소셜 로그인은 password가 필요 없으므로 nullable
@@ -76,31 +80,31 @@ public class Member extends BaseEntity {
 		this.provider = provider;
 		this.providerId = providerId;
 		this.imageUrl = (imageUrl != null && !imageUrl.trim().isEmpty())
-				? imageUrl
-				: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
+			? imageUrl
+			: "https://i.imgur.com/yCUGLR3.jpeg"; // 기본 이미지 URL 설정
 		this.role = Role.ROLE_USER;
 	}
 
 	public static Member createNormalMember(SignUpRequestDto signUpRequestDto, PasswordEncoder passwordEncoder) {
 		return Member.builder()
-				.name(signUpRequestDto.name())
-				.email(signUpRequestDto.email())
-				.password(passwordEncoder.encode(signUpRequestDto.password()))
-				.provider(Provider.LOCAL)
-				.providerId(null)
-				.imageUrl(signUpRequestDto.imageUrl())
-				.build();
+			.name(signUpRequestDto.name())
+			.email(signUpRequestDto.email())
+			.password(passwordEncoder.encode(signUpRequestDto.password()))
+			.provider(Provider.LOCAL)
+			.providerId(null)
+			.imageUrl(signUpRequestDto.imageUrl())
+			.build();
 	}
 
 	public static Member createSocialMember(OAuth2UserInfo userInfo, Provider provider) {
 		return Member.builder()
-				.email(userInfo.getEmail())
-				.name(userInfo.getName())
-				.password(null)
-				.provider(provider)
-				.providerId(userInfo.getId())
-				.imageUrl(userInfo.getImageUrl())
-				.build();
+			.email(userInfo.getEmail())
+			.name(userInfo.getName())
+			.password(null)
+			.provider(provider)
+			.providerId(userInfo.getId())
+			.imageUrl(userInfo.getImageUrl())
+			.build();
 	}
 
 	@Column(name = "is_first_login")
@@ -128,7 +132,7 @@ public class Member extends BaseEntity {
 			return false;
 		}
 		return this.linkedAccounts.stream()
-				.anyMatch(link -> link.getProvider() == provider);
+			.anyMatch(link -> link.getProvider() == provider);
 	}
 
 	// 계정 상태 확인

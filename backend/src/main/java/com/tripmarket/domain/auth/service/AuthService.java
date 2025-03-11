@@ -73,7 +73,7 @@ public class AuthService {
 	@Transactional
 	public void signUp(SignUpRequestDto signUpRequestDto) {
 		// 중복 검사
-		if (memberRepository.findByEmail(signUpRequestDto.email()).isPresent()) {
+		if (memberRepository.findByEmailAndProvider(signUpRequestDto.email(), Provider.LOCAL).isPresent()) {
 			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 

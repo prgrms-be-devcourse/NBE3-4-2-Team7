@@ -1,5 +1,7 @@
 package com.tripmarket.domain.auth.dto;
 
+import com.tripmarket.domain.member.entity.Provider;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -21,6 +23,7 @@ public record SignUpRequestDto(
 	@NotBlank(message = "비밀번호는 필수입니다.")
 	String password,
 	String imageUrl,
+	Provider provider,
 	Boolean hasGuideProfile
 ) {
 }
