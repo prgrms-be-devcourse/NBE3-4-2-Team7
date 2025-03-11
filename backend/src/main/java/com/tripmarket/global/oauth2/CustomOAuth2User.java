@@ -39,4 +39,15 @@ public class CustomOAuth2User extends DefaultOAuth2User implements Authenticated
 		this.id = id;
 		this.email = email;
 	}
+
+	/**
+	 * 코틀린에서 롬복 인식못해서 명시적으로 설정
+	 * */
+	public Long getId() {
+		return id;
+	}
+
+	public String getEmail() {
+		return email;
+	}
 }

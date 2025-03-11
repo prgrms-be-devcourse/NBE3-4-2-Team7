@@ -161,6 +161,11 @@ public class Member extends BaseEntity {
 		this.hasGuideProfile = true;
 	}
 
+	public void deleteGuideProfile() {
+		this.guide = null;
+		this.hasGuideProfile = false;
+	}
+
 	public boolean hasGuideProfile() {
 		return this.hasGuideProfile;
 	}
@@ -176,4 +181,12 @@ public class Member extends BaseEntity {
 	public boolean isAdmin() {
 		return this.role == Role.ROLE_ADMIN;
 	}
+
+	/**
+	 * 코틀린에서 롬복 인식못해서 Getter 함수 명시적으로 설정
+	 * */
+	public Guide getGuide() {
+		return guide;
+	}
+
 }

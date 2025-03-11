@@ -1,11 +1,9 @@
 package com.tripmarket.domain.guide.dto;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.tripmarket.domain.guide.entity.Guide;
 import com.tripmarket.domain.review.dto.ReviewResponseDto;
-import com.tripmarket.domain.review.entity.Review;
 import com.tripmarket.domain.reviewstats.entity.ReviewStats;
 
 public record GuideProfileDto(

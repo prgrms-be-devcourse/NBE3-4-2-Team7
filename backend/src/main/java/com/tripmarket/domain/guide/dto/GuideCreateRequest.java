@@ -1,45 +1,32 @@
 package com.tripmarket.domain.guide.dto;
 
 import com.tripmarket.domain.guide.entity.Guide;
+import com.tripmarket.domain.guide.entity.ValidLanguages;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-@Getter
-public class GuideCreateRequest {
+public record GuideCreateRequest(
+	@NotBlank String name,
+	@NotBlank @ValidLanguages String languages,
+	@NotBlank String activityRegion,
+	@Max(100) @Min(0) Integer experienceYears,
+	@NotBlank String introduction
+) {
 
-	@NotBlank
-	private String name;
-	/*
-	 * ISO 639 언어코드 형식의 문자열(소문자)
-	 * EX) "kr, en"
-	 * */
-	@NotBlank
-	private String languages;
-
-	@NotBlank
-	private String activityRegion;
-
-	private Integer experienceYears;
-
-	@NotBlank
-	private String introduction;
-
-	// DTO → Entity 변환
+	// Record -> Entity 변환
 	public static Guide toEntity(GuideCreateRequest guideCreateRequest) {
 		return Guide.builder()
-			.name(guideCreateRequest.getName())
-			.introduction(guideCreateRequest.getIntroduction())
-			.activityRegion(guideCreateRequest.getActivityRegion())
-			.experienceYears(guideCreateRequest.getExperienceYears())
-			.languages(guideCreateRequest.getLanguages())
+			.name(guideCreateRequest.name)
+			.introduction(guideCreateRequest.introduction)
+			.activityRegion(guideCreateRequest.activityRegion)
+			.experienceYears(guideCreateRequest.experienceYears)
+			.languages(guideCreateRequest.languages)
 			.isDeleted(false)
 			.build();
 	}
+
 }
